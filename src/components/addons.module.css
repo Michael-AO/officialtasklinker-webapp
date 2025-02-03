@@ -1,0 +1,152 @@
+.addOnsBg {
+    position: absolute;
+    top: 0px;
+    left: calc(50% - 668.45px);
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px 20px 0px 0px;
+    background-color: #080808;
+    width: 1336.9px;
+    height: 1612.4px;
+}
+.exploreTopTask {
+    position: absolute;
+    top: 116.4px;
+    left: calc(50% - 228.49px);
+    font-size: 40px;
+    letter-spacing: -0.02em;
+    line-height: 60px;
+}
+.addOns1 {
+    width: 141px;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+.sectionLabelAddons {
+    position: absolute;
+    top: 66.72px;
+    left: calc(50% - 95.99px);
+    border-radius: 20px;
+    background-color: #fafafa;
+    width: 192px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+    text-align: center;
+    color: #000;
+}
+.exploreGigsIcon {
+    position: absolute;
+    top: 268px;
+    left: 218.46px;
+    width: 459px;
+    height: 334px;
+    object-fit: cover;
+}
+.applyForTasksIcon {
+    position: absolute;
+    top: 690px;
+    left: 659.46px;
+    width: 459px;
+    height: 334px;
+    object-fit: cover;
+}
+.unlockNewOpportunities {
+    position: absolute;
+    top: 385.44px;
+    left: 738.96px;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+    color: #adadad;
+    display: inline-block;
+    width: 357.1px;
+}
+.eedATask {
+    position: absolute;
+    top: 794.8px;
+    left: 256.19px;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+    color: #adadad;
+    display: inline-block;
+    width: 357.1px;
+}
+.finishTheJob {
+    position: absolute;
+    top: 1269.17px;
+    left: 738.96px;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+    color: #adadad;
+    display: inline-block;
+    width: 357.1px;
+}
+.exploreIcon {
+    position: absolute;
+    top: 339.88px;
+    left: 738.96px;
+    width: 30px;
+    height: 30px;
+}
+.exploreGigs {
+    position: absolute;
+    top: 333.88px;
+    left: 774.96px;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+.applyIcon {
+    position: absolute;
+    top: 750.3px;
+    left: 256.19px;
+    width: 30px;
+    height: 30px;
+}
+.applyForTasks {
+    position: absolute;
+    top: 747.3px;
+    left: 296.19px;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+.walletIcon {
+    position: absolute;
+    top: 1217.17px;
+    left: 738.96px;
+    width: 37.5px;
+    height: 30px;
+}
+.monitorJobs {
+    position: absolute;
+    top: 1211.17px;
+    left: 786.46px;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+.monitorJobsIcon {
+    position: absolute;
+    top: 1152px;
+    left: 218.46px;
+    width: 459px;
+    height: 334px;
+    object-fit: cover;
+}
+.addOns {
+    width: 100%;
+    position: relative;
+    margin-top: 100px;
+    height: 1612.4px;
+    text-align: left;
+    font-size: 16px;
+    color: #fff;
+    font-family: 'BR Hendrix';
+}
+

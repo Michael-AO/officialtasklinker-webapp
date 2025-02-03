@@ -1,0 +1,340 @@
+.seeMore {
+    position: absolute;
+    top: 1550.03px;
+    left: calc(50% - 20.54px);
+    font-size: 20px;
+    text-decoration: underline;
+    letter-spacing: -0.02em;
+}
+
+.overlay {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    background-color: rgba(8, 8, 8, 0.79);
+    width: 1440px;
+    height: 1254px;
+    width: 100vw; /* Cover full width of the viewport */
+    height: 100vh; /* Cover full height of the viewport */
+}
+
+.background {
+    position: absolute;
+    top: 89px;
+    left: calc(50% - 665px);
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px 20px 0px 0px;
+    background-color: #fff;
+    width: 1335.4px;
+    height: 1200px;
+}
+
+.vectorIcon {
+    width: 40px;
+    position: relative;
+    height: 40px;
+}
+
+.postATask1 {
+    position: relative;
+    letter-spacing: 0.01em;
+    line-height: 60px;
+    font-weight: 500;
+}
+
+.pageheader {
+    position: absolute;
+    top: 146.62px;
+    left: 331.24px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    text-align: center;
+    font-size: 31px;
+    color: #24221e;
+    font-family: Roboto;
+}
+
+.step1Of {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 40.95px;
+    font-weight: 500;
+}
+
+.step1Of2Wrapper {
+    width: 158.8px;
+    border-radius: 10px;
+    background-color: #f3f3f3;
+    height: 39px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.fillInJob {
+    position: relative;
+    letter-spacing: 0.01em;
+}
+
+.frameChild {
+    width: 23.4px;
+    position: relative;
+    border-radius: 4px;
+    background-color: #04a466;
+    height: 4px;
+}
+
+.frameItem {
+    width: 23.4px;
+    position: relative;
+    border-radius: 4px;
+    background-color: #adadad;
+    height: 4px;
+}
+
+.rectangleParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+}
+
+.fillInJobDescriptionParent {
+    align-self: stretch;
+    height: 42px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
+    padding-top: 20px;
+    font-size: 24px;
+    font-family: Roboto;
+}
+
+.frameParent {
+    position: absolute;
+    top: 243.62px;
+    left: 324.86px;
+    width: 243.1px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 18px;
+    text-align: center;
+    color: #080808;
+    font-family: 'DM Sans';
+}
+
+.next {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+
+.buttonnext {
+    position: absolute;
+    top: 1051.58px;
+    left: 894.96px;
+    border-radius: 8px;
+    background-color: #000;
+    border: 1px solid #444;
+    box-sizing: border-box;
+    width: 224px;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    color: #fff;
+    margin-top: 40px;
+}
+
+.tastDesciption {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    padding-top: 20px;
+}
+
+.weAreLooking {
+    width: 718px;
+    position: relative;
+    letter-spacing: 0.01em;
+    line-height: 22px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.descrinput {
+    width: 784px;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    height: 371px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 20px;
+    box-sizing: border-box;
+    font-size: 16px;
+    color: #0e0e0e;
+}
+
+.textwrapper {
+    position: absolute;
+    top: 640.41px;
+    left: 324.98px;
+    width: 784px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 20px; /* Increased gap for Task Description section */
+    font-size: 18px;
+}
+
+.socialMediaManagerWrapper {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px;
+    font-size: 16px;
+    color: #0e0e0e;
+}
+
+.name {
+    width: 370px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 15px; /* Adjusted gap between label and input */
+}
+
+.vectorIcon1 {
+    width: 9.6px;
+    position: relative;
+    height: 4.8px;
+}
+
+.weeklyParent {
+    width: 83px;
+    border-radius: 8px;
+    background-color: #fff;
+    height: 25px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px;
+    box-sizing: border-box;
+    gap: 10px;
+    font-size: 14px;
+    color: #04a466;
+}
+
+.parent {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    font-size: 16px;
+    color: #0e0e0e;
+}
+
+.fullTimeParent {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    font-size: 16px;
+    color: #0e0e0e;
+    font-family: 'BR Hendrix';
+}
+
+.jobtype {
+    width: 370px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 15px; /* Adjusted gap between label and input */
+    font-family: 'DM Sans';
+}
+
+.inputwrapper {
+    position: absolute;
+    top: 387.81px;
+    left: 325.3px;
+    width: 776px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 20px 36px; /* Adjusted vertical gap */
+    font-size: 18px;
+}
+
+.lineIcon {
+    position: absolute;
+    top: 213.62px;
+    left: 322.89px;
+    width: 778.7px;
+    height: 0.1px;
+    object-fit: contain;
+}
+
+.postATask {
+    width: 100%;
+    position: relative;
+    margin-top: 80px;
+    background-color: #fff;
+    height: 1300px;
+    overflow: hidden;
+    cursor: pointer;
+    text-align: left;
+    font-size: 16px;
+    color: #000;
+    font-family: 'BR Hendrix';
+}
+
+.inputField {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 0px solid #ccc;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    color: #585858;
+    box-sizing: border-box;
+}
+
+.inputField:focus {
+    border-color: #04a466; /* Green border color on focus */
+    outline: none; /* Remove the default blue outline */
+}

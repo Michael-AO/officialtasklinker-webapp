@@ -1,0 +1,125 @@
+.footerBg {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%); /* This will center it */
+    border-radius: 20px 20px 0 0;
+    background-color: #080808;
+    width: 1447px; /* You can keep this, but check for responsiveness */
+    height: 410px;
+}
+.copyright2024All {
+    position: absolute;
+    top: 347.14px;
+    left: 658.6px;
+    letter-spacing: -0.02em;
+    line-height: 40.95px;
+    font-weight: 600;
+    color: #727272;
+    white-space: pre-wrap;
+    text-align: center;
+}
+.logofooterIcon {
+    width: 198.4px;
+    position: relative;
+    height: 42.8px;
+}
+.home {
+    position: relative;
+    letter-spacing: -0.02em;
+}
+.testimonials {
+    position: relative;
+    letter-spacing: -0.02em;
+    text-align: center;
+}
+.homeParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+}
+.contactUs {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+}
+.infotasklinkers {
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    color: #fff;
+}
+.legalPrivacy {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 40.95px;
+    font-weight: 600;
+}
+.infotasklinkersParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    text-align: center;
+    font-size: 16px;
+    color: #727272;
+    white-space: nowrap;
+}
+.contactUsParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    font-size: 12px;
+    color: #606060;
+}
+.frameParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 24px;
+}
+.logofooterParent {
+    position: absolute;
+    top: 80.82px;
+    left: 50px;
+    width: 537px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 23px;
+}
+.goToTop {
+    position: absolute;
+    top: 167.29px;
+    left: 1273.93px;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+}
+.upArrowFooterIcon {
+    position: absolute;
+    top: 131.24px;
+    left: 1289.92px;
+    width: 30px;
+    height: 30px;
+}
+.footer {
+    width: 100%;
+    position: relative;
+    height: 410px;
+    margin-top: 100px;
+    text-align: left;
+    font-size: 16px;
+    color: #fff;
+    font-family: 'BR Hendrix';
+}
+

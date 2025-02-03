@@ -1,0 +1,232 @@
+.background {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background-color: #fff;
+  width: 1440px;
+  height: 882px;
+}
+.background1 {
+  position: absolute;
+  top: 86px;
+  left: calc(50% - 667.71px);
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 20px 20px 0px 0px;
+  background-color: #fff;
+  width: 1335.4px;
+  height: 645.9px;
+}
+.quietyTakeNotesIn {
+  margin: 0;
+}
+.quietyTakeNotesInContainer {
+  position: absolute;
+  top: 2652.36px;
+  left: 324.03px;
+  font-size: 16.93px;
+  letter-spacing: -0.02em;
+  line-height: 20px;
+  text-align: left;
+}
+.privacyPolicy {
+  position: relative;
+  letter-spacing: -0.02em;
+  line-height: 22px;
+}
+.termsAndConditions {
+  position: absolute;
+  top: 758.93px;
+  left: calc(50% - 155.8px);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 45px;
+  color: #484848;
+}
+.vectorIcon {
+  position: absolute;
+  top: 5px;
+  left: 0px;
+  width: 16px;
+  height: 14px;
+}
+.back {
+  position: absolute;
+  top: 0px;
+  left: 28.82px;
+  letter-spacing: -0.02em;
+  line-height: 22px;
+}
+.goBack {
+  width: 71.8px;
+  position: relative;
+  height: 22px;
+  font-size: 20px;
+  color: #000;
+  font-family: 'DM Sans';
+}
+.step3Of {
+  position: relative;
+  letter-spacing: -0.02em;
+  line-height: 40.95px;
+  font-weight: 500;
+}
+.step3Of3Wrapper {
+  position: absolute;
+  top: 0px;
+  left: calc(50% - 264.75px);
+  border-radius: 10px;
+  background-color: #f3f3f3;
+  width: 153px;
+  height: 39px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  box-sizing: border-box;
+}
+.enterVerificationCode {
+  position: relative;
+  letter-spacing: 0.01em;
+  line-height: 37px;
+}
+.frameChild {
+  width: 23.4px;
+  position: relative;
+  border-radius: 4px;
+  background-color: #04a466;
+  height: 3px;
+}
+.rectangleParent {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+}
+.enterVerificationCodeParent {
+  position: absolute;
+  top: 50px;
+  left: 0px;
+  width: 529.5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+  text-align: left;
+  font-size: 28px;
+  color: #24221e;
+  font-family: Roboto;
+}
+.pagheader {
+  width: 529.5px;
+  position: relative;
+  height: 100px;
+  font-family: 'DM Sans';
+}
+.weveSentA {
+  width: 463.6px;
+  position: relative;
+  letter-spacing: -0.02em;
+  line-height: 22px;
+  display: inline-block;
+  color: #727272;
+  text-align: left;
+}
+.otpinputChild {
+  width: 52.2px;
+  position: relative;
+  border-radius: 11px;
+  border: 0.9px solid #080808;
+  box-sizing: border-box;
+  height: 52.2px;
+}
+.otpinput {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+}
+.codeExpiresIn {
+  width: 137px;
+  position: relative;
+  letter-spacing: -0.02em;
+  line-height: 22px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.otpinputParent {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 17px;
+  color: #727272;
+}
+.resendCode {
+  width: 137px;
+  position: relative;
+  letter-spacing: -0.02em;
+  line-height: 22px;
+  display: inline-block;
+  color: #04a466;
+  flex-shrink: 0;
+}
+.sendViaSmsParent {
+  width: 373.5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.wrapper {
+  position: absolute;
+  top: 185.92px;
+  left: 262.86px;
+  width: 535.9px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 23px;
+  color: #080808;
+}
+.confirmFinish {
+  position: relative;
+  letter-spacing: -0.02em;
+  line-height: 20px;
+  font-weight: 600;
+}
+.confirmverification {
+  position: absolute;
+  top: 582.34px;
+  left: 911px;
+  border-radius: 20px;
+  background-color: #24221e;
+  border: 1px solid #000;
+  box-sizing: border-box;
+  width: 258px;
+  height: 60px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 19px;
+  color: #fff;
+}
+.verification {
+  width: 100%;
+  position: relative;
+  background-color: #fff;
+  height: 882px;
+  overflow: hidden;
+  text-align: center;
+  font-size: 16px;
+  color: #787878;
+  font-family: 'BR Hendrix';
+}
+

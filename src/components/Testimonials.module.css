@@ -1,0 +1,135 @@
+.testimonials1 {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.sectionLabelTestimonials {
+    width: 192px;
+    border-radius: 20px;
+    background-color: #f3f3f3;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.whatOurUsers {
+    align-self: stretch;
+    position: relative;
+    font-size: 39.44px;
+    line-height: 49px;
+    font-weight: 500;
+    font-family: Roboto;
+    color: #04a466;
+    text-align: center;
+}
+.testimonialHeader {
+    width: 549.2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.testimonialCardChild {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    background-color: #fff;
+    width: 360.7px;
+    height: 339.5px;
+}
+.frameChild {
+    width: 49.1px;
+    position: relative;
+    border-radius: 50%;
+    height: 49.1px;
+    object-fit: cover;
+}
+.sarahK {
+    align-self: stretch;
+    position: relative;
+    font-weight: 500;
+}
+.entrepreneur {
+    align-self: stretch;
+    position: relative;
+    color: #6f6f6f;
+}
+.sarahKParent {
+    width: 140.5px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+.ellipseParent {
+    position: absolute;
+    top: 263.72px;
+    left: 24.56px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
+}
+.iWasStruggling {
+    position: absolute;
+    top: 27.76px;
+    left: 24.56px;
+    color: #727272;
+    display: inline-block;
+    width: 293.7px;
+}
+.testimonialCard {
+    width: 360.7px;
+    position: relative;
+    height: 339.5px;
+}
+.testimonialDisplay {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    gap: 30px;
+    color: #04a466;
+}
+.view1 {
+    width: 10px;
+    position: relative;
+    border-radius: 50%;
+    background-color: #080808;
+    height: 10px;
+}
+.view2 {
+    width: 10px;
+    position: relative;
+    border-radius: 50%;
+    background-color: #d9d9d9;
+    height: 10px;
+}
+.slideshowGuide {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+}
+.testimonials {
+    width: 100%;
+    position: relative;
+    display: flex;
+    margin-top: 100px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 43px;
+    text-align: left;
+    font-size: 16px;
+    color: #000;
+    font-family: 'BR Hendrix';
+}
+

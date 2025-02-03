@@ -1,0 +1,92 @@
+.heroBackground {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 20px 20px 0px 0px;
+    background-color: #04a466;
+    width: 1336px;
+    height: 922px;
+}
+.findThePerfect {
+    position: absolute;
+    top: 108.58px;
+    left: 250.34px;
+    line-height: 67px;
+    text-align: left;
+    display: inline-block;
+    width: 839.3px;
+}
+.yourPersonalisedTask {
+    position: absolute;
+    top: 263.58px;
+    left: 494.96px;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+    font-family: 'DM Sans';
+    display: inline-block;
+    width: 350.1px;
+}
+.exploreTasks {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+    padding-right: 10px;
+}
+.heroArrowIcon {
+    width: 11.8px;
+    position: relative;
+    height: 11.8px;
+}
+.button {
+    position: absolute;
+    top: 328.58px;
+    left: 574px;
+    border-radius: 20px;
+    background-color: #080808;
+    width: 192px;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 20px;
+    box-sizing: border-box;
+    gap: 36px;
+    font-size: 16px;
+    font-family: 'BR Hendrix';
+}
+
+
+.tlbutton {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none; /* Remove underline */
+  }
+
+
+.heroImageIcon {
+    position: absolute;
+    top: 463px;
+    left: 89px;
+    width: 1162px;
+    height: 460px;
+    object-fit: cover;
+}
+.heroSection {
+    width: 100%;
+    position: relative;
+    border-radius: 20px 20px 0px 0px;
+   margin-top: 140px;
+    height: 921px;
+    overflow: hidden;
+    text-align: center;
+    font-size: 65px;
+    color: #fff;
+    font-family: Roboto;
+}
+

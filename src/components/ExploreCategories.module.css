@@ -1,0 +1,375 @@
+.featuredSection {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 500;
+}
+.featuredSectionWrapper {
+    width: 192px;
+    border-radius: 20px;
+    background-color: #f3f3f3;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.exploreCategoriesContainer {
+    display: flex; /* Ensures elements stay in a row */
+    align-items: center; /* Aligns text vertically */
+    gap: 10px; /* Adjusts spacing between elements */
+    flex-wrap: nowrap; /* Prevents wrapping onto a new line */
+}
+
+.exploreCategories1 {
+    font-size: 43px;
+    letter-spacing: 0.01em;
+    line-height: 60px;
+    font-weight: 500;
+    font-family: Roboto;
+    color: #04a466;
+    white-space: nowrap; /* Ensures text doesn’t break onto a new line */
+}
+
+.frameContainer {
+    width: 352px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+.plumbing {
+    position: relative;
+    letter-spacing: -0.02em;
+}
+.plumbingWrapper {
+    width: 120px;
+    border-radius: 8px;
+    background-color: #080808;
+    border: 1px solid #565656;
+    box-sizing: border-box;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    color: #fff;
+}
+.uiDesignWrapper {
+    width: 120px;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+.storekeepeerWrapper {
+    width: 160px;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+.accountantWrapper {
+    width: 147px;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+.frameParent1 {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+}
+.eparrowDownIcon {
+    width: 20px;
+    position: relative;
+    height: 20px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.sortByRelevanceParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.vectorIcon {
+    width: 14.5px;
+    position: relative;
+    height: 7.6px;
+}
+.frameParent2 {
+    display: flex;
+    flex-direction: row;
+    padding-bottom: 20px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 31px;
+    color: #080808;
+}
+.frameDiv {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    font-size: 20px;
+    font-family: 'BR Hendrix';
+}
+.frameGroup {
+    width: 867.8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 39px;
+}
+.seeAllCategories {
+    align-self: stretch;
+    position: relative;
+    text-decoration: underline;
+    letter-spacing: -0.02em;
+}
+.groupChild {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    background-color: #fff;
+    width: 386.7px;
+    height: 257.3px;
+}
+.compensationmonth {
+    position: absolute;
+    top: 169.33px;
+    left: 40.8px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    font-weight: 500;
+}
+.ngn10000 {
+    position: absolute;
+    top: 188.33px;
+    left: 40.8px;
+    font-size: 24.67px;
+    letter-spacing: -0.02em;
+    line-height: 42.17px;
+    font-weight: 500;
+    color: #0e0e0e;
+}
+.uxDesigner {
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+.uxDesignerWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+.onsite {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
+.onsiteWrapper {
+    border-radius: 8px;
+    background-color: #f3f3f3;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 19px;
+    font-size: 16px;
+    color: #212121;
+}
+.frameParent4 {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+}
+.badiruStrLagos {
+    position: absolute;
+    top: 75.28px;
+    left: 0px;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    color: #727272;
+}
+.shellNigeriaWrapper {
+    position: absolute;
+    top: 48.75px;
+    left: 0px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 18px;
+    color: #0e0e0e;
+    font-family: 'DM Sans';
+}
+.groupDiv {
+    position: absolute;
+    top: 31.2px;
+    left: 40.8px;
+    width: 277px;
+    height: 102.3px;
+    font-size: 24px;
+    color: #04a466;
+}
+.rectangleParent {
+    width: 386.7px;
+    position: relative;
+    height: 257.3px;
+    color: #acacac;
+}
+.compensationmonth1 {
+    position: absolute;
+    top: 169.33px;
+    left: 40.8px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    font-weight: 500;
+    color: #acacac;
+}
+.frameParent5 {
+    position: absolute;
+    top: 31.2px;
+    left: 40.8px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    font-size: 24px;
+    color: #04a466;
+}
+.badiruStrLagos1 {
+    position: absolute;
+    top: 106.48px;
+    left: 40.8px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    color: #727272;
+}
+.ngn100001 {
+    position: absolute;
+    top: 188.33px;
+    left: 40.8px;
+    font-size: 24.67px;
+    letter-spacing: -0.02em;
+    line-height: 42.17px;
+    font-weight: 500;
+}
+.shellNigeriaContainer {
+    position: absolute;
+    top: 79.94px;
+    left: 40.8px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 18px;
+    font-family: 'DM Sans';
+}
+.rectangleGroup {
+    width: 386.7px;
+    position: relative;
+    height: 257.3px;
+}
+.groupParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+}
+.frameParent3 {
+    align-self: stretch;
+    display: flex;
+    padding-top: 40px;
+    padding-bottom: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 32px;
+    text-align: left;
+    font-size: 16px;
+    color: #0e0e0e;
+}
+.seeAllCategoriesParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 16px;
+    text-align: right;
+    font-size: 20px;
+    color: #080808;
+    font-family: 'BR Hendrix';
+}
+.frameParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+.seeMore {
+    align-self: stretch;
+    position: relative;
+    font-size: 20px;
+    text-decoration: underline;
+    letter-spacing: -0.02em;
+    font-family: 'BR Hendrix';
+    text-align: center;
+}
+.exploreCategories {
+    width: 100%;
+    position: relative;
+    display: flex;
+    margin-top: 80px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 38px;
+    text-align: left;
+    font-size: 16px;
+    color: #000;
+    font-family: 'DM Sans';
+}
+

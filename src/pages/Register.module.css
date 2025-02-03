@@ -1,0 +1,303 @@
+.background {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: #fff;
+    width: 1440px;
+    height: 786px;
+}
+.background1 {
+    position: absolute;
+    top: 149.83px;
+    left: calc(50% - 670.42px);
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px 20px 0px 0px;
+    background-color: #fff;
+    width: 1335.4px;
+    height: 559.7px;
+}
+.navBarBg {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: #fff;
+    width: 1440px;
+    height: 100.2px;
+}
+.home {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 500;
+    color: #04a466;
+}
+.exploreTasks {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 500;
+}
+.navLinks {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+}
+.createAccount {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+}
+.button {
+    width: 168px;
+    border-radius: 20px;
+    background-color: #080808;
+    border: 1px solid #080808;
+    box-sizing: border-box;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 19px;
+    color: #fff;
+    font-family: 'BR Hendrix';
+}
+.navLinksParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 22px;
+}
+.navMenuInner {
+    position: absolute;
+    top: 0px;
+    left: 883.65px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    background-color: #fff;
+    width: 451.1px;
+    height: 54px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 4px 5px;
+    box-sizing: border-box;
+}
+.logomarkIcon {
+    width: 40.1px;
+    position: relative;
+    height: 42.8px;
+}
+.wordmarkIcon {
+    width: 152.5px;
+    position: relative;
+    height: 23.3px;
+}
+.logo {
+    position: absolute;
+    top: 5.61px;
+    left: 0px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+}
+.navMenu {
+    position: absolute;
+    top: 23.12px;
+    left: 49.58px;
+    width: 1334.8px;
+    height: 54px;
+}
+.navBar {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 1440px;
+    height: 100.2px;
+    color: #727272;
+    font-family: 'DM Sans';
+}
+.vectorIcon {
+    position: absolute;
+    top: 0px;
+    left: 314.83px;
+    width: 20px;
+    height: 20px;
+}
+.personalAccount {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: 0.01em;
+    line-height: 22px;
+    font-weight: 500;
+}
+.idealForIndividuals {
+    align-self: stretch;
+    position: relative;
+    font-size: 16px;
+    letter-spacing: 0.01em;
+    line-height: 22px;
+    font-family: 'DM Sans';
+    color: #727272;
+}
+.cardContent {
+    position: absolute;
+    top: 36.61px;
+    left: 0px;
+    width: 310px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 12px;
+}
+.cardSelection {
+    width: 334.8px;
+    position: relative;
+    height: 158.6px;
+}
+.cardWrapper {
+    position: absolute;
+    top: 339.95px;
+    left: 323.7px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    background-color: #fff;
+    border: 1px solid #04a466;
+    box-sizing: border-box;
+    width: 387.5px;
+    height: 222.8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 21px 14px;
+    text-align: left;
+    font-size: 24px;
+    color: #04a466;
+}
+.cardWrapperInactive {
+    position: absolute;
+    top: 339.95px;
+    left: 732.7px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    background-color: #fff;
+    border: 1px solid #adadad;
+    box-sizing: border-box;
+    width: 387.5px;
+    height: 222.8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 21px 14px;
+    text-align: left;
+    font-size: 24px;
+    color: #0e0e0e;
+}
+.button1 {
+    position: absolute;
+    top: 590.87px;
+    left: 952.53px;
+    border-radius: 20px;
+    background-color: #080808;
+    border: 1px solid #000;
+    box-sizing: border-box;
+    width: 174px;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 19px;
+    color: #fff;
+    font-family: 'BR Hendrix';
+}
+.step1Of {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 40.95px;
+    font-weight: 500;
+}
+.stepCount {
+    position: absolute;
+    top: 213.95px;
+    left: 323.7px;
+    border-radius: 10px;
+    background-color: #f3f3f3;
+    width: 153px;
+    height: 39px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: 'DM Sans';
+}
+
+.tlbutton {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none; /* Remove underline */
+  }
+
+.selectAccount1 {
+    position: absolute;
+    top: 271.18px;
+    left: 323.7px;
+    font-size: 24px;
+    letter-spacing: 0.01em;
+}
+.progressBarChild {
+    width: 23.4px;
+    position: relative;
+    border-radius: 4px;
+    background-color: #04a466;
+    height: 3px;
+}
+.progressBarItem {
+    width: 23.4px;
+    position: relative;
+    border-radius: 4px;
+    background-color: #adadad;
+    height: 3px;
+}
+.progressBar {
+    position: absolute;
+    top: 309.18px;
+    left: 323.7px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+}
+.selectAccount {
+    width: 100%;
+    position: relative;
+    background-color: #fff;
+    height: 784px;
+    margin-top: -10px;
+    overflow: hidden;
+    text-align: center;
+    font-size: 16px;
+    color: #080808;
+    font-family: Roboto;
+}
+
+.wrapper {
+ margin-top: 100px;
+  }
+

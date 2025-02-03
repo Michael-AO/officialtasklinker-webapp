@@ -1,0 +1,407 @@
+.background {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: #fff;
+    width: 1440px;
+    height: 1082px;
+}
+.quietyTakeNotesIn {
+    margin: 0;
+}
+.quietyTakeNotesInContainer {
+    position: absolute;
+    top: 2652.36px;
+    left: 324.03px;
+    font-size: 16.93px;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.farmer {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 60px;
+}
+.farmerWrapper {
+    position: absolute;
+    top: 1316px;
+    left: 1407.68px;
+    border-radius: 20px;
+    width: 210px;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 24px;
+    color: #000;
+}
+.tlbutton {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none; /* Remove underline */
+  }
+
+.emailAddress {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
+.emailAddressWrapper {
+    position: absolute;
+    top: 478.5px;
+    left: 280.75px;
+    width: 428px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    color: #0e0e0e;
+}
+.michaeltasksgmailcom {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
+.michaeltasksgmailcomWrapper {
+    width: 428px;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 20px;
+}
+.michaeltasksgmailcomContainer {
+    align-self: stretch;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 20px;
+    text-align: center;
+    color: #7e7e7e;
+}
+.phoneNumberParent {
+    width: 428px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+    text-align: left;
+    color: #0e0e0e;
+}
+.frameParent {
+    position: absolute;
+    top: 478.5px;
+    left: 280.75px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 19px;
+    text-align: center;
+    color: #7e7e7e;
+}
+.step2Of {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 40.95px;
+    font-weight: 500;
+}
+.step2Of3Wrapper {
+    width: 153px;
+    border-radius: 10px;
+    background-color: #f3f3f3;
+    height: 39px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.registerConnect {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: 0.01em;
+    line-height: 37px;
+}
+.frameChild {
+    width: 23.4px;
+    position: relative;
+    border-radius: 4px;
+    background-color: #04a466;
+    height: 3px;
+}
+.frameInner {
+    width: 23.4px;
+    position: relative;
+    border-radius: 4px;
+    background-color: #adadad;
+    height: 3px;
+}
+.rectangleParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+}
+.registerConnectWithTasksParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
+    text-align: left;
+    font-size: 28px;
+    color: #24221e;
+    font-family: Roboto;
+}
+.pageheader {
+    width: 529.5px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.michaelWrapper {
+    align-self: stretch;
+    border-radius: 12px;
+    background-color: #fff;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 20px;
+    text-align: center;
+    color: #7e7e7e;
+}
+.firstNameParent {
+    width: 427px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.lastNameParent {
+    width: 431px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.frameGroup {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+}
+.emailAddressContainer {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+.frameDiv {
+    width: 428px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.frameContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 19px;
+}
+.frameParent1 {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 23px;
+}
+.inputfileds {
+    width: 885px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 23px;
+    text-align: left;
+    color: #0e0e0e;
+    font-family: 'BR Hendrix';
+}
+.autolayout {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 40px;
+}
+.createAccount {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+}
+.createaccountBtn {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 20px;
+    background-color: #24221e;
+    border: 1px solid #000;
+    box-sizing: border-box;
+    width: 430px;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 19px;
+}
+.orChild {
+    width: 117.6px;
+    position: relative;
+    max-height: 100%;
+}
+.or {
+    position: absolute;
+    top: 76px;
+    left: 85.39px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    color: #626262;
+}
+.vectorIcon {
+    width: 19.4px;
+    position: relative;
+    height: 19.8px;
+}
+.google {
+    position: absolute;
+    top: 114px;
+    left: 0px;
+    border-radius: 20px;
+    background-color: #fff;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    width: 431px;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    gap: 10px;
+    color: #282828;
+}
+.signIn {
+    color: #04a466;
+}
+.alreadyHaveAnContainer {
+    position: absolute;
+    top: 183.05px;
+    left: calc(50% - 90.16px);
+    letter-spacing: -0.02em;
+    line-height: 22px;
+    color: #9f9f9f;
+}
+.authentication {
+    width: 431px;
+    position: relative;
+    height: 205.1px;
+    color: #fff;
+    font-family: 'BR Hendrix';
+}
+.createaccount {
+    width: 892.8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 69px;
+}
+.pagecontent {
+    align-self: stretch;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px 20px 0px 0px;
+    background-color: #fff;
+    height: 872.2px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 55px 216px;
+    box-sizing: border-box;
+}
+.privacyandterms {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 45px;
+    color: #484848;
+    font-family: 'BR Hendrix';
+}
+.pagewrapper {
+    position: absolute;
+    top: 86px;
+    left: 50px;
+    width: 1335.4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 27px;
+    text-align: center;
+    color: #080808;
+    font-family: 'DM Sans';
+}
+.registerPage {
+    width: 100%;
+    position: relative;
+    background-color: #fff;
+    height: 1082px;
+    overflow: hidden;
+    text-align: left;
+    font-size: 16px;
+    color: #787878;
+    font-family: 'BR Hendrix';
+}
+

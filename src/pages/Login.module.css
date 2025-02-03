@@ -1,0 +1,231 @@
+.background {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: #fff;
+    width: 1440px;
+    height: 890px;
+}
+.farmer {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 60px;
+}
+.farmerWrapper {
+    position: absolute;
+    top: 1316px;
+    left: 1407.68px;
+    border-radius: 20px;
+    width: 210px;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.loginToAccess {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 40.95px;
+    font-weight: 500;
+}
+.headersub {
+    width: 250px;
+    border-radius: 10px;
+    background-color: #f3f3f3;
+    height: 39px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+    text-align: center;
+}
+.welcomeBackContinue {
+    width: 399.2px;
+    position: relative;
+    font-size: 28px;
+    letter-spacing: 0.01em;
+    line-height: 37px;
+    font-family: Roboto;
+    color: #24221e;
+    display: inline-block;
+}
+.emailAddress {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
+.michaeltasksgmailcom {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
+.michaeltasksgmailcomWrapper {
+    align-self: stretch;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 20px;
+    text-align: center;
+    color: #7e7e7e;
+}
+.emailAddressPhoneNumberParent {
+    width: 428px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.passwordParent {
+    width: 431px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.frameParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    color: #000;
+    font-family: 'BR Hendrix';
+}
+.upper {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 24px;
+}
+.login {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+}
+.loginbtn {
+    align-self: stretch;
+    border-radius: 12px;
+    background-color: #24221e;
+    border: 1px solid #000;
+    box-sizing: border-box;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 19px;
+}
+.orChild {
+    width: 117.6px;
+    position: relative;
+    max-height: 100%;
+}
+.or {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    color: #626262;
+}
+.vectorIcon {
+    width: 19.4px;
+    position: relative;
+    height: 19.8px;
+}
+.googlecont {
+    align-self: stretch;
+    border-radius: 12px;
+    background-color: #fff;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    gap: 10px;
+    color: #282828;
+}
+.createAccount {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+    color: #04a466;
+}
+.dontHaveAnAccountParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    color: #727272;
+}
+.lower {
+    width: 431px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+    text-align: center;
+    color: #fff;
+    font-family: 'BR Hendrix';
+}
+.contentlgn {
+    width: 879px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 35px;
+}
+.total {
+    position: absolute;
+    top: 90.05px;
+    left: 51.85px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px 20px 0px 0px;
+    background-color: #fff;
+    width: 1335.4px;
+    height: 723px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 102px 228px;
+    box-sizing: border-box;
+    font-size: 16px;
+    color: #080808;
+    font-family: 'DM Sans';
+}
+.signIn {
+    width: 100%;
+    position: relative;
+    background-color: #fff;
+    height: 890px;
+    overflow: hidden;
+    cursor: pointer;
+    text-align: left;
+    font-size: 24px;
+    color: #000;
+    font-family: 'BR Hendrix';
+}
+
