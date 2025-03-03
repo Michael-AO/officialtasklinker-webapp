@@ -1,10 +1,7 @@
-module.exports = {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+export default {
+  // Vite build options here, if you need any additional config
+  build: {
+    outDir: 'dist',
+    // Other Vite build options can go here
+  }
+};

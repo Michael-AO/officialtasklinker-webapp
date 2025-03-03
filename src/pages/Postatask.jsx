@@ -6,14 +6,14 @@ import line from './dividerpat.png';
 import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore';
 
 function PostATask() {
-  const [roleName, setRoleName] = useState('Social media manager');
-  const [compensation, setCompensation] = useState('30000');
-  const [location, setLocation] = useState('Lagos Island, Lagos, Nigeria');
+  const [roleName, setRoleName] = useState('E.g Social media manager');
+  const [compensation, setCompensation] = useState('E.g 30000');
+  const [location, setLocation] = useState('E.g Lagos Island, Lagos, Nigeria');
   const [description, setDescription] = useState(
-    'We are looking for a creative and strategic Social Media Specialist to join our team. In this role, you will be responsible for developing and executing social media strategies that enhance our brand presence, engage our audience, and drive growth. You will manage social media channels, create compelling content, and analyze performance metrics to optimize campaigns.'
+    'E.g We are looking for a creative and strategic Social Media Specialist to join our team.'
   );
   const [jobType, setJobType] = useState('Full time');
-  const [employerName, setEmployerName] = useState('ABC Corp');
+  const [employerName, setEmployerName] = useState('E.g Michael Asere');
 
   const handleFocus = (setValue) => {
     setValue('');
@@ -77,7 +77,7 @@ function PostATask() {
             type="text"
             value={employerName}
             onChange={(e) => setEmployerName(e.target.value)} // Update state on change
-            placeholder="Enter Employer Name"
+            placeholder="E.g Michael Asere"
             onFocus={() => handleFocus(setEmployerName)} // Empty the field on focus
           />
         </div>
@@ -90,7 +90,7 @@ function PostATask() {
             type="text"
             value={roleName}
             onChange={(e) => setRoleName(e.target.value)} // Update state on change
-            placeholder="Enter Role Name"
+            placeholder="Graphic designer"
             onFocus={() => handleFocus(setRoleName)} // Empty the field on focus
           />
         </div>
@@ -103,7 +103,7 @@ function PostATask() {
             type="text"
             value={jobType}
             onChange={(e) => setJobType(e.target.value)} // Update state on change
-            placeholder="Enter Job Type"
+            placeholder="E.g Remote"
             onFocus={() => handleFocus(setJobType)} // Empty the field on focus
           />
         </div>
@@ -116,7 +116,7 @@ function PostATask() {
             type="number"
             value={compensation}
             onChange={(e) => setCompensation(e.target.value)} // Update state on change
-            placeholder="Enter compensation in Naira"
+            placeholder="E.g 200,000"
             onFocus={() => handleFocus(setCompensation)} // Empty the field on focus
           />
         </div>
@@ -129,7 +129,7 @@ function PostATask() {
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)} // Update state on change
-            placeholder="Enter Location"
+            placeholder="E.g Lekki"
             onFocus={() => handleFocus(setLocation)} // Empty the field on focus
           />
         </div>

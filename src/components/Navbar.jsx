@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import styles from "./Navbar.module.css"; 
-import Logo from "./Logo.png";
-import User from "./User.png";
+import Logo from "./logo.png";
+import icon from "./icon.png";
 
 function NavBar() {
   const [user, setUser] = useState(null);
@@ -59,7 +59,7 @@ function NavBar() {
             {user && (
               <div className={styles.profileWrapper}>
                 <Link to="/profile">
-                  <img className={styles.vectorIcon} alt="User" src={User} />
+                  <img className={styles.vectorIcon} alt="icon" src={icon} />
                 </Link>
                 <button className={styles.logoutButton} onClick={() => signOut(auth)}>Logout</button>
               </div>

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { db, collection, getDocs } from '../pages/firebase'; // adjust the path to where your firebase.js is located
+import { db, collection, getDocs } from '../firebase';
 import styles from './Recenttasks.module.css';
+import { Link } from "react-router-dom";
 
 function RecentTasks() {
   const [jobs, setJobs] = useState([]);
 
   useEffect(() => {
-    // Fetch jobs from Firestore
     const fetchJobs = async () => {
       try {
         const jobsCollection = collection(db, 'Jobs');
@@ -26,9 +26,15 @@ function RecentTasks() {
         <div className={styles.recentTasks1}>Recent Tasks</div>
       </div>
       <div className={styles.recentTasks2}>Recent Tasks – What’s New!</div>
-      <div className={styles.jobDisplay}>
-        {jobs.map((job) => (
-          <div key={job.id} className={styles.jobCard}>
+<div className={styles.displaywrapper}>
+
+{jobs.map((job) => (
+        <Link 
+          key={job.id}
+          to={`/applyfortask/${job.id}`} // Pass job ID in the URL
+          className={styles.jobDisplay}
+        >
+          <div className={styles.jobCard}>
             <div className={styles.jobCardChild} />
             <div className={styles.compensationmonth}>Compensation/month</div>
             <div className={styles.frameParent}>
@@ -45,8 +51,12 @@ function RecentTasks() {
               <div className={styles.uxDesigner}>{job.employerName}</div>
             </div>
           </div>
-        ))}
-      </div>
+        </Link>
+      ))}
+
+
+</div>
+     
     </div>
   );
 }

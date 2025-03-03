@@ -1,0 +1,283 @@
+.overlay {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    background-color: rgba(8, 8, 8, 0.79);
+    width: 1440px;
+    height: 1136px;
+    width: 100vw; /* Cover full width of the viewport */
+    height: 100vh; /* Cover full height of the viewport */
+}
+.bg {
+    position: absolute;
+    justify-items: center;
+    top: 0px;
+    left: 0px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    background-color: #fff;
+    width: 1335px;
+    height: 964.3px;
+}
+.cancel {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
+.nextStep {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.button {
+    width: 224px;
+    border-radius: 8px;
+    background-color: #000;
+    border: 1px solid #444;
+    box-sizing: border-box;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    text-align: left;
+    font-size: 16px;
+    color: #fff;
+}
+.cancelParent {
+    position: absolute;
+    top: 44.73px;
+    left: 865.42px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 40px;
+    text-align: center;
+}
+.rightContent {
+    position: absolute;
+    top: 51.58px;
+    left: 0px;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    width: 788.8px;
+    min-height: 600px; /* Minimum height */
+    max-height: 900px; /* Maximum height */
+    overflow-y: auto; /* Enable scrolling if content exceeds max height */
+    display: flex;
+    flex-direction: column; /* Ensures auto layout */
+}
+.aboutTask {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    font-size: 20px;
+    letter-spacing: -0.02em;
+}
+.uxDesigner {
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+.uxDesignerWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+.onsiteWrapper {
+    border-radius: 8px;
+    background-color: #f3f3f3;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 19px;
+    font-size: 16px;
+    color: #212121;
+}
+.frameParent {
+    position: absolute;
+    top: 0px;
+    left: 0.38px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    font-size: 24px;
+}
+.badiruStrLagos {
+    position: absolute;
+    top: 75.28px;
+    left: 0px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    color: #727272;
+}
+.compensationmonth {
+    position: absolute;
+    top: 0px;
+    left: 0.39px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    font-weight: 500;
+}
+.ngn10000 {
+    position: absolute;
+    top: 18.87px;
+    left: 0px;
+    font-size: 24.67px;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    color: #04a466;
+}
+.compensationmonthParent {
+    position: absolute;
+    top: 0.13px;
+    left: 558.61px;
+    width: 155.4px;
+    height: 50.9px;
+    color: #acacac;
+}
+.headercontentwrapperInner {
+    position: absolute;
+    top: 48.75px;
+    left: 0.38px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 18px;
+    color: #0e0e0e;
+    font-family: 'DM Sans';
+}
+.headercontentwrapper {
+    position: absolute;
+    top: 85.62px;
+    left: 40.69px;
+    width: 714px;
+    height: 102.3px;
+    color: #04a466;
+}
+.aboutTheJob {
+    margin: 0;
+}
+.aboutTheJobContainer {
+    position: absolute;
+    top: 228.75px;
+    left: 45.01px;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+    color: #0e0e0e;
+    display: inline-block;
+    width: 714.5px;
+}
+.rightBar {
+    position: absolute;
+    top: 118.73px;
+    left: 411.08px;
+    width: 788.8px;
+    height: 822.5px;
+    font-size: 16px;
+}
+.leftBarChild {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 15px;
+    background-color: #f3f3f3;
+    width: 244.7px;
+    height: 868.7px;
+}
+.vectorIcon {
+    width: 20px;
+    position: relative;
+    height: 20px;
+}
+.about {
+    position: absolute;
+    top: 32.27px;
+    left: 33.35px;
+    border-radius: 10px;
+    width: 178px;
+    height: 50.6px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 20px;
+    box-sizing: border-box;
+    gap: 10px;
+}
+.leftBarItem {
+    position: absolute;
+    top: 67.51px;
+    left: 64.45px;
+    max-width: 100%;
+    overflow: hidden;
+    height: 39.5px;
+}
+.applicationChild {
+    width: 22.2px;
+    position: relative;
+    border-radius: 50%;
+    border: 1px solid #000;
+    box-sizing: border-box;
+    height: 22.2px;
+}
+.application {
+    position: absolute;
+    top: 93.95px;
+    left: 33.35px;
+    border-radius: 10px;
+    width: 178px;
+    height: 50.6px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 20px;
+    box-sizing: border-box;
+    gap: 10px;
+    color: #000;
+}
+.leftBar {
+    position: absolute;
+    top: 43.42px;
+    left: 22.54px;
+    width: 244.7px;
+    height: 868.7px;
+    font-size: 18px;
+    color: #04a466;
+}
+.applyForTask1 {
+    position: absolute;
+    top: 86px;
+    /* left: 49.58px; */
+    width: 1335px;
+    height: 964.3px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
+.applyForTask {
+    width: 100%;
+    position: relative;
+    background-color: #fff;
+    height: 1136px;
+    overflow: hidden;
+    cursor: pointer;
+    text-align: left;
+    font-size: 20px;
+    color: #000;
+    font-family: 'BR Hendrix';
+    margin-top: 60px;
+}

@@ -1,0 +1,15 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-tasklinkerswebapp-dev-be2c6-authRole",
+      "UnauthRoleArn": "arn:aws:iam::438465125356:role/amplify-tasklinkerswebapp-dev-be2c6-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::438465125356:role/amplify-tasklinkerswebapp-dev-be2c6-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-tasklinkerswebapp-dev-be2c6-deployment",
+      "UnauthRoleName": "amplify-tasklinkerswebapp-dev-be2c6-unauthRole",
+      "StackName": "amplify-tasklinkerswebapp-dev-be2c6",
+      "StackId": "arn:aws:cloudformation:us-east-1:438465125356:stack/amplify-tasklinkerswebapp-dev-be2c6/1dbe1140-f26c-11ef-a1c8-0affe236f919",
+      "AmplifyAppId": "defkndpyj7l6r"
+    }
+  }
+}

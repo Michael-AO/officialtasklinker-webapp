@@ -1,0 +1,9 @@
+{
+  "function": {
+    "tasklinkerswebappc0b946af": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  }
+}

@@ -40,9 +40,14 @@ function UserNavbar() {
               </Link>
                   				
                 								</div>
-                								<div className={styles.profile}>
-                  									<img className={styles.profileChild} alt="" src={profile} />
-                								</div>
+
+												<Link 
+                to="/dashboard" 
+                className={`${styles.profile} ${location.pathname === "/" ? styles.active : ""}`}
+              >
+              <img className={styles.profileChild} alt="" src={profile} />
+              </Link>
+
                 								<div className={styles.posttask}>
 
 												<Link 

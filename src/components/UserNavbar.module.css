@@ -25,6 +25,11 @@
     box-sizing: border-box;
     gap: 6px;
 }
+/* Active state when typing */
+.seacrhb:focus-within {
+    border: 1px solid #04A466; /* Green stroke */
+}
+
 .home {
     position: relative;
     letter-spacing: -0.02em;

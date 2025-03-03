@@ -9,7 +9,8 @@ body {
 .page-container {
     max-width: 1440px;
     margin: 0 auto; /* Center the container horizontally */
-    padding: 0 50px; /* Padding of 50px on both sides */
+    padding: 0px 50px; /* Padding of 50px on both sides */
+    padding-bottom: 50px;
     box-sizing: border-box;
     align-items: center;
   }

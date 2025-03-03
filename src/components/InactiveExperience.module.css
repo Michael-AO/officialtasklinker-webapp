@@ -1,0 +1,274 @@
+.uploadResume {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.upload24dp5f6368Fill0Wght4Icon {
+    width: 29px;
+    position: relative;
+    height: 29px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.uploadNewFile {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.upload24dp5f6368Fill0Wght4Parent {
+    position: absolute;
+    top: 30.7px;
+    left: 0px;
+    border-radius: 8px;
+    border: 1px solid #04a466;
+    box-sizing: border-box;
+    width: 375px;
+    height: 47px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    gap: 10px;
+    font-size: 16px;
+}
+.uploadResumeParent {
+    width: 375px;
+    position: relative;
+    height: 77.7px;
+    color: #0e0e0e;
+}
+.primaryRole {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.socialMediaManagerWrapper {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px;
+    font-size: 16px;
+    color: #0e0e0e;
+}
+.primaryRoleParent {
+    width: 370px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.vectorIcon {
+    width: 9.6px;
+    position: relative;
+    height: 4.8px;
+}
+.parent {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    font-size: 16px;
+    color: #0e0e0e;
+}
+.frameParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+.frameChild {
+    width: 287px;
+    position: relative;
+    max-height: 100%;
+}
+.previousExperienceWrapper {
+    background-color: #fff;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+.vectorParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.addExperience {
+    position: absolute;
+    top: 0px;
+    left: 18.91px;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.addExperienceParent {
+    width: 141.9px;
+    position: relative;
+    height: 20px;
+    color: #04a466;
+}
+.frameGroup {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 9px;
+}
+.headerwrp {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 31px;
+}
+.aug2021 {
+    position: absolute;
+    top: 23.35px;
+    left: 27.17px;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.lagosNigeria {
+    position: absolute;
+    top: 51.91px;
+    left: 27.17px;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.lagoonAgency {
+    position: absolute;
+    top: 22.35px;
+    left: 207.69px;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    color: #0e0e0e;
+}
+.graphicDesigner {
+    position: absolute;
+    top: 51.91px;
+    left: 207.69px;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+    color: #04a466;
+}
+.yourPersonalisedTask {
+    position: absolute;
+    top: 89.79px;
+    left: 207.69px;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+    display: inline-block;
+    color: #5c574e;
+    width: 521.6px;
+}
+.eachexperience {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    width: 781px;
+    height: 216px;
+}
+.eachexperience1 {
+    position: absolute;
+    top: 234px;
+    left: 0px;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    width: 781px;
+    height: 216px;
+}
+.eachexperience2 {
+    position: absolute;
+    top: 471px;
+    left: 0px;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    width: 781px;
+    height: 216px;
+}
+.experiencewrp {
+    width: 781px;
+    position: relative;
+    height: 687px;
+    font-size: 16px;
+}
+.contentwrp {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 34px;
+}
+.editchangedone {
+    width: 224px;
+    border-radius: 8px;
+    background-color: #080808;
+    border: 1px solid #0e0e0e;
+    box-sizing: border-box;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    font-size: 16px;
+    color: #fff;
+}
+.resumereuse {
+    position: absolute;
+    top: 67.96px;
+    left: 142.76px;
+    width: 782px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 26px;
+}
+.frameInner {
+    position: absolute;
+    top: 1140.29px;
+    left: 145.26px;
+    background-color: #fff;
+    width: 776px;
+    height: 76px;
+}
+.resumereuseParent {
+    width: 100%;
+    position: relative;
+    border-radius: 15px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 1178px;
+    overflow: hidden;
+    text-align: left;
+    font-size: 18px;
+    color: #080808;
+    font-family: 'BR Hendrix';
+}
+

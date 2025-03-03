@@ -3,7 +3,7 @@ import React from 'react';
 import googleIcon from './googleiocn.png'; // Consolidated the imports
 import vector3 from './vector 3.png'; // Also cleaned up unnecessary imports
 import { useNavigate } from 'react-router-dom';
-import { auth, googleAuthProvider } from './firebase.js'; 
+import { auth, googleAuthProvider } from '../firebase.js'; 
 import { Link } from "react-router-dom";
 
 function RegisterPage() {

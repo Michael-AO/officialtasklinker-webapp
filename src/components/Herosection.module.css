@@ -9,10 +9,11 @@
 }
 .findThePerfect {
     position: absolute;
+     text-align: center; /* Centers the text */
+  width: 100%; /* Ensures full-width alignment */
     top: 108.58px;
     left: 250.34px;
     line-height: 67px;
-    text-align: left;
     display: inline-block;
     width: 839.3px;
 }
@@ -90,3 +91,26 @@
     font-family: Roboto;
 }
 
+@keyframes typing {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
+  }
+  
+  @keyframes blink {
+    50% {
+      border-color: transparent;
+    }
+  }
+  
+  .typewriter {
+        display: inline; /* Ensures text stays inline */
+        overflow: hidden;
+        white-space: nowrap;
+        border-right: 2px solid white; /* Cursor effect */
+        vertical-align: baseline; /* Aligns with the surrounding text */
+        animation: typing 2s steps(15, end) forwards, blink 0.8s step-end infinite;
+      }

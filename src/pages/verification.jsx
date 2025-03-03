@@ -3,7 +3,7 @@ import styles from "./verification.module.css";
 import verivector from "./verivector.png";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
-import { db } from "./firebase.js"; // Ensure db is imported
+import { db } from "../firebase.js"; // Ensure db is imported
 
 function Verification() {
   const length = 6; // Number of OTP input fields

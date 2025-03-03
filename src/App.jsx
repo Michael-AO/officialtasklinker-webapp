@@ -16,13 +16,24 @@ import UserNavbar from "./components/UserNavbar.jsx";
 import ExploreCategories from "./components/ExploreCategories.jsx";
 import Exploreheader from "./components/ExploreHeader.jsx";
 import Howitworks from "./components/HowItWorks.jsx";
-import PostATask from "./pages/Postatask.jsx";
+import PostATask from "./pages/Postatask.jsx"
+import ApplyForTask from "./pages/Applyfortask.jsx"
+import DashboardUI from "./components/DashboardUI.jsx";
+// import ProfileUI from "./components/ProfileUI.jsx"
+import DashboardLayout from "./components/DashboardLayout.jsx";
+import Sidebar from "./components/sidebar.jsx"
+
+
+
+
 
 function App() {
   return (
     <Router>
       <div className="page-container">
-        <Routes>
+
+
+      <Routes>
           {/* Home Route */}
           <Route
             path="/"
@@ -111,6 +122,32 @@ function App() {
               <>
                 <UserNavbar />
                <PostATask />
+              </>
+            }
+          />
+
+
+           {/* Apply for Task */}
+<Route
+            path="/applyfortask/:jobId"
+            element={
+              <>
+                <UserNavbar />
+               <ApplyForTask />
+              </>
+            }
+          />
+
+
+
+
+           {/* Dashboard */}
+           <Route
+            path="/dashboard/*"
+            element={
+              <>
+                <UserNavbar />
+               <DashboardLayout />
               </>
             }
           />
