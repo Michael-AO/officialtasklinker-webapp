@@ -1,6 +1,5 @@
-import styles from './Howitworks.module.css';
 import React from 'react';
-import video from './video-embed.png';
+import styles from './HowItWorks.module.css';
 import videm from './Vidembed.mp4';
 
 
