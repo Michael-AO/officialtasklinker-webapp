@@ -2,7 +2,7 @@ import NavBar from '../components/Navbar';
 import styles from './Register.module.css';
 import React from 'react';
 import { Link } from "react-router-dom";
-
+import Vector from './verivector.png'
 
 function Register() {
   	return (
@@ -35,7 +35,7 @@ function Register() {
                 {/* <NavBar /> */}
       			<div className={styles.cardWrapper}>
         				<div className={styles.cardSelection}>
-          					<img className={styles.vectorIcon} alt="" src="Vector.svg" />
+          					<img className={styles.vectorIcon} alt="" src={Vector} />
           					<div className={styles.cardContent}>
             						<div className={styles.personalAccount}>{`Personal Account `}</div>
             						<div className={styles.idealForIndividuals}>Ideal for individuals looking to manage personal tasks, track their own projects, or explore the platform for individual needs.</div>
@@ -44,7 +44,7 @@ function Register() {
       			</div>
       			<div className={styles.cardWrapperInactive}>
         				<div className={styles.cardSelection}>
-          					<img className={styles.vectorIcon} alt="" src="Vector.svg" />
+          					<img className={styles.vectorIcon} alt="" src={Vector} />
           					<div className={styles.cardContent}>
             						<div className={styles.personalAccount}>Company</div>
             						<div className={styles.idealForIndividuals}>Ideal for individuals looking to manage personal tasks, track their own projects, or explore the platform for individual needs.</div>
