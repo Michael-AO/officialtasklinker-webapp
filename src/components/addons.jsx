@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './AddOns.module.css';
+import styles from './addons.module.css';
 import exploreImage from "./explore-gigs.svg";
 import exploreGigsIcon from "./explore.png";
 import applyForTasksIcon from "./apply.png";
