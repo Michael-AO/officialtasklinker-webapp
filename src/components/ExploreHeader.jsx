@@ -1,4 +1,4 @@
-import styles from './Exploreheader.module.css';
+import styles from './ExploreHeader.module.css';
 import React from 'react';
 
 
