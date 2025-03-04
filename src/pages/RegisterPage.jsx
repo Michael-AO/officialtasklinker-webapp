@@ -1,7 +1,7 @@
 import styles from './RegisterPage.module.css';
 import React from 'react';
 import googleIcon from './googleiocn.png'; // Consolidated the imports
-import vector3 from './Vector3.png'; // Also cleaned up unnecessary imports
+import vector from './imaget.png'; // Also cleaned up unnecessary imports
 import { useNavigate } from 'react-router-dom';
 import { auth, googleAuthProvider } from '../firebase.js'; 
 import { Link } from "react-router-dom";
@@ -116,9 +116,9 @@ function RegisterPage() {
 			  <Link to="/verification" className={styles.tlbutton}>Create Account</Link>
               </div>
               <div className={styles.or}>
-                <img className={styles.orChild} alt="" src={vector3} />
+                <img className={styles.orChild} alt="" src={vector} />
                 <div className={styles.michaeltasksgmailcom}>or</div>
-                <img className={styles.orChild} alt="" src={vector3} />
+                <img className={styles.orChild} alt="" src={vector} />
               </div>
               <button
                 className={styles.google}
