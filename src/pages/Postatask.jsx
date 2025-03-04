@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import styles from './PostATask.module.css';
+import styles from './Postatask.module.css';
 import React from 'react';
 import pvector from './postatastvectorelg.png';
 import line from './dividerpat.png';
