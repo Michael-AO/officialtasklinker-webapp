@@ -1,67 +1,22 @@
-.background {
+.evaarrowBackFillIcon {
   position: absolute;
   top: 0px;
   left: 0px;
-  background-color: #fff;
-  width: 1440px;
-  height: 882px;
-}
-.background1 {
-  position: absolute;
-  top: 86px;
-  left: calc(50% - 667.71px);
-  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 20px 20px 0px 0px;
-  background-color: #fff;
-  width: 1335.4px;
-  height: 645.9px;
-}
-.quietyTakeNotesIn {
-  margin: 0;
-}
-.quietyTakeNotesInContainer {
-  position: absolute;
-  top: 2652.36px;
-  left: 324.03px;
-  font-size: 16.93px;
-  letter-spacing: -0.02em;
-  line-height: 20px;
-  text-align: left;
-}
-.privacyPolicy {
-  position: relative;
-  letter-spacing: -0.02em;
-  line-height: 22px;
-}
-.termsAndConditions {
-  position: absolute;
-  top: 758.93px;
-  left: calc(50% - 155.8px);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 45px;
-  color: #484848;
-}
-.vectorIcon {
-  position: absolute;
-  top: 5px;
-  left: 0px;
-  width: 16px;
-  height: 14px;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
 }
 .back {
   position: absolute;
   top: 0px;
-  left: 28.82px;
+  left: 32.82px;
   letter-spacing: -0.02em;
   line-height: 22px;
 }
-.goBack {
-  width: 71.8px;
+.evaarrowBackFillParent {
+  width: 75.8px;
   position: relative;
-  height: 22px;
+  height: 24px;
   font-size: 20px;
   color: #000;
   font-family: 'DM Sans';
@@ -121,10 +76,11 @@
   color: #24221e;
   font-family: Roboto;
 }
-.pagheader {
+.frameGroup {
   width: 529.5px;
   position: relative;
   height: 100px;
+  color: #080808;
   font-family: 'DM Sans';
 }
 .weveSentA {
@@ -133,10 +89,9 @@
   letter-spacing: -0.02em;
   line-height: 22px;
   display: inline-block;
-  color: #727272;
   text-align: left;
 }
-.otpinputChild {
+.rectangleDiv {
   width: 52.2px;
   position: relative;
   border-radius: 11px;
@@ -144,7 +99,7 @@
   box-sizing: border-box;
   height: 52.2px;
 }
-.otpinput {
+.rectangleGroup {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -159,13 +114,18 @@
   display: inline-block;
   flex-shrink: 0;
 }
-.otpinputParent {
+.frameDiv {
+  align-self: stretch;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
   gap: 17px;
-  color: #727272;
+}
+.sendViaSms {
+  position: relative;
+  letter-spacing: -0.02em;
+  line-height: 22px;
 }
 .resendCode {
   width: 137px;
@@ -182,18 +142,16 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  gap: 0px;
+  color: #080808;
 }
-.wrapper {
-  position: absolute;
-  top: 185.92px;
-  left: 262.86px;
-  width: 535.9px;
+.frameContainer {
+  width: 501.9px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 23px;
-  color: #080808;
+  gap: 19px;
 }
 .confirmFinish {
   position: relative;
@@ -201,10 +159,10 @@
   line-height: 20px;
   font-weight: 600;
 }
-.confirmverification {
+.confirmFinishWrapper {
   position: absolute;
-  top: 582.34px;
-  left: 911px;
+  top: 0px;
+  left: 0px;
   border-radius: 20px;
   background-color: #24221e;
   border: 1px solid #000;
@@ -216,17 +174,38 @@
   align-items: center;
   justify-content: center;
   padding: 11px 19px;
+}
+.frameWrapper {
+  width: 258px;
+  position: relative;
+  height: 60px;
   color: #fff;
 }
-.verification {
+.groupParent {
+  width: 535.9px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 34px;
+}
+.frameParent {
   width: 100%;
   position: relative;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 20px 20px 0px 0px;
   background-color: #fff;
-  height: 882px;
-  overflow: hidden;
+  height: 645.9px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 89px 211px;
+  box-sizing: border-box;
   text-align: center;
   font-size: 16px;
-  color: #787878;
+  margin-top: 140px;
+  color: #727272;
   font-family: 'BR Hendrix';
 }
 
