@@ -1,0 +1,102 @@
+:root {
+    --drop-t: 0px 4px 10px 0px rgba(0, 0, 0, 0.1), 0px 1px 3px 0px
+        rgba(0, 0, 0, 0.25);
+    --gh: 0px 4px 102px 0px rgba(0, 0, 0, 0.25);
+    --mix: 0px 4px 10px 0px rgba(0, 0, 0, 0.1), 0px 1px 3px 0px
+        rgba(0, 0, 0, 0.25);
+    --section-heading-font-family: "Roboto", Helvetica;
+    --section-heading-font-size: 43px;
+    --section-heading-font-style: normal;
+    --section-heading-font-weight: 500;
+    --section-heading-letter-spacing: -1.075px;
+    --section-heading-line-height: 60px;
+    --t-black: rgba(8, 8, 8, 1);
+    --t-green: rgba(4, 164, 102, 1);
+    --variable-collection-color-blue: rgba(12, 88, 183, 1);
+    --variable-collection-color-grey-43: rgba(110, 110, 110, 1);
+    --variable-collection-color-grey-46: rgba(118, 118, 118, 1);
+    --variable-collection-color-grey-91: rgba(233, 233, 233, 1);
+    --variable-collection-color-grey-95: rgba(241, 241, 241, 1);
+    --variable-collection-color-grey-97: rgba(247, 247, 247, 1);
+    --variable-collection-color-input-text: rgba(126, 126, 126, 1);
+    --variable-collection-color-orange: rgba(227, 134, 41, 1);
+    --variable-collection-colorlighter-grey-text: rgba(173, 173, 173, 1);
+    --variable-collection-grey-text: rgba(114, 114, 114, 1);
+    --variable-collection-header-black: rgba(14, 14, 14, 1);
+    --variable-collection-input-stroke-and-description: rgba(219, 219, 219, 1);
+    --variable-collection-light-background-grey: rgba(243, 243, 243, 1);
+    --variable-collection-text-on-light-stroke: rgba(166, 166, 166, 1);
+    --variable-collection-white-on-green-grey-version: rgba(235, 235, 235, 1);
+}
+
+.register {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    margin-left: 100px;
+    gap: 10px;
+    height: 975px;
+    justify-content: center;
+    padding: 10px;
+    position: relative;
+    width: 775px;
+}
+
+.frame {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 78px;
+    justify-content: center;
+    position: relative;
+    width: 518px;
+}
+
+.img {
+    align-self: stretch;
+    flex: 0 0 auto;
+    position: relative;
+    width: 100%;
+}
+
+.buttonWrapper {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    width: 450px;
+}
+
+.button {
+    all: unset;
+    align-items: center;
+    align-self: stretch;
+    background-color: #24221e;
+    border: 1px solid;
+    border-color: #000000;
+    border-radius: 20px;
+    box-sizing: border-box;
+    display: flex;
+    gap: 10px;
+    height: 78px;
+    justify-content: center;
+    padding: 12px 35px;
+    position: relative;
+    width: 100%;
+}
+
+.textWrapper {
+    color: #ffffff;
+    font-family: "BR Hendrix-SemiBold", Helvetica;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: -0.60px;
+    line-height: 20px;
+    position: relative;
+    text-align: center;
+    white-space: nowrap;
+    width: fit-content;
+}

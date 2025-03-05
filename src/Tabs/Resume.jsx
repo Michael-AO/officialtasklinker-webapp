@@ -1,77 +1,90 @@
 import React, { useState } from "react";
 import styles from "./Resume.module.css";
-import InactiveExperience from "../components/InactiveExperience";
-import EditResume from "../components/EditResume";
-
+import upload from "./upload.png";
 
 function ReuseableResume() {
-  	return (
-    		<div className={styles.reuseableResume}>
-      			<div className={styles.resumereuse}>
-        				<div className={styles.contentwrp}>
-          					<div className={styles.headerwrp}>
-            						<div className={styles.uploadResumeParent}>
-              							<div className={styles.uploadResume}>{`Upload Resume `}</div>
-              							<div className={styles.upload24dp5f6368Fill0Wght4Parent}>
-                								<img className={styles.upload24dp5f6368Fill0Wght4Icon} alt="" src="upload_24dp_5F6368_FILL0_wght400_GRAD0_opsz24 1.svg" />
-                								<div className={styles.uploadNewFile}>Upload New File</div>
-              							</div>
-            						</div>
-            						<div className={styles.frameParent}>
-              							<div className={styles.primaryRoleParent}>
-                								<div className={styles.primaryRole}>Primary Role</div>
-                								<div className={styles.socialMediaManagerWrapper}>
-                  									<div className={styles.uploadNewFile}>Social media manager</div>
-                								</div>
-              							</div>
-              							<div className={styles.primaryRoleParent}>
-                								<div className={styles.primaryRole}>Years of Experience</div>
-                								<div className={styles.parent}>
-                  									<div className={styles.uploadNewFile}>3</div>
-                  									<img className={styles.vectorIcon} alt="" src="Vector.svg" />
-                								</div>
-              							</div>
-            						</div>
-            						<div className={styles.frameGroup}>
-              							<div className={styles.vectorParent}>
-                								<img className={styles.frameChild} alt="" src="Vector 7.svg" />
-                								<div className={styles.previousExperienceWrapper}>
-                  									<div className={styles.uploadNewFile}>Previous Experience</div>
-                								</div>
-                								<img className={styles.frameChild} alt="" src="Vector 8.svg" />
-              							</div>
-              					
-            						</div>
-          					</div>
-          					<div className={styles.experiencewrp}>
-            						<div className={styles.eachexperience}>
-              							<div className={styles.aug2021}>Aug 2021 - Aug 2022</div>
-              							<div className={styles.lagosNigeria}>Lagos, Nigeria</div>
-              							<div className={styles.lagoonAgency}>Lagoon Agency</div>
-              							<div className={styles.graphicDesigner}>Graphic Designer</div>
-              							<i className={styles.yourPersonalisedTask}>Your personalised task linking assistant that handles your job needs and connections.Your personalised task linking assistant that handles your job needs and connectionsYour personalised task linking assistant that handles your job needs and connections</i>
-            						</div>
-            						<div className={styles.eachexperience1}>
-              							<div className={styles.aug2021}>Aug 2021 - Aug 2022</div>
-              							<div className={styles.lagosNigeria}>Lagos, Nigeria</div>
-              							<div className={styles.lagoonAgency}>Lagoon Agency</div>
-              							<div className={styles.graphicDesigner}>Graphic Designer</div>
-              							<i className={styles.yourPersonalisedTask}>Your personalised task linking assistant that handles your job needs and connections.Your personalised task linking assistant that handles your job needs and connectionsYour personalised task linking assistant that handles your job needs and connections</i>
-            						</div>
-            						<div className={styles.eachexperience2}>
-              							<div className={styles.aug2021}>Aug 2021 - Aug 2022</div>
-              							<div className={styles.lagosNigeria}>Lagos, Nigeria</div>
-              							<div className={styles.lagoonAgency}>Lagoon Agency</div>
-              							<div className={styles.graphicDesigner}>Graphic Designer</div>
-              							<i className={styles.yourPersonalisedTask}>Your personalised task linking assistant that handles your job needs and connections.Your personalised task linking assistant that handles your job needs and connectionsYour personalised task linking assistant that handles your job needs and connections</i>
-            						</div>
-          					</div>
-        				</div>
-        				<div className={styles.editchangedone}>
-          					<div className={styles.uploadNewFile}>Edit Changes</div>
-        				</div>
-      			</div>
-    		</div>);
-};
+  const [isEditing, setIsEditing] = useState(false);
+  const [role, setRole] = useState("");
+  const [experience, setExperience] = useState("");
+  const [fileError, setFileError] = useState("");
+
+  const handleEditClick = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const fileSizeMB = file.size / (1024 * 1024); // Convert bytes to MB
+      if (file.type !== "application/pdf") {
+        setFileError("Only PDF files are allowed.");
+        return;
+      }
+      if (fileSizeMB > 10) {
+        setFileError("File must be 10MB or less.");
+        return;
+      }
+      setFileError(""); // Clear error if valid
+      alert("File uploaded successfully!");
+    }
+  };
+
+  return (
+    <div className={styles.reuseableResume}>
+      <div className={styles.resumereuse}>
+        <div className={styles.contentwrp}>
+          <div className={styles.headerwrp}>
+            <div className={styles.uploadResumeParent}>
+              <div className={styles.uploadResume}>{`Upload Resume `}</div>
+              <label className={styles.upload24dp5f6368Fill0Wght4Parent}>
+                <img className={styles.upload24dp5f6368Fill0Wght4Icon} alt="" src={upload} />
+                <div className={styles.uploadNewFile}>Upload New File</div>
+                <input type="file" accept=".pdf" onChange={handleFileUpload} hidden />
+              </label>
+              {fileError && <p className={styles.errorMessage}>{fileError}</p>}
+            </div>
+
+            <div className={styles.frameParent}>
+              <div className={styles.primaryRoleParent}>
+                <div className={styles.primaryRole}>Primary Role</div>
+                <div className={styles.socialMediaManagerWrapper}>
+                  <input
+                    className={styles.socialMediaManagerWrapper}
+                    type="text"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    disabled={!isEditing}
+					placeholder="Non-Specific"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.primaryRoleParent}>
+                <div className={styles.primaryRole}>Years of Experience</div>
+                <div className={styles.parent}>
+                  <input
+                    className={styles.socialMediaManagerWrapper}
+                    type="number"
+                    value={experience}
+                    onChange={(e) => setExperience(e.target.value)}
+                    disabled={!isEditing}
+					placeholder="Non-Specific"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.editchangedone} onClick={handleEditClick}>
+            <div className={styles.uploadNewFile}>
+              {isEditing ? "Save Changes" : "Edit Changes"}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default ReuseableResume;

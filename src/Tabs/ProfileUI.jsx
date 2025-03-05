@@ -1,15 +1,21 @@
-import React from "react";
-import styles from './ProfileUI.module.css'
-import profile from './profilepic.png'; 
+import React, { useEffect, useState } from "react";
+import styles from "./ProfileUI.module.css";
+import { auth } from "../firebase"; // Ensure Firebase is properly configured
+import Authentication from "../components/authentication";
+import DefaultProfile from "../components/defaultProfile";
 
 function ProfileUI() {
-    return (
-		<>
-		<h1>Prorfile</h1>
-        </>
-        
-    );
-};
+  const [user, setUser] = useState(null);
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser); // Update user state on authentication change
+    });
+
+    return () => unsubscribe(); // Cleanup on unmount
+  }, []);
+
+  return user ? <DefaultProfile /> : <Authentication />; // Render one or the other
+}
 
 export default ProfileUI;

@@ -9,7 +9,7 @@ import AddOns from "./components/addons.jsx";
 import Faqs from "./components/Faqs.jsx";
 import Footer from "./components/Footer.jsx";
 import Register from "./pages/Register.jsx";
-import RegisterPage from "./pages/RegisterPage.jsx";
+import RegisterPage from "./pages/RegisterP.jsx";
 import Verification from "./pages/verification.jsx";
 import Login from './pages/Login.jsx';
 import UserNavbar from "./components/UserNavbar.jsx";
@@ -22,6 +22,7 @@ import DashboardUI from "./components/DashboardUI.jsx";
 // import ProfileUI from "./components/ProfileUI.jsx"
 import DashboardLayout from "./components/DashboardLayout.jsx";
 import Sidebar from "./components/sidebar.jsx"
+import SelectAccount from "./pages/SelectAccount.jsx";
 
 
 
@@ -55,8 +56,8 @@ function App() {
             path="/register"
             element={
               <>
-                <Navbar />
-                <Register />
+                   <UserNavbar />
+                <SelectAccount />
               </>
             }
           />
@@ -66,7 +67,7 @@ function App() {
             path="/registerpage"
             element={
               <>
-                <Navbar />
+                  <UserNavbar />
                 <RegisterPage />
               </>
             }
@@ -78,7 +79,7 @@ function App() {
             path="/verification"
             element={
               <>
-                <Navbar />
+                  <UserNavbar />
                 <Verification />
               </>
             }
@@ -90,7 +91,7 @@ function App() {
             path="/Login"
             element={
               <>
-                <Navbar />
+                  <UserNavbar />
                 <Login />
               </>
             }

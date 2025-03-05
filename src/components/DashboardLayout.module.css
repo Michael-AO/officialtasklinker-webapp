@@ -1,13 +1,13 @@
 .sidebarComponentChild {
     width: 209px;
-    position: absolute;
+    position: fixed;
     margin: 0 !important;
     top: 0px;
     left: 0px;
     border-radius: 15px;
     background-color: #000;
     height: 1032px;
-    z-index: 0;
+    z-index: 100;
 }
 .profiledashIcon {
     width: 18px;
@@ -369,7 +369,7 @@
     color: #04a466;
     font-family: Roboto;
     padding-bottom: 100px;
-    overflow: hidden; /* Prevents whole page scroll */
+    overflow-y: auto; /* Prevents whole page scroll */
     flex: 1;
 }
 .lftopright {
@@ -388,3 +388,10 @@
     overflow: hidden; /* Prevents whole page from scrolling */
 }
 
+.mainContent {
+    margin-left: 209px; /* Matches sidebar width */
+    padding: 20px;
+    width: calc(100% - 209px); /* Ensures it takes remaining space */
+    height: 100vh;
+    overflow-y: auto; /* Enables vertical scrolling */
+}

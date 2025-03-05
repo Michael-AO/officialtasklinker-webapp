@@ -1,0 +1,197 @@
+.editChanges {
+    position: absolute;
+    top: 676px;
+    left: calc(50% + 163.93px);
+    border-radius: 8px;
+    background-color: #000;
+    border: 1px solid #444;
+    box-sizing: border-box;
+    width: 224px;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    font-size: 16px;
+    color: #fff;
+}
+.firstName {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.updateProfilePhoto {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.updateProfilePhotoWrapper {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px;
+    font-size: 16px;
+    border: 0;
+    stroke: 0;
+}
+.firstname {
+    position: absolute;
+    top: 146.98px;
+    left: 0.7px;
+    width: 370px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.uploadPhotoWrapper {
+    position: absolute;
+    top: 46.5px;
+    left: 129.32px;
+    border-radius: 8px;
+    border: 1px solid #04a466;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    font-size: 16px;
+    color: #444;
+}
+.emailaddress {
+    position: absolute;
+    top: 249.15px;
+    left: 0px;
+    width: 370px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.updateProfilePhotoFrame {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    height: 271px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 20px 10px;
+    box-sizing: border-box;
+    font-size: 16px;
+    border: 0;
+    stroke: 0;
+
+}
+.bio {
+    position: absolute;
+    top: 351.32px;
+    left: 0px;
+    width: 776.3px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.frameDiv {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px;
+    font-size: 16px;
+    color: #0e0e0e;
+}
+.password {
+    position: absolute;
+    top: 249.15px;
+    left: 406.7px;
+    width: 370px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+    color: #000;
+}
+.lastname {
+    position: absolute;
+    top: 146.98px;
+    left: 406.28px;
+    width: 370px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.profilepictureIcon {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 50%;
+    width: 112.5px;
+    height: 112.5px;
+    object-fit: cover;
+}
+.reusuableSection {
+    position: absolute;
+    top: 67.88px;
+    left: calc(50% - 387.72px);
+    width: 776.7px;
+    height: 722px;
+}
+.container {
+    width: 100%;
+    position: relative;
+    border-radius: 15px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 858px;
+    overflow: hidden;
+    text-align: left;
+    font-size: 18px;
+    color: #0e0e0e;
+    font-family: 'BR Hendrix';
+}
+
+.inputField {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.inputFieldWrapper {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.updateProfilePhoto {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+
+.Header {
+    display: flex;
+    flex-direction: row;
+}

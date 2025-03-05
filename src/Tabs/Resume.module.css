@@ -57,6 +57,8 @@
     padding: 10px;
     font-size: 16px;
     color: #0e0e0e;
+    border: none;
+    outline: none;
 }
 .primaryRoleParent {
     width: 370px;
@@ -255,4 +257,6 @@
     font-family: 'BR Hendrix';
     
 }
-
+.upload24dp5f6368Fill0Wght4Parent {
+    cursor: pointer;
+  }

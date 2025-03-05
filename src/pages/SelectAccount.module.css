@@ -1,0 +1,277 @@
+.step1Of {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 40.95px;
+    font-weight: 500;
+}
+.step1Of3Wrapper {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 10px;
+    background-color: #f3f3f3;
+    width: 153px;
+    height: 39px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.selectAccount {
+    position: relative;
+    letter-spacing: 0.01em;
+}
+.frameChild {
+    width: 23.4px;
+    position: relative;
+    border-radius: 4px;
+    background-color: #04a466;
+    height: 3px;
+}
+.frameItem {
+    width: 23.4px;
+    position: relative;
+    border-radius: 4px;
+    background-color: #adadad;
+    height: 3px;
+}
+.rectangleParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+}
+.selectAccountParent {
+    position: absolute;
+    top: 57.23px;
+    left: 0px;
+    width: 190.9px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
+    font-size: 24px;
+    font-family: Roboto;
+}
+.stepcount {
+    width: 190.9px;
+    position: relative;
+    height: 98.2px;
+}
+.groupChild {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    background-color: #fff;
+    border: 1px solid #04a466;
+    box-sizing: border-box;
+    width: 387.5px;
+    height: 222.8px;
+}
+.fluentradioButton24FilledIcon {
+    position: absolute;
+    top: 19.29px;
+    left: 351.59px;
+    width: 24px;
+    height: 24px;
+    overflow: hidden;
+}
+.personalAccount {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: 0.01em;
+    line-height: 22px;
+    font-weight: 500;
+}
+.idealForIndividuals {
+    align-self: stretch;
+    position: relative;
+    font-size: 16px;
+    letter-spacing: 0.01em;
+    line-height: 22px;
+    font-family: 'DM Sans';
+    color: #727272;
+}
+.personalAccountParent {
+    position: absolute;
+    top: 57.91px;
+    left: 38.76px;
+    width: 310px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 12px;
+}
+
+.groupItem {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    background-color: #fff;
+    width: 387.5px;
+    height: 222.8px;
+}
+.companyParent {
+    position: absolute;
+    top: 61.38px;
+    left: 38.76px;
+    width: 310px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 12px;
+}
+
+.accouttypesInner {
+    width: 387.5px;
+    position: relative;
+    height: 222.8px;
+    color: #0e0e0e;
+}
+.accouttypes {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 22px;
+    text-align: left;
+    font-size: 24px;
+    color: #04a466;
+    font-family: Roboto;
+}
+.stepcountParent {
+    width: 797px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 28px;
+}
+.back {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+}
+.backbtn {
+    width: 191px;
+    border-radius: 20px;
+    border: 1px solid #000;
+    box-sizing: border-box;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 19px;
+}
+.nextbtn {
+    width: 191px;
+    border-radius: 20px;
+    background-color: #24221e;
+    border: 1px solid #000;
+    box-sizing: border-box;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 19px;
+    color: #fff;
+}
+.buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 18px;
+    font-size: 20px;
+    color: #000;
+    font-family: 'BR Hendrix';
+}
+.selectaccount {
+    width: 100%;
+    position: relative;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px 20px 0px 0px;
+    background-color: #fff;
+    height: 559.7px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 64px 264px;
+    box-sizing: border-box;
+    gap: 28px;
+    text-align: center;
+    font-size: 16px;
+    color: #080808;
+    font-family: 'DM Sans';
+    margin-top: 180px;
+}
+
+
+.radiobtn {
+width: 100%;
+margin-left: 150px;
+margin-top: 20px;
+position: relative;
+max-width: 100%;
+overflow: hidden;
+height: 24px;
+color: #04A466;
+}
+
+
+.rectangleGroup {
+    width: 387.5px;
+    position: relative;
+    height: 222.8px;
+    cursor: pointer;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    background-color: #fff;
+    box-sizing: border-box;
+    transition: border 0.3s ease-in-out;
+}
+
+/* Active (selected) state */
+.rectangleGroup.active {
+    border: 2px solid #04a466; /* Blue border when selected */
+}
+
+/* Disabled state for the Company card */
+.rectangleContainer {
+    width: 387.5px;
+    position: relative;
+    height: 222.8px;
+    cursor: not-allowed;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    opacity: 0.6;
+}
+
+input[type="radio"]:checked {
+    accent-color: #04a466;
+}
+
+.backbtn, .nextbtn {
+    cursor: pointer;
+}
+
+.backbtn:hover, .nextbtn:hover {
+    cursor: pointer;
+}

@@ -20,7 +20,8 @@ function DashboardLayout() {
   	return (
     		<div className={styles.lftopright}>
       			<Sidebar />
-      			<div className={styles.rightupdown}>
+				<div className={styles.mainContent}> 
+				<div className={styles.rightupdown}>
         				<Topbar />
         				<div className={styles.reuseablecontainer}>
 
@@ -37,6 +38,8 @@ function DashboardLayout() {
           </Routes>  					
         				</div>
       			</div>
+				</div>
+      			
     		</div>);
 };
 
