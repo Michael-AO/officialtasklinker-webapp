@@ -142,7 +142,7 @@
 
 .buttonnext {
     position: absolute;
-    top: 1051.58px;
+    top: 813px;
     left: 894.96px;
     border-radius: 8px;
     margin-top: 40px;
@@ -187,6 +187,7 @@
     justify-content: flex-start;
     padding: 20px;
     box-sizing: border-box;
+    margin-top: 20px;
     font-size: 16px;
     color: #0e0e0e;
 }
@@ -200,7 +201,6 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: 20px; /* Increased gap for Task Description section */
     font-size: 18px;
 }
 
@@ -286,7 +286,7 @@
 }
 
 .inputwrapper {
-    position: absolute;
+    position: relative;
     top: 387.81px;
     left: 325.3px;
     width: 776px;
@@ -298,7 +298,10 @@
     align-content: flex-start;
     gap: 20px 36px; /* Adjusted vertical gap */
     font-size: 18px;
+    margin-bottom: 30px;
 }
+
+  
 
 .lineIcon {
     position: absolute;
@@ -338,3 +341,35 @@
     border-color: #04a466; /* Green border color on focus */
     outline: none; /* Remove the default blue outline */
 }
+
+.error {
+    color: #04a466;;  /* Red color for errors */
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+    font-weight: bold;
+  }
+
+  
+ 
+  .flexContainer {
+    display: flex;
+    gap: 20px; /* Space between Job Type and Tag */
+    justify-content: space-between;
+  }
+  
+  .jobTypeTagWrapper {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+  }
+  
+  .jobTypeTagWrapper .name {
+    flex: 1; /* Ensure equal width for both dropdowns */
+  }
+  
+  .fullWidth {
+    width: 100%;
+    margin-top: 10px;
+  }
+  

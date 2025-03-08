@@ -6,40 +6,64 @@ import line from './dividerpat.png';
 import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore';
 
 function PostATask() {
-  const [roleName, setRoleName] = useState('E.g Social media manager');
-  const [compensation, setCompensation] = useState('E.g 30000');
-  const [location, setLocation] = useState('E.g Lagos Island, Lagos, Nigeria');
-  const [description, setDescription] = useState(
-    'E.g We are looking for a creative and strategic Social Media Specialist to join our team.'
-  );
-  const [jobType, setJobType] = useState('Full time');
-  const [employerName, setEmployerName] = useState('E.g Michael Asere');
+  const [roleName, setRoleName] = useState('');
+  const [compensation, setCompensation] = useState('');
+  const [location, setLocation] = useState('');
+  const [description, setDescription] = useState('');
+  const [jobType, setJobType] = useState('Onsite Full Time');
+  const [tag, setTag] = useState('Design');
+  const [employerName, setEmployerName] = useState('');
+  const [errors, setErrors] = useState({});
 
-  const handleFocus = (setValue) => {
-    setValue('');
+  const db = getFirestore();
+
+  const validateInputs = () => {
+    let newErrors = {};
+
+    if (!employerName.trim()) newErrors.employerName = 'Employer name is required.';
+    if (!roleName.trim()) newErrors.roleName = 'Role name is required.';
+    if (!compensation.trim()) newErrors.compensation = 'Compensation is required.';
+    if (!location.trim()) newErrors.location = 'Location is required.';
+
+    const wordCount = description.trim().split(/\s+/).length;
+    if (!description.trim()) {
+      newErrors.description = 'Job description is required.';
+    } else if (wordCount < 50) {
+      newErrors.description = 'Job description must be at least 50 words.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  // Firebase Firestore configuration
-  const db = getFirestore(); // Get Firestore instance
-
-  // Post task to Firestore
   const postJobToFirestore = async () => {
+    if (!validateInputs()) return;
+
     try {
-      // Add job data to Firestore (updated to 'Jobs' collection)
       const docRef = await addDoc(collection(db, 'Jobs'), {
         roleName,
         compensation,
         location,
         description,
         jobType,
+        tag,
         employerName,
-        createdAt: Timestamp.fromDate(new Date()), // Timestamp for when the job is posted
+        createdAt: Timestamp.fromDate(new Date()),
       });
 
-      console.log("Job posted with ID: ", docRef.id);
-      alert('Job posted successfully!'); // Show a success message
+      console.log('Job posted with ID: ', docRef.id);
+      alert('Job posted successfully!');
+
+      setRoleName('');
+      setCompensation('');
+      setLocation('');
+      setDescription('');
+      setJobType('Onsite Full Time');
+      setTag('Design');
+      setEmployerName('');
+      setErrors({});
     } catch (e) {
-      console.error("Error adding document: ", e);
+      console.error('Error adding document: ', e);
       alert('Failed to post job. Please try again.');
     }
   };
@@ -50,105 +74,86 @@ function PostATask() {
       <div className={styles.background} />
       <div className={styles.pageheader}>
         <img className={styles.vectorIcon} alt="" src={pvector} />
-        <div className={styles.postATask1}>Post a task</div>
+        <div className={styles.postATask1}>Post a Task</div>
       </div>
       <div className={styles.frameParent}>
         <div className={styles.step1Of2Wrapper}>
           <div className={styles.step1Of}>Quick Step</div>
         </div>
         <div className={styles.fillInJobDescriptionParent}>
-          <div className={styles.fillInJob}>Fill in Job description</div>
+          <div className={styles.fillInJob}>Fill in Job Description</div>
           <div className={styles.rectangleParent}>
             <div className={styles.frameChild} />
             <div className={styles.frameItem} />
           </div>
         </div>
       </div>
+
+      {/* Input Fields */}
+      <div className={styles.inputwrapper}>
+        {[
+          { label: 'Employer Name', value: employerName, setter: setEmployerName, error: errors.employerName, placeholder: 'E.g Michael Asere' },
+          { label: 'Name of the Role', value: roleName, setter: setRoleName, error: errors.roleName, placeholder: 'E.g Graphic Designer' },
+          { label: 'Compensation NGN', value: compensation, setter: setCompensation, error: errors.compensation, placeholder: 'E.g 200,000', type: 'number' },
+          { label: 'Location', value: location, setter: setLocation, error: errors.location, placeholder: 'E.g Lekki' },
+        ].map(({ label, value, setter, error, placeholder, type = 'text' }, index) => (
+          <div key={index} className={styles.name}>
+            <div className={styles.next}>{label}</div>
+            <input
+              className={`${styles.inputField} ${error ? styles.errorField : ''}`}
+              type={type}
+              value={value}
+              onChange={(e) => setter(e.target.value)}
+              placeholder={placeholder}
+            />
+            {error && <span className={styles.error}>{error}</span>}
+          </div>
+        ))}
+
+        {/* Job Type & Tag Dropdowns */}
+        <div className={styles.flexContainer}>
+          <div className={styles.jobTypeTagWrapper}>
+            <div className={styles.name}>
+              <div className={styles.next}>Job Type</div>
+              <select className={styles.inputField} value={jobType} onChange={(e) => setJobType(e.target.value)}>
+                <option value="Onsite Full Time">Onsite Full Time</option>
+                <option value="Onsite Contract">Onsite Contract</option>
+                <option value="Remote Full Time">Remote Full Time</option>
+                <option value="Remote Contract">Remote Contract</option>
+              </select>
+            </div>
+            <div className={styles.name}>
+              <div className={styles.next}>Tag</div>
+              <select className={styles.inputField} value={tag} onChange={(e) => setTag(e.target.value)}>
+                <option value="Design">Design</option>
+                <option value="Development">Development</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Sales">Sales</option>
+                <option value="Physical">Physical</option>
+                <option value="Virtual Assistant">Virtual Assistant</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Task Description spanning full width */}
+        <div className={styles.fullWidth}>
+          <div className={styles.next}>Task Description</div>
+          <textarea
+            className={`${styles.inputField} ${errors.description ? styles.errorField : ''}`}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows="6"
+            placeholder="Write a detailed job description (at least 50 words)"
+          />
+          {errors.description && <span className={styles.error}>{errors.description}</span>}
+        </div>
+      </div>
+
+      {/* Post Button Inside Form */}
       <div className={styles.buttonnext} onClick={postJobToFirestore}>
         <div className={styles.next}>Post</div>
       </div>
-
-      {/* Employer Name */}
-      <div className={styles.inputwrapper}>
-        <div className={styles.name}>
-          <div className={styles.next}>Employer Name</div>
-          <input
-            className={styles.inputField}
-            type="text"
-            value={employerName}
-            onChange={(e) => setEmployerName(e.target.value)} // Update state on change
-            placeholder="E.g Michael Asere"
-            onFocus={() => handleFocus(setEmployerName)} // Empty the field on focus
-          />
-        </div>
-
-        {/* Name of the Role */}
-        <div className={styles.name}>
-          <div className={styles.next}>Name of the Role</div>
-          <input
-            className={styles.inputField}
-            type="text"
-            value={roleName}
-            onChange={(e) => setRoleName(e.target.value)} // Update state on change
-            placeholder="Graphic designer"
-            onFocus={() => handleFocus(setRoleName)} // Empty the field on focus
-          />
-        </div>
-
-        {/* Job Type */}
-        <div className={styles.name}>
-          <div className={styles.next}>Job Type</div>
-          <input
-            className={styles.inputField}
-            type="text"
-            value={jobType}
-            onChange={(e) => setJobType(e.target.value)} // Update state on change
-            placeholder="E.g Remote"
-            onFocus={() => handleFocus(setJobType)} // Empty the field on focus
-          />
-        </div>
-
-        {/* Compensation */}
-        <div className={styles.name}>
-          <div className={styles.next}>Compensation NGN</div>
-          <input
-            className={styles.inputField}
-            type="number"
-            value={compensation}
-            onChange={(e) => setCompensation(e.target.value)} // Update state on change
-            placeholder="E.g 200,000"
-            onFocus={() => handleFocus(setCompensation)} // Empty the field on focus
-          />
-        </div>
-
-        {/* Location */}
-        <div className={styles.name}>
-          <div className={styles.next}>Location</div>
-          <input
-            className={styles.inputField}
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)} // Update state on change
-            placeholder="E.g Lekki"
-            onFocus={() => handleFocus(setLocation)} // Empty the field on focus
-          />
-        </div>
-      </div>
-
-      {/* Task Description */}
-      <div className={styles.textwrapper}>
-        <div className={styles.tastDesciption}>Task Description</div>
-        <div className={styles.descrinput}>
-          <textarea
-            className={styles.inputField}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)} // Update state on change
-            rows="6"
-            onFocus={() => setDescription('')} // Empty the description field on focus
-          />
-        </div>
-      </div>
-
       <img className={styles.lineIcon} alt="" src={line} />
     </div>
   );
