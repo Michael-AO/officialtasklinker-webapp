@@ -17,12 +17,11 @@ import ExploreCategories from "./components/ExploreCategories.jsx";
 import Exploreheader from "./components/ExploreHeader.jsx";
 import Howitworks from "./components/HowItWorks.jsx";
 import PostATask from "./pages/Postatask.jsx"
-import ApplyForTask from "./pages/Applyfortask.jsx"
-import DashboardUI from "./components/DashboardUI.jsx";
 // import ProfileUI from "./components/ProfileUI.jsx"
 import DashboardLayout from "./components/DashboardLayout.jsx";
 import Sidebar from "./components/sidebar.jsx"
 import SelectAccount from "./pages/SelectAccount.jsx";
+import Apply from "./pages/Apply.jsx";
 
 
 
@@ -130,11 +129,11 @@ function App() {
 
            {/* Apply for Task */}
 <Route
-            path="/applyfortask/:jobId"
+            path="/Apply"
             element={
               <>
                 <UserNavbar />
-               <ApplyForTask />
+               <Apply />
               </>
             }
           />

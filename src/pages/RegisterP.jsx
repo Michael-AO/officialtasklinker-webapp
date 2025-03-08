@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db, setDoc } from "../firebase";
+import { auth, db } from "../firebase";
+import { doc, setDoc } from "firebase/firestore";
+import sendVerificationEmail from "../Utility/sendVerificationEmail"; // Utility to send emails
 import styles from "./RegisterP.module.css";
-import google from "./google.png";
-import line from "./Vector 3.png";
 
 function RegisterP() {
   const navigate = useNavigate();
@@ -40,13 +40,18 @@ function RegisterP() {
       const user = userCredential.user;
       const verificationCode = generateVerificationCode();
 
+      // Store user details in Firestore
       await setDoc(doc(db, "users", user.uid), {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
         verificationCode,
+        isVerified: false, // User is not verified yet
       });
+
+      // Send verification email
+      await sendVerificationEmail(formData.email, verificationCode);
 
       // Navigate to verification page with user ID
       navigate("/verification", { state: { userId: user.uid } });

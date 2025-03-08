@@ -31,7 +31,7 @@ function RecentTasks() {
 {jobs.map((job) => (
         <Link 
           key={job.id}
-          to={`/applyfortask/${job.id}`} // Pass job ID in the URL
+          to={`/Apply`} // Pass job ID in the URL
           className={styles.jobDisplay}
         >
           <div className={styles.jobCard}>

@@ -4,17 +4,15 @@
     left: 0px;
     background-color: rgba(8, 8, 8, 0.79);
     width: 1440px;
-    height: 1136px;
+    height: 1254px;
     width: 100vw; /* Cover full width of the viewport */
     height: 100vh; /* Cover full height of the viewport */
 }
 .bg {
     position: absolute;
-    justify-items: center;
     top: 0px;
     left: 0px;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
+    border-radius: 20px;
     background-color: #fff;
     width: 1335px;
     height: 964.3px;
@@ -45,36 +43,26 @@
     font-size: 16px;
     color: #fff;
 }
-.cancelParent {
+.buttongroup {
     position: absolute;
-    top: 44.73px;
-    left: 865.42px;
+    top: 42px;
+    left: 794.42px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 40px;
     text-align: center;
+    color: #000;
 }
-.rightContent {
-    position: absolute;
-    top: 51.58px;
-    left: 0px;
-    border-radius: 8px;
-    background-color: #f7f7f7;
-    width: 788.8px;
-    min-height: 600px; /* Minimum height */
-    max-height: 900px; /* Maximum height */
-    overflow-y: auto; /* Enable scrolling if content exceeds max height */
-    display: flex;
-    flex-direction: column; /* Ensures auto layout */
-}
-.aboutTask {
+.baselinecontent {
     position: absolute;
     top: 0px;
     left: 0px;
-    font-size: 20px;
-    letter-spacing: -0.02em;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    width: 904px;
+    height: 770px;
 }
 .uxDesigner {
     position: relative;
@@ -155,42 +143,38 @@
     font-family: 'DM Sans';
 }
 .headercontentwrapper {
-    position: absolute;
-    top: 85.62px;
-    left: 40.69px;
     width: 714px;
+    position: relative;
     height: 102.3px;
-    color: #04a466;
 }
 .aboutTheJob {
     margin: 0;
 }
 .aboutTheJobContainer {
-    position: absolute;
-    top: 228.75px;
-    left: 45.01px;
+    align-self: stretch;
+    position: relative;
     letter-spacing: -0.02em;
     line-height: 22px;
     color: #0e0e0e;
-    display: inline-block;
-    width: 714.5px;
+}
+.reuseabout {
+    position: absolute;
+    top: 33.62px;
+    left: 98.69px;
+    width: 718.8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 41px;
 }
 .rightBar {
     position: absolute;
-    top: 118.73px;
-    left: 411.08px;
-    width: 788.8px;
-    height: 822.5px;
+    top: 163px;
+    left: 215.42px;
+    width: 904px;
+    height: 770px;
     font-size: 16px;
-}
-.leftBarChild {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    border-radius: 15px;
-    background-color: #f3f3f3;
-    width: 244.7px;
-    height: 868.7px;
 }
 .vectorIcon {
     width: 20px;
@@ -199,8 +183,8 @@
 }
 .about {
     position: absolute;
-    top: 32.27px;
-    left: 33.35px;
+    top: 0px;
+    left: 0px;
     border-radius: 10px;
     width: 178px;
     height: 50.6px;
@@ -212,14 +196,6 @@
     box-sizing: border-box;
     gap: 10px;
 }
-.leftBarItem {
-    position: absolute;
-    top: 67.51px;
-    left: 64.45px;
-    max-width: 100%;
-    overflow: hidden;
-    height: 39.5px;
-}
 .applicationChild {
     width: 22.2px;
     position: relative;
@@ -230,8 +206,8 @@
 }
 .application {
     position: absolute;
-    top: 93.95px;
-    left: 33.35px;
+    top: 1px;
+    left: 185px;
     border-radius: 10px;
     width: 178px;
     height: 50.6px;
@@ -246,27 +222,18 @@
 }
 .leftBar {
     position: absolute;
-    top: 43.42px;
-    left: 22.54px;
-    width: 244.7px;
-    height: 868.7px;
+    top: 99px;
+    left: 289.42px;
+    width: 363px;
+    height: 51.6px;
     font-size: 18px;
-    color: #04a466;
 }
 .applyForTask1 {
     position: absolute;
     top: 86px;
-    /* left: 49.58px; */
+    left: 49.58px;
     width: 1335px;
     height: 964.3px;
-    align-items: center;
-    justify-content: center;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    align-content: flex-start;
 }
 .applyForTask {
     width: 100%;
@@ -275,9 +242,10 @@
     height: 1136px;
     overflow: hidden;
     cursor: pointer;
+    margin-top: 80px;
     text-align: left;
     font-size: 20px;
-    color: #000;
+    color: #04a466;
     font-family: 'BR Hendrix';
-    margin-top: 60px;
 }
+
