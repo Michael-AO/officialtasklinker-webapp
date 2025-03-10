@@ -1,11 +1,11 @@
-import axios from "axios";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
-const sendVerificationEmail = async (email, verificationCode) => {
+const sendVerificationEmail = async (email, code) => {
+  const functions = getFunctions();
+  const sendEmail = httpsCallable(functions, "sendVerificationEmail");
+
   try {
-    await axios.post("https://your-cloud-function-url/send-email", {
-      email,
-      verificationCode,
-    });
+    await sendEmail({ email, code });
   } catch (error) {
     console.error("Error sending email:", error);
   }

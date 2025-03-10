@@ -22,6 +22,7 @@ import DashboardLayout from "./components/DashboardLayout.jsx";
 import Sidebar from "./components/sidebar.jsx"
 import SelectAccount from "./pages/SelectAccount.jsx";
 import Apply from "./pages/Apply.jsx";
+import OpenPost from "./Tabs/openpost.jsx";
 
 
 
@@ -73,6 +74,9 @@ function App() {
           />
 
 
+          
+
+
 {/* verification Route */}
 <Route
             path="/verification"
@@ -102,7 +106,6 @@ function App() {
             element={
               <>
                 <UserNavbar />
-                <Exploreheader />
                 <ExploreCategories />
                 <AddOns />
                 <Footer />

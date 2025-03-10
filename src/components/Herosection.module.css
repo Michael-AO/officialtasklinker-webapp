@@ -39,6 +39,7 @@
     width: 11.8px;
     position: relative;
     height: 11.8px;
+    margin-left: 6px;
 }
 .button {
     position: absolute;

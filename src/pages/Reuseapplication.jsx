@@ -1,50 +1,56 @@
+import React from 'react';
 import styles from './Reuseapplication.module.css';
-import React, { useState } from 'react';
 
-function Reuseapplication() {
-  const [experience, setExperience] = useState('');
-  const [years, setYears] = useState('');
-  const [reason, setReason] = useState('');
+function Reuseapplication({ applicationData, updateApplicationData }) {
+    return (
+        <div className={styles.reuseapplication}>
+            <div className={styles.frameParent}>
+                {/* Experience with Plumbing */}
+                <div className={styles.haveExpereinceWithPlumbingParent}>
+                    <div className={styles.haveExpereinceWith}>Have experience with plumbing</div>
+                    <div className={styles.yesParent}>
+                        <select 
+                            className={styles.yesParentH}
+                            value={applicationData.experience} 
+                            onChange={(e) => updateApplicationData('experience', e.target.value)}
+                        >
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                </div>
 
-  return (
-    <div className={styles.reuseapplication}>
-      <div className={styles.frameParent}>
-        <div className={styles.haveExpereinceWithPlumbingParent}>
-          <label className={styles.haveExpereinceWith}>Have experience with this job</label>
-          <select 
-            className={styles.yesParent} 
-            value={experience} 
-            onChange={(e) => setExperience(e.target.value)}
-          >
-            <option value="">Select</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
+                {/* Number of Years of Experience */}
+                <div className={styles.haveExpereinceWithPlumbingParent}>
+                    <div className={styles.haveExpereinceWith}>No. of years of experience</div>
+                    <div className={styles.yesParent}>
+                        <input 
+                            type="number" 
+                            className={styles.yesParentH} 
+                            value={applicationData.years} 
+                            onChange={(e) => updateApplicationData('years', e.target.value)} 
+                            placeholder="Enter years"
+                            min="0"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Why You Should Be Picked */}
+            <div className={styles.whyYouShouldBePickedForTParent}>
+                <div className={styles.haveExpereinceWith}>Why you should be picked for this role</div>
+                <div className={styles.iBelieveIAmAnExcellentFiWrapper}>
+                    <textarea
+                        className={styles.iBelieve}
+                        value={applicationData.whyPick}
+                        onChange={(e) => updateApplicationData('whyPick', e.target.value)}
+                        placeholder="Explain why you are a great fit for this role"
+                    />
+                </div>
+            </div>
         </div>
-        
-        <div className={styles.haveExpereinceWithPlumbingParent}>
-          <label className={styles.haveExpereinceWith}>No of years of experience</label>
-          <input 
-            type="number" 
-            className={styles.yesParent} 
-            value={years} 
-            onChange={(e) => setYears(e.target.value)}
-            placeholder="Enter years"
-          />
-        </div>
-      </div>
-      
-      <div className={styles.whyYouShouldBePickedForTParent}>
-        <label className={styles.haveExpereinceWith}>Why you should be picked for this role</label>
-        <textarea 
-          className={styles.iBelieveIAmAnExcellentFiWrapper} 
-          value={reason} 
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Write your response here..."
-        />
-      </div>
-    </div>
-  );
-};
+    );
+}
 
 export default Reuseapplication;

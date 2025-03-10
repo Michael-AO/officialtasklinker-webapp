@@ -17,45 +17,7 @@
     width: 1335px;
     height: 964.3px;
 }
-.cancel {
-    position: relative;
-    letter-spacing: -0.02em;
-    line-height: 22px;
-}
-.nextStep {
-    position: relative;
-    letter-spacing: -0.02em;
-    line-height: 20px;
-}
-.button {
-    width: 224px;
-    border-radius: 8px;
-    background-color: #000;
-    border: 1px solid #444;
-    box-sizing: border-box;
-    height: 46px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    text-align: left;
-    font-size: 16px;
-    color: #fff;
-}
-.buttongroup {
-    position: absolute;
-    top: 42px;
-    left: 794.42px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 40px;
-    text-align: center;
-    color: #000;
-}
-.baselinecontent {
+.basebg {
     position: absolute;
     top: 0px;
     left: 0px;
@@ -75,9 +37,14 @@
     align-items: center;
     justify-content: flex-start;
 }
+.onsite {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
 .onsiteWrapper {
     border-radius: 8px;
-    background-color: #f3f3f3;
+    background-color: #e8e8e8;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -168,65 +135,92 @@
     justify-content: flex-start;
     gap: 41px;
 }
-.rightBar {
-    position: absolute;
-    top: 163px;
-    left: 215.42px;
+.content {
     width: 904px;
+    position: relative;
     height: 770px;
-    font-size: 16px;
 }
-.vectorIcon {
-    width: 20px;
+.nextStep {
     position: relative;
-    height: 20px;
+    letter-spacing: -0.02em;
+    line-height: 20px;
 }
-.about {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    border-radius: 10px;
-    width: 178px;
-    height: 50.6px;
+.button {
+    width: 224px;
+    border-radius: 8px;
+    background-color: #000;
+    border: 1px solid #444;
+    box-sizing: border-box;
+    height: 46px;
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
-    padding: 10px 20px;
-    box-sizing: border-box;
-    gap: 10px;
+    justify-content: center;
+    padding: 10px;
+    color: #fff;
 }
-.applicationChild {
-    width: 22.2px;
-    position: relative;
-    border-radius: 50%;
-    border: 1px solid #000;
-    box-sizing: border-box;
-    height: 22.2px;
-}
-.application {
-    position: absolute;
-    top: 1px;
-    left: 185px;
-    border-radius: 10px;
-    width: 178px;
-    height: 50.6px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 10px 20px;
-    box-sizing: border-box;
-    gap: 10px;
-    color: #000;
-}
-.leftBar {
+.fullForm {
     position: absolute;
     top: 99px;
-    left: 289.42px;
-    width: 363px;
-    height: 51.6px;
-    font-size: 18px;
+    left: 215.42px;
+    width: 905px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 25px;
+}
+.aboutTask {
+    position: relative;
+}
+.activeaboutChild {
+    align-self: stretch;
+    position: relative;
+    border-radius: 8px;
+    background-color: #04a466;
+    height: 5.9px;
+}
+.activeabout {
+    width: 271.2px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 15px;
+}
+.applicationChild {
+    align-self: stretch;
+    position: relative;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+    height: 5.9px;
+}
+.application {
+    width: 271.2px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 15px;
+    color: #000;
+}
+.stepCount {
+    position: absolute;
+    top: 32px;
+    left: 314.42px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 23px;
+    text-align: center;
+}
+.cancelIcon {
+    position: absolute;
+    top: 34.33px;
+    left: 1238.75px;
+    width: 33.3px;
+    height: 33.3px;
 }
 .applyForTask1 {
     position: absolute;
@@ -241,11 +235,84 @@
     background-color: #fff;
     height: 1136px;
     overflow: hidden;
+    margin-top: 60px;
     cursor: pointer;
-    margin-top: 80px;
     text-align: left;
-    font-size: 20px;
+    font-size: 16px;
     color: #04a466;
     font-family: 'BR Hendrix';
 }
 
+.buttonContainer {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.nextStep, .backStep, .submit {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.nextStep {
+    background-color: green;
+    color: white;
+    width: 224px;
+    position: relative;
+    border-radius: 8px;
+    background-color: #000;
+    border: 1px solid #444;
+    box-sizing: border-box;
+height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    text-align: left;
+    font-size: 16px;
+    color: #fff;
+    font-family: 'BR Hendrix';
+        }
+
+.backStep {
+    background-color: grey;
+    color: white;
+}
+
+.submit {
+    background-color: #04a466;
+    color: white;
+}
+
+/* Step Indicator */
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stepBar {
+    width: 340px;
+    height: 5px;
+    background-color: grey;
+    margin-top: 5px;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.filled {
+    background-color: #008000;
+}
+
+/* Cancel Icon */
+.cancelIcon {
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}

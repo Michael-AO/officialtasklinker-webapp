@@ -9,7 +9,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProfileUI from '../Tabs/ProfileUI';
 import ReuseableResume from '../Tabs/Resume';
 import Application from '../Tabs/ApplicationReuseable';
-import Postedtasks from '../Tabs/Postedtasks';
+import PostU from '../Tabs/postedupdate';
 import GetPaid from '../Tabs/GetPaid';
 
 
@@ -31,7 +31,7 @@ function DashboardLayout() {
             <Route path="/profile" element={<ProfileUI />} />
             <Route path="/resume" element={<ReuseableResume />} />
             <Route path="/applications" element={<Application />} />
-			<Route path="/postedTasks" element={<Postedtasks />} />
+			<Route path="/postedTasks" element={<PostU />} />
 			<Route path="/getPaid" element={<GetPaid />} />
 
 

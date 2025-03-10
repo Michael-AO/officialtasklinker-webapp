@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
-import sendVerificationEmail from "../Utility/sendVerificationEmail"; // Utility to send emails
 import styles from "./RegisterP.module.css";
 
 function RegisterP() {
@@ -16,29 +15,45 @@ function RegisterP() {
     password: "",
     confirmPassword: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const generateVerificationCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  const validateForm = () => {
+    const { firstName, lastName, email, phone, password, confirmPassword } = formData;
+
+    if (!firstName || !lastName || !email || !phone || !password || !confirmPassword) {
+      alert("All fields must be filled before submitting.");
+      return false;
+    }
+
+    if (!/^\+234\d{10}$/.test(phone)) {
+      alert("Phone number must be in the correct format: +234XXXXXXXXXX");
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return false;
+    }
+
+    return true;
   };
 
   const handleCreateAccount = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
+    if (!validateForm()) return;
 
+    setLoading(true);
+    
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
+      // Create user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
-      const verificationCode = generateVerificationCode();
+
+      // Send Firebase email verification
+      await sendEmailVerification(user);
 
       // Store user details in Firestore
       await setDoc(doc(db, "users", user.uid), {
@@ -46,17 +61,17 @@ function RegisterP() {
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
-        verificationCode,
-        isVerified: false, // User is not verified yet
+        isVerified: false, // Email verification handled by Firebase
+        createdAt: new Date(),
       });
 
-      // Send verification email
-      await sendVerificationEmail(formData.email, verificationCode);
+      alert("Account created successfully! Please check your email to verify your account.");
+      navigate("/login"); // Redirect to login page
 
-      // Navigate to verification page with user ID
-      navigate("/verification", { state: { userId: user.uid } });
     } catch (error) {
       alert(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -121,7 +136,7 @@ function RegisterP() {
                   value={formData.phone}
                   onChange={handleChange}
                   className={styles.inputContainer}
-                  placeholder="Enter phone number"
+                  placeholder="+234XXXXXXXXXX"
                 />
               </div>
             </div>
@@ -154,12 +169,14 @@ function RegisterP() {
 
           <div className={styles.groupParent}>
             <div className={styles.groupDiv}>
-              <button className={styles.createAccountWrapper} onClick={handleCreateAccount}>
-                <div className={styles.Button}>Create Account</div>
+              <button
+                className={styles.createAccountWrapper}
+                onClick={handleCreateAccount}
+                disabled={loading}
+              >
+                {loading ? "Creating..." : "Create Account"}
               </button>
             </div>
-
-            
           </div>
         </div>
       </div>

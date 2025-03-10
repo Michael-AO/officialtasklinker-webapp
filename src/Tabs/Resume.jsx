@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { auth, db, storage } from "../firebase"; // Firebase imports
+import { doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import styles from "./Resume.module.css";
 import upload from "./upload.png";
 
@@ -7,25 +10,89 @@ function ReuseableResume() {
   const [role, setRole] = useState("");
   const [experience, setExperience] = useState("");
   const [fileError, setFileError] = useState("");
+  const [fileName, setFileName] = useState(localStorage.getItem("resumeName") || "No file selected");
+  const [uploading, setUploading] = useState(false);
+
+  // ✅ Fetch resume info & listen for Firestore updates
+  useEffect(() => {
+    const fetchResume = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const userDocRef = doc(db, "users", user.uid);
+
+      // 🔥 Firestore real-time listener (auto-updates UI when resume changes)
+      const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          if (userData.resumeName) {
+            setFileName(userData.resumeName);
+            localStorage.setItem("resumeName", userData.resumeName); // ✅ Store in local storage
+          }
+        }
+      });
+
+      return () => unsubscribe(); // Clean up listener on unmount
+    };
+
+    fetchResume();
+  }, []);
 
   const handleEditClick = () => {
     setIsEditing(!isEditing);
   };
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      const fileSizeMB = file.size / (1024 * 1024); // Convert bytes to MB
-      if (file.type !== "application/pdf") {
-        setFileError("Only PDF files are allowed.");
-        return;
-      }
-      if (fileSizeMB > 10) {
-        setFileError("File must be 10MB or less.");
-        return;
-      }
-      setFileError(""); // Clear error if valid
+    if (!file) return;
+
+    // Validate file type and size
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (file.type !== "application/pdf") {
+      setFileError("Only PDF files are allowed.");
+      return;
+    }
+    if (fileSizeMB > 10) {
+      setFileError("File must be 10MB or less.");
+      return;
+    }
+
+    setFileError("");
+    setUploading(true);
+    setFileName("Uploading...");
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert("User not authenticated!");
+      setUploading(false);
+      return;
+    }
+
+    const storageRef = ref(storage, `resumes/${user.uid}/${file.name}`);
+
+    try {
+      await uploadBytes(storageRef, file);
+      const fileURL = await getDownloadURL(storageRef);
+
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(
+        userDocRef,
+        {
+          resumeName: file.name,
+          resumeURL: fileURL,
+        },
+        { merge: true }
+      );
+
+      setFileName(file.name.length > 50 ? file.name.slice(0, 47) + "..." : file.name);
+      localStorage.setItem("resumeName", file.name); // ✅ Save to local storage
       alert("File uploaded successfully!");
+    } catch (error) {
+      console.error("Upload error:", error);
+      setFileError("Failed to upload file.");
+      setFileName("No file selected");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -35,10 +102,14 @@ function ReuseableResume() {
         <div className={styles.contentwrp}>
           <div className={styles.headerwrp}>
             <div className={styles.uploadResumeParent}>
-              <div className={styles.uploadResume}>{`Upload Resume `}</div>
+              <div className={styles.uploadResume}>
+                Upload Resume: <span className={styles.fileName}>{fileName}</span>
+              </div>
               <label className={styles.upload24dp5f6368Fill0Wght4Parent}>
                 <img className={styles.upload24dp5f6368Fill0Wght4Icon} alt="" src={upload} />
-                <div className={styles.uploadNewFile}>Upload New File</div>
+                <div className={styles.uploadNewFile}>
+                  {uploading ? "Uploading..." : "Upload New File"}
+                </div>
                 <input type="file" accept=".pdf" onChange={handleFileUpload} hidden />
               </label>
               {fileError && <p className={styles.errorMessage}>{fileError}</p>}
@@ -54,7 +125,7 @@ function ReuseableResume() {
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     disabled={!isEditing}
-					placeholder="Non-Specific"
+                    placeholder="Non-Specific"
                   />
                 </div>
               </div>
@@ -68,7 +139,7 @@ function ReuseableResume() {
                     value={experience}
                     onChange={(e) => setExperience(e.target.value)}
                     disabled={!isEditing}
-					placeholder="Non-Specific"
+                    placeholder="Non-Specific"
                     min="0"
                   />
                 </div>

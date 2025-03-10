@@ -60,14 +60,14 @@
 }
 
 .buttonWrapper {
-    align-items: center;
+    align-items: stretch;
     display: flex;
     flex: 0 0 auto;
     flex-direction: column;
     gap: 10px;
     padding: 10px;
     position: relative;
-    width: 450px;
+    width: 300px;
 }
 
 .button {
@@ -86,6 +86,7 @@
     padding: 12px 35px;
     position: relative;
     width: 100%;
+    text-decoration: none;
 }
 
 .textWrapper {

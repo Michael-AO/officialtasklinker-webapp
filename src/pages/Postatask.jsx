@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './Postatask.module.css';
 import React from 'react';
 import pvector from './postatastvectorelg.png';
 import line from './dividerpat.png';
 import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 function PostATask() {
   const [roleName, setRoleName] = useState('');
@@ -14,8 +15,22 @@ function PostATask() {
   const [tag, setTag] = useState('Design');
   const [employerName, setEmployerName] = useState('');
   const [errors, setErrors] = useState({});
+  const [userId, setUserId] = useState(null); // Store logged-in user ID
 
   const db = getFirestore();
+  const auth = getAuth();
+
+  // Check user authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        setUserId(null);
+      }
+    });
+    return () => unsubscribe();
+  }, [auth]);
 
   const validateInputs = () => {
     let newErrors = {};
@@ -37,10 +52,16 @@ function PostATask() {
   };
 
   const postJobToFirestore = async () => {
+    if (!userId) {
+      alert('You must be logged in to post a task.');
+      return;
+    }
+
     if (!validateInputs()) return;
 
     try {
-      const docRef = await addDoc(collection(db, 'Jobs'), {
+      const docRef = await addDoc(collection(db, 'Tasks'), {
+        userId, // Store logged-in user ID
         roleName,
         compensation,
         location,
@@ -51,8 +72,8 @@ function PostATask() {
         createdAt: Timestamp.fromDate(new Date()),
       });
 
-      console.log('Job posted with ID: ', docRef.id);
-      alert('Job posted successfully!');
+      console.log('Task posted with ID: ', docRef.id);
+      alert('Task posted successfully!');
 
       setRoleName('');
       setCompensation('');
@@ -64,7 +85,7 @@ function PostATask() {
       setErrors({});
     } catch (e) {
       console.error('Error adding document: ', e);
-      alert('Failed to post job. Please try again.');
+      alert('Failed to post task. Please try again.');
     }
   };
 
@@ -91,7 +112,7 @@ function PostATask() {
 
       {/* Input Fields */}
       <div className={styles.inputwrapper}>
-        {[
+        {[ 
           { label: 'Employer Name', value: employerName, setter: setEmployerName, error: errors.employerName, placeholder: 'E.g Michael Asere' },
           { label: 'Name of the Role', value: roleName, setter: setRoleName, error: errors.roleName, placeholder: 'E.g Graphic Designer' },
           { label: 'Compensation NGN', value: compensation, setter: setCompensation, error: errors.compensation, placeholder: 'E.g 200,000', type: 'number' },
@@ -136,7 +157,7 @@ function PostATask() {
           </div>
         </div>
 
-        {/* Task Description spanning full width */}
+        {/* Task Description */}
         <div className={styles.fullWidth}>
           <div className={styles.next}>Task Description</div>
           <textarea
@@ -150,9 +171,11 @@ function PostATask() {
         </div>
       </div>
 
-      {/* Post Button Inside Form */}
-      <div className={styles.buttonnext} onClick={postJobToFirestore}>
-        <div className={styles.next}>Post</div>
+      {/* Post Button - Moves Dynamically */}
+      <div className={`${styles.buttonWrapper} ${Object.keys(errors).length > 0 ? styles.hasErrors : ''}`}>
+        <div className={styles.buttonnext} onClick={postJobToFirestore}>
+          <div className={styles.next}>Post</div>
+        </div>
       </div>
       <img className={styles.lineIcon} alt="" src={line} />
     </div>

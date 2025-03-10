@@ -142,7 +142,7 @@
 
 .buttonnext {
     position: absolute;
-    top: 813px;
+    top: 899px;
     left: 894.96px;
     border-radius: 8px;
     margin-top: 40px;
@@ -372,4 +372,24 @@
     width: 100%;
     margin-top: 10px;
   }
+  
+  .buttonWrapper {
+    transition: margin-top 0.3s ease-in-out; /* Smooth transition */
+  }
+  
+  .hasErrors {
+    margin-top: 20px; /* Moves the button down when errors appear */
+  }
+  
+  .error {
+    color: #04a466;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+  }
+  
+  .errorField {
+    border: 1px solid #04a466  !important;
+  }
+  
   

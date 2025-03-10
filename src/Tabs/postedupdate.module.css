@@ -1,0 +1,284 @@
+.containerChild {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 15px;
+    background-color: #fff;
+    width: 1060.8px;
+    height: 869px;
+}
+.totalNoOf {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    white-space: pre-wrap;
+}
+.div {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    color: #04a466;
+}
+.totalNoOfPostsParent {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2px;
+}
+.totalNoCompletedParent {
+    position: absolute;
+    top: 0px;
+    left: 191px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2px;
+}
+.frameParent {
+    width: 380px;
+    position: relative;
+    height: 20px;
+}
+.posts2Wrapper {
+    width: 126px;
+    border-radius: 15px;
+    background-color: #0e0e0e;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    box-sizing: border-box;
+}
+.offered {
+    position: relative;
+    letter-spacing: -0.02em;
+}
+.offeredWrapper {
+    width: 143px;
+    border-radius: 15px;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+    color: #0e0e0e;
+}
+.frameGroup {
+    border-radius: 15px;
+    background-color: #fff;
+    border: 1px solid #000;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 20px;
+    color: #fff;
+}
+.headercontent {
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 17px;
+}
+.eparrowDownIcon {
+    width: 20px;
+    position: relative;
+    height: 20px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.sortByRelevanceParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.sortgroup {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 31px;
+}
+.rolename {
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+.onsite {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
+.onsiteWrapper {
+    width: 69px;
+    border-radius: 8px;
+    background-color: #f3f3f3;
+    height: 26px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 19px;
+    box-sizing: border-box;
+    font-size: 14px;
+    color: #212121;
+}
+.rolenameParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 25px;
+}
+.eparrowDownIcon2 {
+    width: 20px;
+    position: relative;
+    height: 20px;
+    overflow: hidden;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+.viewDetailsParent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    font-size: 16px;
+    color: #000;
+}
+.frameDiv {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0px;
+}
+.fullTime {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+.badiruStrLagos {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    font-family: 'BR Hendrix';
+    color: #727272;
+}
+.fullTimeParent {
+    width: 277px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+.application10 {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.numberofapply {
+    width: 152px;
+    border-radius: 20px;
+    background-color: #f3f3f3;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: 'BR Hendrix';
+}
+.lowdetails {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0px;
+    font-size: 16px;
+    color: #0e0e0e;
+    font-family: 'DM Sans';
+}
+.frameContainer {
+    width: 691.5px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.postapplicant {
+    align-self: stretch;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    background-color: #fff;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 30px;
+    padding-left: 20px;
+    box-sizing: border-box;
+}
+.applicationgrid {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 16px;
+    color: #04a466;
+}
+.content {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 16px;
+    font-size: 20px;
+    color: #000;
+}
+.postandapply {
+    position: absolute;
+    top: 68px;
+    left: 143px;
+    width: 776.2px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 29px;
+}
+.container {
+    width: 100%;
+    position: relative;
+    border-radius: 15px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 869px;
+    overflow: hidden;
+    text-align: left;
+    font-size: 18px;
+    color: #0e0e0e;
+    font-family: 'BR Hendrix';
+}
+

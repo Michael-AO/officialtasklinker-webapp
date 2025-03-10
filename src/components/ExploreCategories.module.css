@@ -15,24 +15,18 @@
     padding: 10px;
     box-sizing: border-box;
 }
-.exploreCategoriesContainer {
-    display: flex; /* Ensures elements stay in a row */
-    align-items: center; /* Aligns text vertically */
-    gap: 10px; /* Adjusts spacing between elements */
-    flex-wrap: nowrap; /* Prevents wrapping onto a new line */
-}
-
-.exploreCategories1 {
+.exploreCategories {
+    position: relative;
     font-size: 43px;
     letter-spacing: 0.01em;
     line-height: 60px;
     font-weight: 500;
     font-family: Roboto;
     color: #04a466;
-    white-space: nowrap; /* Ensures text doesn’t break onto a new line */
+    white-space: nowrap;
+overflow: hidden;
 }
-
-.frameContainer {
+.exploreheader {
     width: 352px;
     display: flex;
     flex-direction: column;
@@ -94,65 +88,41 @@
     justify-content: center;
     padding: 10px;
 }
-.frameParent1 {
+.tags {
     align-self: stretch;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 16px;
+    font-size: 20px;
+    font-family: 'BR Hendrix';
 }
-.eparrowDownIcon {
-    width: 20px;
-    position: relative;
-    height: 20px;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-.sortByRelevanceParent {
+
+.timestampsort {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 5px;
 }
-.vectorIcon {
-    width: 14.5px;
-    position: relative;
-    height: 7.6px;
-}
-.frameParent2 {
+.sortby {
     display: flex;
     flex-direction: row;
-    padding-bottom: 20px;
     align-items: center;
     justify-content: flex-start;
     gap: 31px;
-    color: #080808;
-}
-.frameDiv {
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
     font-size: 20px;
+    color: #080808;
     font-family: 'BR Hendrix';
 }
-.frameGroup {
-    width: 867.8px;
+.frameParent {
+    width: 867px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
-    gap: 39px;
-}
-.seeAllCategories {
-    align-self: stretch;
-    position: relative;
-    text-decoration: underline;
-    letter-spacing: -0.02em;
+    gap: 32px;
 }
 .groupChild {
     position: absolute;
@@ -171,22 +141,33 @@
     letter-spacing: -0.02em;
     line-height: 27px;
     font-weight: 500;
-}
-.ngn10000 {
-    position: absolute;
-    top: 188.33px;
-    left: 40.8px;
-    font-size: 24.67px;
-    letter-spacing: -0.02em;
-    line-height: 42.17px;
-    font-weight: 500;
-    color: #0e0e0e;
+    color: #acacac;
 }
 .uxDesigner {
     position: relative;
     letter-spacing: -0.02em;
     font-weight: 500;
+    white-space: nowrap; /* Prevents text from wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds "..." if text is too long */
+    line-height: 1.2; /* Reduces the line height */
+    max-width: 140px;
 }
+
+.employer {
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    white-space: nowrap; /* Prevents text from wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds "..." if text is too long */
+    line-height: 1.2; /* Reduces the line height */
+    max-width: 140px;
+    color: #080808;
+}
+ 
+
+
 .uxDesignerWrapper {
     display: flex;
     flex-direction: row;
@@ -209,74 +190,19 @@
     font-size: 16px;
     color: #212121;
 }
-.frameParent4 {
+.frameGroup {
     position: absolute;
-    top: 0px;
-    left: 0px;
+    top: 31.2px;
+    left: 40.8px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 20px;
+    font-size: 24px;
+    color: #04a466;
 }
 .badiruStrLagos {
-    position: absolute;
-    top: 75.28px;
-    left: 0px;
-    font-size: 16px;
-    letter-spacing: -0.02em;
-    line-height: 27px;
-    color: #727272;
-}
-.shellNigeriaWrapper {
-    position: absolute;
-    top: 48.75px;
-    left: 0px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    font-size: 18px;
-    color: #0e0e0e;
-    font-family: 'DM Sans';
-}
-.groupDiv {
-    position: absolute;
-    top: 31.2px;
-    left: 40.8px;
-    width: 277px;
-    height: 102.3px;
-    font-size: 24px;
-    color: #04a466;
-}
-.rectangleParent {
-    width: 386.7px;
-    position: relative;
-    height: 257.3px;
-    color: #acacac;
-}
-.compensationmonth1 {
-    position: absolute;
-    top: 169.33px;
-    left: 40.8px;
-    letter-spacing: -0.02em;
-    line-height: 27px;
-    font-weight: 500;
-    color: #acacac;
-}
-.frameParent5 {
-    position: absolute;
-    top: 31.2px;
-    left: 40.8px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 20px;
-    font-size: 24px;
-    color: #04a466;
-}
-.badiruStrLagos1 {
     position: absolute;
     top: 106.48px;
     left: 40.8px;
@@ -284,16 +210,17 @@
     line-height: 27px;
     color: #727272;
 }
-.ngn100001 {
+.money {
     position: absolute;
     top: 188.33px;
     left: 40.8px;
-    font-size: 24.67px;
+    font-size: 22px;
     letter-spacing: -0.02em;
     line-height: 42.17px;
     font-weight: 500;
+    color: #04a466;
 }
-.shellNigeriaContainer {
+.shellNigeriaWrapper {
     position: absolute;
     top: 79.94px;
     left: 40.8px;
@@ -303,51 +230,46 @@
     justify-content: flex-start;
     font-size: 18px;
     font-family: 'DM Sans';
+    color: 000
+
 }
-.rectangleGroup {
+.rectangleParent {
     width: 386.7px;
     position: relative;
     height: 257.3px;
 }
+
+
 .groupParent {
     align-self: stretch;
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: flex-start;
+    gap: 32px;
+}
+.jobs {
+    align-self: center;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columns */
+    grid-template-rows: repeat(2, auto); /* 2 rows */
+    gap: 20px;
     justify-content: center;
-    gap: 32px;
-}
-.frameParent3 {
-    align-self: stretch;
-    display: flex;
-    padding-top: 40px;
-    padding-bottom: 10px;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 32px;
-    text-align: left;
-    font-size: 16px;
     color: #0e0e0e;
-}
-.seeAllCategoriesParent {
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: flex-start;
-    gap: 16px;
-    text-align: right;
-    font-size: 20px;
-    color: #080808;
     font-family: 'BR Hendrix';
+    width: 100%;
+    max-width: 1200px; /* Adjust width if needed */
 }
-.frameParent {
+  
+
+  
+.explorecontent {
     align-self: stretch;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+    gap: 32px;
 }
 .seeMore {
     align-self: stretch;
@@ -356,20 +278,89 @@
     text-decoration: underline;
     letter-spacing: -0.02em;
     font-family: 'BR Hendrix';
+    cursor: pointer;
     text-align: center;
+    padding: 10px;
+    transition: color 0.3s ease;
 }
-.exploreCategories {
+  
+  .seeMore:hover {
+    color: #04a466; /* Change to any highlight color you prefer */
+  }
+  
+
+
+.fullexplore {
     width: 100%;
     position: relative;
     display: flex;
-    margin-top: 80px;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    gap: 38px;
+    gap: 67px;
     text-align: left;
     font-size: 16px;
     color: #000;
     font-family: 'DM Sans';
+    margin-top: 170px;
 }
 
+/* Dropdown Container */
+.dropdown {
+    position: absolute;
+    background: white;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 8px 0;
+    width: 180px;
+    z-index: 100;
+    margin-top: 5px;
+  }
+  
+  /* Dropdown Item */
+  .dropdownItem {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    transition: background 0.2s ease-in-out;
+  }
+  
+  /* Hover Effect */
+  .dropdownItem:hover {
+    background: #f0f0f0;
+  }
+  
+  /* Active Selection */
+  .dropdownItem.active {
+    font-weight: bold;
+    background: #e6f7ff;
+    color: #04a466;
+  }
+  
+  /* Position Fix for Dropdown */
+  .timestampsort {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .loading {
+    font-size: 22px;
+    color: #04a466;
+  }
+  
+  .select {
+    border: 0;
+    stroke: 0;
+    font-size: 15px;
+  }
+
+  .select .active {
+    background-color: #f0f0f0; /* Light gray background */
+    color: #000; /* Black text */
+    font-weight: bold; /* Make text bold */
+    border-radius: 5px; /* Rounded corners */
+    padding: 5px 10px; /* Add some padding */
+  }
