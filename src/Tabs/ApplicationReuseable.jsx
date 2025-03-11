@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Vector from "./vector.png";
+import Vector from "./Vector.png";
 import styles from "./ApplicationReuseable.module.css";
 import { db, auth } from "../firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
