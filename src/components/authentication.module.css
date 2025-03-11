@@ -100,4 +100,10 @@
     text-align: center;
     white-space: nowrap;
     width: fit-content;
+    text-decoration: none;
 }
+
+a {
+    text-decoration: none;
+    color: inherit; /* Ensures it uses the parent’s text color */
+  }

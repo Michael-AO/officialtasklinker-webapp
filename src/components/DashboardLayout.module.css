@@ -345,17 +345,10 @@
     height: 722px;
 }
 .reuseablecontainer {
-    align-self: stretch;
-    position: relative;
-    border-radius: 15px;
-    border: 1px solid #dbdbdb;
-    box-sizing: border-box;
-    height: 858px;
-    flex-shrink: 0;
-    font-size: 18px;
-    color: #0e0e0e;
-    font-family: 'BR Hendrix';
-    overflow-y: auto;  /* Enables vertical scrolling */
+    max-height: 80vh; /* Adjust as needed */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 .rightupdown {
     width: 1098px;
@@ -394,4 +387,10 @@
     width: calc(100% - 209px); /* Ensures it takes remaining space */
     height: 100vh;
     overflow-y: auto; /* Enables vertical scrolling */
+}
+
+.ListContainer { 
+    flex: 1; 
+    overflow-y: auto;
+    max-height: 100%; /* Ensure it respects the parent's height */
 }

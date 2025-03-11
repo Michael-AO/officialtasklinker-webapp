@@ -3,7 +3,7 @@ import styles from './Postatask.module.css';
 import React from 'react';
 import pvector from './postatastvectorelg.png';
 import line from './dividerpat.png';
-import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 function PostATask() {
@@ -61,7 +61,7 @@ function PostATask() {
 
     try {
       const docRef = await addDoc(collection(db, 'Tasks'), {
-        userId, // Store logged-in user ID
+        userId, 
         roleName,
         compensation,
         location,
@@ -71,6 +71,9 @@ function PostATask() {
         employerName,
         createdAt: Timestamp.fromDate(new Date()),
       });
+
+      // Store the task ID in the Firestore document
+      await setDoc(docRef, { taskId: docRef.id }, { merge: true });
 
       console.log('Task posted with ID: ', docRef.id);
       alert('Task posted successfully!');
@@ -112,7 +115,7 @@ function PostATask() {
 
       {/* Input Fields */}
       <div className={styles.inputwrapper}>
-        {[ 
+        {[
           { label: 'Employer Name', value: employerName, setter: setEmployerName, error: errors.employerName, placeholder: 'E.g Michael Asere' },
           { label: 'Name of the Role', value: roleName, setter: setRoleName, error: errors.roleName, placeholder: 'E.g Graphic Designer' },
           { label: 'Compensation NGN', value: compensation, setter: setCompensation, error: errors.compensation, placeholder: 'E.g 200,000', type: 'number' },
@@ -171,7 +174,7 @@ function PostATask() {
         </div>
       </div>
 
-      {/* Post Button - Moves Dynamically */}
+      {/* Post Button */}
       <div className={`${styles.buttonWrapper} ${Object.keys(errors).length > 0 ? styles.hasErrors : ''}`}>
         <div className={styles.buttonnext} onClick={postJobToFirestore}>
           <div className={styles.next}>Post</div>

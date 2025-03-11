@@ -22,22 +22,20 @@ function DashboardLayout() {
       			<Sidebar />
 				<div className={styles.mainContent}> 
 				<div className={styles.rightupdown}>
-        				<Topbar />
-        				<div className={styles.reuseablecontainer}>
-
-						<Routes>
-            {/* Redirect to ProfileUI if no specific route is provided */}
+    <Topbar />
+    <div className={styles.reuseablecontainer}>
+		<div className={styles.ListContainer}>
+		<Routes>
             <Route path="/" element={<Navigate to="/dashboard/Profile" replace />} />
             <Route path="/profile" element={<ProfileUI />} />
             <Route path="/resume" element={<ReuseableResume />} />
             <Route path="/applications" element={<Application />} />
-			<Route path="/postedTasks" element={<PostU />} />
-			<Route path="/getPaid" element={<GetPaid />} />
-
-
-          </Routes>  					
-        				</div>
-      			</div>
+            <Route path="/postedTasks" element={<PostU />} />
+            <Route path="/getPaid" element={<GetPaid />} />
+        </Routes>
+		</div>
+    </div>
+</div>
 				</div>
       			
     		</div>);

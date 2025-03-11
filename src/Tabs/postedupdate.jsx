@@ -1,51 +1,73 @@
 import React, { useState, useEffect } from "react";
 import styles from "./postedupdate.module.css";
 import { db, auth } from "../firebase";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import down from './down.png';
-
+import { collection, query, where, onSnapshot, doc, setDoc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import down from "./down.png";
 
 function PostU() {
     const [tasks, setTasks] = useState([]);
     const [totalCompleted, setTotalCompleted] = useState(0);
+    const [applications, setApplications] = useState({});
 
     useEffect(() => {
-        const user = auth.currentUser;
-        if (!user) return;
+        let unsubscribeTasks, unsubscribeApplications;
 
-        const tasksRef = collection(db, "PostedTasks");
-        const q = query(tasksRef, where("userId", "==", user.uid));
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+            if (!user) return;
 
-        // Listen for real-time updates
-        const unsubscribe = onSnapshot(q, async (tasksSnapshot) => {
-            const tasksList = await Promise.all(
-                tasksSnapshot.docs.map(async (doc) => {
-                    const taskData = { id: doc.id, ...doc.data() };
+            const tasksRef = collection(db, "Tasks");
+            const q = query(tasksRef, where("userId", "==", user.uid));
 
-                    // Fetch applications for each task in real time
-                    const applicationsRef = collection(db, "Applications");
-                    const applicationQuery = query(applicationsRef, where("taskId", "==", taskData.id));
+            unsubscribeTasks = onSnapshot(q, async (tasksSnapshot) => {
+                const tasksList = tasksSnapshot.docs.map((docSnapshot) => ({
+                    id: docSnapshot.id,
+                    ...docSnapshot.data(),
+                }));
 
-                    return new Promise((resolve) => {
-                        onSnapshot(applicationQuery, (applicationsSnapshot) => {
-                            resolve({
-                                ...taskData,
-                                applications: applicationsSnapshot.size,
-                            });
-                        });
-                    });
-                })
-            );
+                tasksList.forEach(async (task) => await addTaskToJobs(task));
 
-            const completedCount = tasksList.filter(task => task.status === "completed").length;
+                setTasks(tasksList);
+                setTotalCompleted(tasksList.filter((task) => task.status === "completed").length);
 
-            setTasks(tasksList);
-            setTotalCompleted(completedCount);
+                if (tasksList.length > 0) {
+                    fetchApplications(tasksList.map((task) => task.id));
+                }
+            });
         });
 
-        // Cleanup listener on unmount
-        return () => unsubscribe();
+        const fetchApplications = (taskIds) => {
+            if (taskIds.length === 0) return;
+
+            const applicationsRef = collection(db, "Applications");
+            const applicationsQuery = query(applicationsRef, where("taskId", "in", taskIds));
+
+            unsubscribeApplications = onSnapshot(applicationsQuery, (applicationsSnapshot) => {
+                const appsData = {};
+                applicationsSnapshot.docs.forEach((doc) => {
+                    const app = doc.data();
+                    appsData[app.taskId] = (appsData[app.taskId] || 0) + 1;
+                });
+
+                setApplications(appsData);
+            });
+        };
+
+        return () => {
+            if (unsubscribeTasks) unsubscribeTasks();
+            if (unsubscribeApplications) unsubscribeApplications();
+            unsubscribeAuth();
+        };
     }, []);
+
+    const addTaskToJobs = async (task) => {
+        const jobRef = doc(db, "Jobs", task.id);
+        const jobSnap = await getDoc(jobRef);
+
+        if (!jobSnap.exists()) {
+            await setDoc(jobRef, task);
+        }
+    };
 
     return (
         <div className={styles.container}>
@@ -98,7 +120,7 @@ function PostU() {
                                             </div>
                                             <div className={styles.viewDetailsParent}>
                                                 <div className={styles.offered}>View details</div>
-                                                <img  alt="" src={down} />
+                                                <img alt="" src={down} />
                                             </div>
                                         </div>
                                         <div className={styles.lowdetails}>
@@ -107,7 +129,9 @@ function PostU() {
                                                 <i className={styles.badiruStrLagos}>{task.location || "Location"}</i>
                                             </div>
                                             <div className={styles.numberofapply}>
-                                                <div className={styles.application10}>Application ({task.applications})</div>
+                                                <div className={styles.application10}>
+                                                    Applications ({applications[task.id] || 0})
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
