@@ -10,6 +10,7 @@ body {
     max-width: 1440px;
     margin: 0 auto; /* Center the container horizontally */
     padding: 0px 50px; /* Padding of 50px on both sides */
+    padding-bottom: 50px;
     box-sizing: border-box;
     align-items: center;
     flex: 1;
@@ -34,3 +35,5 @@ body {
 .main-content {
     flex: 1; /* Pushes the footer down */
 }
+
+

@@ -16,17 +16,23 @@ function PostATask() {
   const [employerName, setEmployerName] = useState('');
   const [errors, setErrors] = useState({});
   const [userId, setUserId] = useState(null); // Store logged-in user ID
+  const [userEmail, setUserEmail] = useState(''); // Store logged-in user's email
 
   const db = getFirestore();
   const auth = getAuth();
+
+  // List of verified user IDs
+  const verifiedUserIds = ["1OSOjuGz0GZneXImiO4WGiexAq32", "I4tx1lI88tb0luNonvD7AjaYWuv2"]; // Replace with actual IDs
 
   // Check user authentication state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
+        setUserEmail(user.email); // Set the logged-in user's email
       } else {
         setUserId(null);
+        setUserEmail(''); // Clear email if user is not logged in
       }
     });
     return () => unsubscribe();
@@ -60,6 +66,8 @@ function PostATask() {
     if (!validateInputs()) return;
 
     try {
+      const isVerified = verifiedUserIds.includes(userId); // Check if user is in the verified list
+
       const docRef = await addDoc(collection(db, 'Tasks'), {
         userId, 
         roleName,
@@ -69,10 +77,11 @@ function PostATask() {
         jobType,
         tag,
         employerName,
+        employerEmail: userEmail, // Include the logged-in user's email
         createdAt: Timestamp.fromDate(new Date()),
+        verified: isVerified, // Add verified status
       });
 
-      // Store the task ID in the Firestore document
       await setDoc(docRef, { taskId: docRef.id }, { merge: true });
 
       console.log('Task posted with ID: ', docRef.id);
@@ -140,10 +149,9 @@ function PostATask() {
             <div className={styles.name}>
               <div className={styles.next}>Job Type</div>
               <select className={styles.inputField} value={jobType} onChange={(e) => setJobType(e.target.value)}>
-                <option value="Onsite Full Time">Onsite Full Time</option>
-                <option value="Onsite Contract">Onsite Contract</option>
-                <option value="Remote Full Time">Remote Full Time</option>
-                <option value="Remote Contract">Remote Contract</option>
+                <option value="Onsite">Onsite</option>
+                <option value="Remote">Remote</option>
+               
               </select>
             </div>
             <div className={styles.name}>

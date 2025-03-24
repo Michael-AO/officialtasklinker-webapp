@@ -36,7 +36,7 @@ function Topbar() {
         </div>
         <div className={styles.profilecompletion}>
           <div className={styles.completeYourProfileParent}>
-            <div className={styles.completeYourProfile}>Complete your profile</div>
+            <div className={styles.completeYourProfile}>Keep track with our job board</div>
             <img className={styles.vectorIcon} alt="" src={next} />
           </div>
           <div className={styles.div}>60%</div>

@@ -1,6 +1,6 @@
 import styles from './UserNavbar.module.css';
 import React, { useState, useEffect } from 'react';
-import logor from './Logor.png';
+import logor from './tlogo.png';
 import sicon from './searchicon.png';
 import profile from './Profile.png';
 import post from './postatask.png';

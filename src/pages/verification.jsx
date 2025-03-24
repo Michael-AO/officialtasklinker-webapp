@@ -1,66 +1,52 @@
-import React from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-import styles from "./verification.module.css";
-import back from "./backarrow.png";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import styles from './verification.module.css';
+import check from './check.png';
+import verify from './verifywhite.png';
+import profile from './pimage.png';
+import email from './email.png'
 
 function Verification() {
-  const navigate = useNavigate(); // Initialize navigate function
+    const navigate = useNavigate();
 
-  // Function to go back to the Register page
-  const handleBackClick = () => {
-    navigate("/register"); // Change "/register" to your actual route
-  };
-
-  return (
-    <div className={styles.frameParent}>
-      <div className={styles.groupParent}>
-        {/* Back Arrow */}
-        <div className={styles.evaarrowBackFillParent} onClick={handleBackClick} style={{ cursor: "pointer" }}>
-          <img className={styles.evaarrowBackFillIcon} alt="Back" src={back} />
-          <div className={styles.back}>Back</div>
-        </div>
-
-        <div className={styles.frameGroup}>
-          <div className={styles.step3Of3Wrapper}>
-            <div className={styles.step3Of}>Step 3 of 3</div>
-          </div>
-          <div className={styles.enterVerificationCodeParent}>
-            <div className={styles.enterVerificationCode}>{`Enter Verification Code `}</div>
-            <div className={styles.rectangleParent}>
-              <div className={styles.frameChild} />
-              <div className={styles.frameChild} />
-              <div className={styles.frameChild} />
+    return (
+        <div className={styles.footer}>
+            <div className={styles.verificationPeopel}>
+                <div className={styles.frameParent}>
+                    <div className={styles.verificationCompleteParent}>
+                    <img className={styles.checkIcon} alt="" src={email} />
+                        <div className={styles.verificationComplete}>{`Check your email to complete verification and login! `}</div>
+                       
+                    </div>
+                    <div className={styles.frameWrapper}>
+                        {/* Login button linked to /login */}
+                        <div className={styles.loginWrapper} onClick={() => navigate('/login')} style={{ cursor: 'pointer' }}>
+                            <div className={styles.login}>{`Login! `}</div>
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.footerParent}>
+                    <div className={styles.footer1}>
+                        <div className={styles.content}>
+                            <div className={styles.welcomeToYour}>
+                                Welcome to your dashboard—your personal hub for managing tasks, tracking progress, and staying connected.
+                            </div>
+                        </div>
+                    </div>
+                    <div className={styles.profile}>
+                        <img className={styles.pimageIcon} alt="" src={profile} />
+                        <div className={styles.frameGroup}>
+                            <div className={styles.opeyemiMichaelAsereParent}>
+                                <div className={styles.opeyemiMichaelAsere}>{`Opeyemi-Michael Asere `}</div>
+                                <img className={styles.verifywhiteIcon} alt="" src={verify} />
+                            </div>
+                            <div className={styles.managerTasklinkersLtd}>Manager, Tasklinkers LTD</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-        <i className={styles.weveSentA}>
-          We've sent a verification code to your email. Please enter the code below to confirm your account and proceed.
-        </i>
-        <div className={styles.frameContainer}>
-          <div className={styles.frameDiv}>
-            <div className={styles.rectangleGroup}>
-              <div className={styles.rectangleDiv} />
-              <div className={styles.rectangleDiv} />
-              <div className={styles.rectangleDiv} />
-              <div className={styles.rectangleDiv} />
-              <div className={styles.rectangleDiv} />
-              <div className={styles.rectangleDiv} />
-            </div>
-            <i className={styles.codeExpiresIn}>Code expires in 30s</i>
-          </div>
-          <div className={styles.sendViaSmsParent}>
-            <i className={styles.sendViaSms}>{`Send via SMS `}</i>
-            <i className={styles.resendCode}>Resend code</i>
-          </div>
-        </div>
-        <div className={styles.frameWrapper}>
-          <div className={styles.confirmFinishWrapper}>
-            <div className={styles.confirmFinish}>{`Confirm & Finish`}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }
 
 export default Verification;

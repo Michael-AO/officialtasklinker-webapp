@@ -1,4 +1,4 @@
-.bar {
+.frameChild {
     align-self: stretch;
     position: relative;
     border-radius: 15px;
@@ -10,24 +10,13 @@
     position: relative;
     letter-spacing: -0.02em;
 }
-
-.rateStep {
-    align-self: stretch;
-    position: relative;
-    letter-spacing: -0.02em;
-    color: 04A466;
-}
-
-
-
-
 .rectangleParent {
-    width: 170px;
+    width: 193px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: 8px;
+    gap: 10px;
 }
 .nextnavIcon {
     width: 22px;
@@ -53,9 +42,9 @@
 .frameGroup {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    gap: 8px;
+    gap: 16px;
 }
 .radiobuttonIcon {
     width: 20px;
@@ -213,13 +202,11 @@
     border-radius: 15px;
     border: 1px solid #dbdbdb;
     box-sizing: border-box;
-    padding-bottom: 50px;
     height: 904px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    margin-top: 150px;
     padding: 16px 32px;
     text-align: left;
     font-size: 22px;

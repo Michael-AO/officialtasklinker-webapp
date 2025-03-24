@@ -28,8 +28,8 @@ function DashboardLayout() {
 		<Routes>
             <Route path="/" element={<Navigate to="/dashboard/Profile" replace />} />
             <Route path="/profile" element={<ProfileUI />} />
-            <Route path="/resume" element={<ReuseableResume />} />
             <Route path="/applications" element={<Application />} />
+            <Route path="/resume" element={<ReuseableResume />} />
             <Route path="/postedTasks" element={<PostU />} />
             <Route path="/getPaid" element={<GetPaid />} />
         </Routes>

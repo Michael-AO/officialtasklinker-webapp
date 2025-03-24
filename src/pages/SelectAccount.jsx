@@ -1,59 +1,128 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './SelectAccount.module.css';
+import next from './Nextnav.png';
+import SA from './SA';
+import RegisterAccount from './RegisterAccount';
+import Verification from './verification';
 
 function SelectAccount() {
+    const [step, setStep] = useState(1);
     const navigate = useNavigate();
-    const [selectedAccount, setSelectedAccount] = useState('personal');
+
+    const handleStepChange = (newStep) => {
+        if (newStep < step) {
+            setStep(newStep);
+        }
+    };
+
+    const handleAccountCreation = () => {
+        setStep(3); // Move to the verification step
+    };
+
+    const renderComponent = () => {
+        switch (step) {
+            case 1:
+                return <SA setStep={setStep} />;
+            case 2:
+                return <RegisterAccount onCreateAccount={handleAccountCreation} />;
+            case 3:
+                return <Verification />;
+            default:
+                return <SA setStep={setStep} />;
+        }
+    };
 
     return (
-        <div className={styles.selectaccount}>
-            <div className={styles.stepcountParent}>
-                <div className={styles.stepcount}>
-                    <div className={styles.step1Of3Wrapper}>
-                        <div className={styles.step1Of}>Step 1 of 3</div>
-                    </div>
-                    <div className={styles.selectAccountParent}>
-                        <div className={styles.selectAccount}>Select Account</div>
-                        <div className={styles.rectangleParent}>
-                            <div className={styles.frameChild} />
-                            <div className={styles.frameItem} />
-                            <div className={styles.frameItem} />
+        <div className={styles.registercontain}>
+            <div className={styles.createaccount}>
+                <div className={styles.frameParent}>
+                    <div className={styles.frameGroup}>
+                        {/* Step 1: Select Account */}
+                        <div 
+                            className={styles.rectangleParent} 
+                            onClick={() => handleStepChange(1)} 
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div 
+                                className={styles.rateStep} 
+                                style={{ color: step >= 1 ? '#04A466' : 'white' }}
+                            >
+                                Select Account
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div className={styles.accouttypes}>
-                    <div
-                        className={`${styles.rectangleGroup} ${selectedAccount === 'personal' ? styles.selected : ''}`}
-                        onClick={() => setSelectedAccount('personal')}
-                    >
-                        <input type="radio" name="accountType" className={styles.radiobtn} checked={selectedAccount === 'personal'} readOnly />
-                        <div className={styles.personalAccountParent}>
-                            <div className={styles.personalAccount}>Personal Account</div>
-                            <div className={styles.idealForIndividuals}>
-                                Ideal for individuals looking to manage personal tasks, track their own projects, or explore the platform for individual needs.
+
+                        <img className={styles.nextnavIcon} alt="" src={next} />
+
+                        {/* Step 2: Register Account */}
+                        <div 
+                            className={styles.rectangleParent} 
+                            onClick={() => handleStepChange(2)} 
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div 
+                                className={styles.rateStep} 
+                                style={{ color: step >= 2 ? '#04A466' : 'white' }}
+                            >
+                                Register Account
+                            </div>
+                        </div>
+
+                        <img className={styles.nextnavIcon} alt="" src={next} />
+
+                        {/* Step 3: Verify Account */}
+                        <div className={styles.rectangleParent}>
+                            <div 
+                                className={styles.rateStep} 
+                                style={{ color: step >= 3 ? '#04A466' : 'white' }}
+                            >
+                                Verify Account
                             </div>
                         </div>
                     </div>
-                    <div className={styles.accouttypesInner}>
-                        <div className={styles.rectangleContainer}>
-                            <input type="radio" name="accountType" disabled />
-                            <div className={styles.companyParent}>
-                                <div className={styles.personalAccount}>Company</div>
-                                <div className={styles.idealForIndividuals}>
-                                    Perfect for teams and businesses to collaborate, delegate tasks, and manage projects with advanced team features.
+
+                    {/* Render current step component */}
+                    {renderComponent()}
+
+                    <div className={styles.frameParent2}>
+                        <div className={styles.goBackHomeWrapper} onClick={() => navigate('/')}> 
+                            <div className={styles.goBackHome}>Go back Home</div>
+                        </div>
+
+                        {/* Previous Button */}
+                        {step > 1 && step !== 3 && (
+                            <div className={styles.frameWrapper}>
+                                <div className={styles.frameWrapper1}>
+                                    <div
+                                        className={styles.goBackHomeWrapper}
+                                        onClick={() => setStep((prev) => Math.max(prev - 1, 1))}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <div className={styles.goBackHome}>Previous</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
+
+                        {/* Next Button only on Step 1 */}
+                        {step === 1 && (
+                            <div className={styles.frameWrapper}>
+                                <div className={styles.frameWrapper1}>
+                                    <div
+                                        className={styles.goBackHomeWrapper}
+                                        onClick={() => setStep((prev) => Math.min(prev + 1, 3))}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <div className={styles.goBackHome}>Next</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
-            <div className={styles.buttons}>
-                <div className={styles.backbtn} onClick={() => navigate('/')}>Back</div>
-                <div className={styles.nextbtn} onClick={() => navigate('/registerpage')}>Next</div>
             </div>
         </div>
     );
-};
+}
 
 export default SelectAccount;

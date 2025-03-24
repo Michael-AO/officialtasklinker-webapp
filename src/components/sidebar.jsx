@@ -38,16 +38,6 @@ function Sidebar() {
           </NavLink>
 
           <NavLink 
-            to="/dashboard/resume" 
-            className={({ isActive }) => 
-              isActive ? `${styles.inactiveTab} ${styles.active}` : styles.inactiveTab
-            }
-          >
-            <img className={styles.resumedashIcon} alt="" src={resume} />
-            <div className={styles.applications}>Resume</div>
-          </NavLink>
-
-          <NavLink 
             to="/dashboard/applications" 
             className={({ isActive }) => 
               isActive ? `${styles.inactiveTab} ${styles.active}` : styles.inactiveTab
@@ -56,6 +46,8 @@ function Sidebar() {
             <img className={styles.applicationdashIcon} alt="" src={application} />
             <div className={styles.applications}>Applications</div>
           </NavLink>
+
+          
 
           <NavLink 
             to="/dashboard/postedTasks" 
@@ -67,15 +59,17 @@ function Sidebar() {
             <div className={styles.applications}>Posted Tasks</div>
           </NavLink>
 
-          <NavLink 
-            to="/dashboard/getPaid" 
-            className={({ isActive }) => 
-              isActive ? `${styles.inactiveTab} ${styles.active}` : styles.inactiveTab
-            }
-          >
+          {/* DISABLED: Resume */}
+          <div className={`${styles.inactiveTab} ${styles.disabledTab}`}>
+            <img className={styles.resumedashIcon} alt="" src={resume} />
+            <div className={styles.applications}>Resume</div>
+          </div>
+
+          {/* DISABLED: Get Paid */}
+          <div className={`${styles.inactiveTab} ${styles.disabledTab}`}>
             <img className={styles.getpaidIcon} alt="" src={getpaid} />
             <div className={styles.applications}>Get Paid</div>
-          </NavLink>
+          </div>
         </div>
 
         <div className={styles.navMenuWrapper1}>

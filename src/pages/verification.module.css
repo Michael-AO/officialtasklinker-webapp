@@ -1,173 +1,37 @@
-.evaarrowBackFillIcon {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  width: 24px;
-  height: 24px;
-  overflow: hidden;
-}
-.back {
-  position: absolute;
-  top: 0px;
-  left: 32.82px;
-  letter-spacing: -0.02em;
-  line-height: 22px;
-}
-.evaarrowBackFillParent {
-  width: 75.8px;
-  position: relative;
-  height: 24px;
-  font-size: 20px;
-  color: #000;
-  font-family: 'DM Sans';
-}
-.step3Of {
-  position: relative;
-  letter-spacing: -0.02em;
-  line-height: 40.95px;
-  font-weight: 500;
-}
-.step3Of3Wrapper {
-  position: absolute;
-  top: 0px;
-  left: calc(50% - 264.75px);
-  border-radius: 10px;
-  background-color: #f3f3f3;
-  width: 153px;
-  height: 39px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  box-sizing: border-box;
-}
-.enterVerificationCode {
+.verificationComplete {
   position: relative;
   letter-spacing: 0.01em;
   line-height: 37px;
 }
-.frameChild {
-  width: 23.4px;
+.checkIcon {
+  width: 27px;
   position: relative;
-  border-radius: 4px;
-  background-color: #04a466;
-  height: 3px;
+  height: 27px;
 }
-.rectangleParent {
+.verificationCompleteParent {
+  width: 320px;
   display: flex;
   flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
-}
-.enterVerificationCodeParent {
-  position: absolute;
-  top: 50px;
-  left: 0px;
-  width: 529.5px;
-  display: flex;
-  flex-direction: column;
   align-items: flex-start;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 10px;
-  text-align: left;
-  font-size: 28px;
-  color: #24221e;
-  font-family: Roboto;
 }
-.frameGroup {
-  width: 529.5px;
-  position: relative;
-  height: 100px;
-  color: #080808;
-  font-family: 'DM Sans';
-}
-.weveSentA {
-  width: 463.6px;
-  position: relative;
-  letter-spacing: -0.02em;
-  line-height: 22px;
-  display: inline-block;
-  text-align: left;
-}
-.rectangleDiv {
-  width: 52.2px;
-  position: relative;
-  border-radius: 11px;
-  border: 0.9px solid #080808;
-  box-sizing: border-box;
-  height: 52.2px;
-}
-.rectangleGroup {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 7px;
-}
-.codeExpiresIn {
-  width: 137px;
-  position: relative;
-  letter-spacing: -0.02em;
-  line-height: 22px;
-  display: inline-block;
-  flex-shrink: 0;
-}
-.frameDiv {
-  align-self: stretch;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 17px;
-}
-.sendViaSms {
-  position: relative;
-  letter-spacing: -0.02em;
-  line-height: 22px;
-}
-.resendCode {
-  width: 137px;
-  position: relative;
-  letter-spacing: -0.02em;
-  line-height: 22px;
-  display: inline-block;
-  color: #04a466;
-  flex-shrink: 0;
-}
-.sendViaSmsParent {
-  width: 373.5px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0px;
-  color: #080808;
-}
-.frameContainer {
-  width: 501.9px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 19px;
-}
-.confirmFinish {
+.login {
   position: relative;
   letter-spacing: -0.02em;
   line-height: 20px;
   font-weight: 600;
+  text-decoration: none;
 }
-.confirmFinishWrapper {
+.loginWrapper {
   position: absolute;
   top: 0px;
   left: 0px;
   border-radius: 20px;
-  background-color: #24221e;
+  background-color: #04a466;
   border: 1px solid #000;
   box-sizing: border-box;
-  width: 258px;
+  width: 430px;
   height: 60px;
   display: flex;
   flex-direction: row;
@@ -176,36 +40,127 @@
   padding: 11px 19px;
 }
 .frameWrapper {
-  width: 258px;
+  width: 430px;
   position: relative;
   height: 60px;
-  color: #fff;
-}
-.groupParent {
-  width: 535.9px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 34px;
-}
-.frameParent {
-  width: 100%;
-  position: relative;
-  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25), 0px 4px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 20px 20px 0px 0px;
-  background-color: #fff;
-  height: 645.9px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 89px 211px;
-  box-sizing: border-box;
   text-align: center;
   font-size: 16px;
-  margin-top: 140px;
-  color: #727272;
   font-family: 'BR Hendrix';
+}
+.frameParent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 24px;
+}
+.welcomeToYour {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  letter-spacing: 0.01em;
+  line-height: 39px;
+  display: inline-block;
+  width: 761px;
+}
+.content {
+  width: 761px;
+  position: relative;
+  height: 164px;
+}
+.footer1 {
+  align-self: stretch;
+  border-radius: 15px;
+  background-color: #737373;
+  height: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 33px 35px;
+  box-sizing: border-box;
+}
+.pimageIcon {
+  width: 103px;
+  position: relative;
+  border-radius: 11.7px;
+  height: 103px;
+  object-fit: cover;
+}
+.opeyemiMichaelAsere {
+  position: relative;
+  letter-spacing: 0.01em;
+  line-height: 17.17px;
+}
+.verifywhiteIcon {
+  width: 16.7px;
+  position: relative;
+  height: 16px;
+}
+.opeyemiMichaelAsereParent {
+  align-self: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2.3px;
+}
+.managerTasklinkersLtd {
+  align-self: stretch;
+  position: relative;
+  font-size: 12.48px;
+  letter-spacing: 0.01em;
+  line-height: 17.17px;
+  color: #929292;
+}
+.frameGroup {
+  width: 205.2px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10.1px;
+}
+.profile {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 17.9px;
+  font-size: 15.61px;
+}
+.footerParent {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 31px;
+  font-size: 25px;
+  font-family: 'DM Sans';
+}
+.verificationPeopel {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 24px;
+}
+.footer {
+  width: 100%;
+  position: relative;
+  border-radius: 15px;
+  background-color: #1b1b1b;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 52px 82px;
+  box-sizing: border-box;
+  text-align: left;
+  font-size: 28px;
+  color: #fff;
+  font-family: Roboto;
 }
 

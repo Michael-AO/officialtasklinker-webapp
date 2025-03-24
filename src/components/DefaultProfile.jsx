@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { auth, db } from '../firebase'; // Import Firestore database
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import styles from './DefaultProfile.module.css';
+import React, { useState, useEffect } from "react";
+import { auth, db } from "../firebase"; // Import Firestore database
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import styles from "./DefaultProfile.module.css";
 import defaultProfilePicture from "./profilepicture.png";
 
 function DefaultProfile() {

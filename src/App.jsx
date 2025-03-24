@@ -23,6 +23,7 @@ import Sidebar from "./components/sidebar.jsx"
 import SelectAccount from "./pages/SelectAccount.jsx";
 import Apply from "./pages/Apply.jsx";
 import OpenPost from "./Tabs/openpost.jsx";
+import RegisterAccount from "./pages/RegisterAccount.jsx";
 
 
 
@@ -83,7 +84,7 @@ function App() {
             element={
               <>
                   <UserNavbar />
-                <Verification />
+                  <SelectAccount initialStep={3} />
               </>
             }
           />
@@ -95,7 +96,7 @@ function App() {
             element={
               <>
                   <UserNavbar />
-                <Login />
+                  <Login />
               </>
             }
           />

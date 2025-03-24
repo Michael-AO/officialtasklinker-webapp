@@ -1,50 +1,21 @@
-.frameChild {
-    align-self: stretch;
-    position: relative;
-    border-radius: 15px;
-    background-color: #04a466;
-    height: 4px;
-}
-.logIntoYour {
-    width: 221px;
-    position: relative;
-    letter-spacing: -0.02em;
-    display: inline-block;
-}
-.rectangleParent {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    width: 193px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 10px;
-}
-.frameWrapper {
-    width: 193px;
-    position: relative;
-    height: 43px;
-    font-size: 22px;
-}
-.emailAddress {
+.firstName {
     align-self: stretch;
     position: relative;
     letter-spacing: -0.02em;
     line-height: 22px;
 }
-.emailAddressWrapper {
-    align-self: stretch;
+.michael {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
+.inputfield {
+    width: 427px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-}
-.michaeltasksgmailcom {
-    position: relative;
-    letter-spacing: -0.02em;
-    line-height: 22px;
+    gap: 5px;
 }
 .michaeltasksgmailcomWrapper {
     align-self: stretch;
@@ -60,21 +31,23 @@
     text-align: center;
     color: #7e7e7e;
 }
-.frameDiv {
-    width: 428px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 5px;
-}
-.frameContainer {
+
+.inputclass {
+    align-self: stretch;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 60px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
+    padding: 10px 20px;
+    text-align: center;
+    color: #7e7e7e;
 }
-.passwordAtLeast8CharacterParent {
+
+.lastNameParent {
     width: 431px;
     display: flex;
     flex-direction: column;
@@ -82,15 +55,59 @@
     justify-content: flex-start;
     gap: 5px;
 }
-.frameGroup {
+.inputfieldParent {
     align-self: stretch;
     display: flex;
     flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+}
+.emailAddressWrapper {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+.frameContainer {
+    width: 428px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.frameGroup {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 19px;
+}
+.frameDiv {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 23px;
+}
+.frameParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
     gap: 23px;
 }
-.loginWrapper {
+.createAccount {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    font-weight: 600;
+}
+.createAccountWrapper {
     position: absolute;
     top: 0px;
     left: 0px;
@@ -106,12 +123,12 @@
     justify-content: center;
     padding: 11px 19px;
 }
-.frameItem {
+.dashIcon {
     width: 117.6px;
     position: relative;
     max-height: 100%;
 }
-.vectorParent {
+.dashParent {
     position: absolute;
     top: 76px;
     left: 85.39px;
@@ -145,13 +162,13 @@
     gap: 10px;
     color: #282828;
 }
-.signUp {
+.signIn {
     color: #04a466;
 }
-.dontHaveAnContainer {
+.alreadyHaveAnContainer {
     position: absolute;
     top: 183.05px;
-    left: calc(50% - 85.16px);
+    left: calc(50% - 90.16px);
     letter-spacing: -0.02em;
     line-height: 22px;
     color: #9f9f9f;
@@ -163,84 +180,31 @@
     width: 431px;
     height: 205.1px;
 }
-.groupWrapper {
+.registeraccountInner {
     width: 431px;
     position: relative;
     height: 205.1px;
     text-align: center;
 }
-.frameParent {
+.registeraccount1 {
     align-self: stretch;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: 41px;
+    gap: 26px;
 }
-.footer {
-    align-self: stretch;
+.registeraccount {
+    width: 100%;
+    position: relative;
     border-radius: 15px;
     background-color: #1b1b1b;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    padding: 100px 79px;
-}
-.goBackHome {
-    position: relative;
-    letter-spacing: -0.02em;
-    line-height: 20px;
-    font-weight: 600;
-}
-.goBackHomeWrapper {
-    width: 226px;
-    border-radius: 20px;
-    background-color: #f7f7f7;
-    border: 1px solid #f7f7f7;
+    padding: 38px 94px;
     box-sizing: border-box;
-    height: 46px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 11px 19px;
-    text-align: center;
-    color: #0e0e0e;
-}
-.groupParent {
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 35px;
-}
-.createaccount {
-    width: 1285px;
-    border-radius: 15px;
-    background-color: #000;
-    height: 776px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 48px 75px;
-    box-sizing: border-box;
-}
-.login {
-    width: 100%;
-    position: relative;
-    border-radius: 15px;
-    border: 1px solid #dbdbdb;
-    box-sizing: border-box;
-    height: 827px;
-    margin-top: 150px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 22px 19px;
     text-align: left;
     font-size: 16px;
     color: #fff;
