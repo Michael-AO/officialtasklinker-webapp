@@ -1,0 +1,324 @@
+.overlay {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    background-color: rgba(8, 8, 8, 0.79);
+    width: 1440px;
+    height: 1254px;
+    width: 100vw; /* Cover full width of the viewport */
+    height: 100vh; /* Cover full height of the viewport */
+}
+.bg {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 20px;
+    background-color: #fff;
+    width: 1335px;
+    height: 964.3px;
+}
+.back {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.button {
+    width: 224px;
+    border-radius: 8px;
+    background-color: #000;
+    border: 1px solid #444;
+    box-sizing: border-box;
+    height: 46px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+.buttonParent {
+    position: absolute;
+    top: 784px;
+    left: 571.42px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 40px;
+}
+.uxDesigner {
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+.uxDesignerWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+.onsite {
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+}
+.onsiteWrapper {
+    border-radius: 8px;
+    background-color: #e8e8e8;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 19px;
+    font-size: 16px;
+    color: #212121;
+}
+.frameDiv {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+}
+.frameWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 18px;
+    color: #0e0e0e;
+    font-family: 'DM Sans';
+}
+.badiruStrLagos {
+    align-self: stretch;
+    position: relative;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    color: #727272;
+}
+.frameContainer {
+    width: 277px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 9px;
+}
+.compensationmonth {
+    position: absolute;
+    top: 0px;
+    left: 0.39px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    font-weight: 500;
+}
+.ngn10000 {
+    position: absolute;
+    top: 18.87px;
+    left: 0px;
+    font-size: 24.67px;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    color: #04a466;
+}
+.compensationmonthParent {
+    width: 155.4px;
+    position: relative;
+    height: 50.9px;
+    font-size: 16px;
+    color: #acacac;
+}
+.frameGroup {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0px;
+}
+.rightContent {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    width: 904px;
+    height: 709px;
+}
+.buttonGroup {
+    position: absolute;
+    top: 638px;
+    left: 355px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 40px;
+    font-size: 16px;
+}
+.uploadResume {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    white-space: pre-wrap;
+}
+.upload24dp5f6368Fill0Wght4Icon {
+    width: 29px;
+    position: relative;
+    height: 29px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.uploadinputresume {
+    position: absolute;
+    top: 30.7px;
+    left: 0px;
+    border-radius: 8px;
+    border: 1px solid #04a466;
+    box-sizing: border-box;
+    width: 375px;
+    height: 47px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    gap: 10px;
+    font-size: 16px;
+}
+.resume {
+    position: absolute;
+    top: 29px;
+    left: 59.39px;
+    width: 375px;
+    height: 77.7px;
+    color: #0e0e0e;
+}
+.haveExpereinceWith {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+}
+.vectorIcon {
+    width: 9.6px;
+    position: relative;
+    height: 4.8px;
+}
+.yesParent {
+    align-self: stretch;
+    border-radius: 8px;
+    background-color: #e2e1e1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    gap: 0px;
+    font-size: 16px;
+    color: #0e0e0e;
+}
+.haveExpereinceWithPlumbingParent {
+    width: 370px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.frameParent1 {
+    align-self: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 36px;
+}
+.iBelieveI {
+    width: 718px;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 20px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+.iBelieveIAmAnExcellentFiWrapper {
+    width: 784px;
+    border-radius: 8px;
+    background-color: #e2e1e1;
+    height: 322px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 20px;
+    box-sizing: border-box;
+    font-size: 16px;
+    color: #0e0e0e;
+}
+.whyYouShouldBePickedForTParent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 11px;
+}
+.reuseapplication {
+    position: absolute;
+    top: 150px;
+    left: 59px;
+    width: 784px;
+    height: 521px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 48px;
+    color: #000;
+}
+.rightBar {
+    width: 904px;
+    position: relative;
+    height: 709px;
+    font-size: 18px;
+    color: #fff;
+}
+.frameParent {
+    position: absolute;
+    top: 56px;
+    left: 213.42px;
+    width: 907.4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 41px;
+    font-size: 24px;
+    color: #04a466;
+}
+.applyForTask {
+    position: absolute;
+    top: 86px;
+    left: 49.58px;
+    width: 1335px;
+    height: 964.3px;
+}
+.application {
+    width: 100%;
+    position: relative;
+    background-color: #fff;
+    height: 1136px;
+    margin-top: 80px;
+    left: auto;
+    right: auto;
+    overflow: hidden;
+    cursor: pointer;
+    text-align: left;
+    font-size: 16px;
+    color: #fff;
+    font-family: 'BR Hendrix';
+}
+

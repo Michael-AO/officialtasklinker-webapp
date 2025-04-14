@@ -24,6 +24,8 @@ import SelectAccount from "./pages/SelectAccount.jsx";
 import Apply from "./pages/Apply.jsx";
 import OpenPost from "./Tabs/openpost.jsx";
 import RegisterAccount from "./pages/RegisterAccount.jsx";
+import Application from "./pages/Application.jsx"
+import ApplicationList from "./Tabs/ApplicationList.jsx";
 
 
 
@@ -143,7 +145,28 @@ function App() {
           />
 
 
+           {/* ApplICATION LIST for Task */}
+<Route
+            path="/ApplicationList"
+            element={
+              <>
+                <UserNavbar />
+               <ApplicationList />
+              </>
+            }
+          />
 
+
+ {/* Application Route */}
+ <Route
+            path="/Application"
+            element={
+              <>
+                  <UserNavbar />
+                  <Application />
+              </>
+            }
+          />
 
            {/* Dashboard */}
            <Route

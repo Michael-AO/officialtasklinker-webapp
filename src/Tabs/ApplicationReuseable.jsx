@@ -56,7 +56,7 @@ function Application() {
                         <div className={styles.textWrapper3}>Applications ({applications.length})</div>
                     </div>
                     <div className={styles.inactiveTab}>
-                        <div className={styles.textWrapper4}>Completed</div>
+                        <div className={styles.textWrapper4}>Approved</div>
                     </div>
                 </div>
 

@@ -131,3 +131,9 @@
     font-family: 'BR Hendrix';
 }
 
+/* Add this new class to your CSS module */
+.jobCardLink {
+    text-decoration: none;
+    color: inherit;
+    display: block; /* Makes the link cover the entire card */
+  }

@@ -247,3 +247,17 @@
     font-family: 'BR Hendrix';
 }
 
+.input {
+    align-self: stretch;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 20px;
+    text-align: center;
+    color: #7e7e7e;
+}

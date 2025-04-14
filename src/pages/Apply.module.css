@@ -8,139 +8,12 @@
     width: 100vw; /* Cover full width of the viewport */
     height: 100vh; /* Cover full height of the viewport */
 }
-.bg {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    border-radius: 20px;
-    background-color: #fff;
-    width: 1335px;
-    height: 964.3px;
-}
-.basebg {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    border-radius: 8px;
-    background-color: #f7f7f7;
-    width: 904px;
-    height: 770px;
-}
-.uxDesigner {
-    position: relative;
-    letter-spacing: -0.02em;
-    font-weight: 500;
-}
-.uxDesignerWrapper {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-}
-.onsite {
+.cancel {
     position: relative;
     letter-spacing: -0.02em;
     line-height: 22px;
 }
-.onsiteWrapper {
-    border-radius: 8px;
-    background-color: #e8e8e8;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 19px;
-    font-size: 16px;
-    color: #212121;
-}
-.frameParent {
-    position: absolute;
-    top: 0px;
-    left: 0.38px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 20px;
-    font-size: 24px;
-}
-.badiruStrLagos {
-    position: absolute;
-    top: 75.28px;
-    left: 0px;
-    letter-spacing: -0.02em;
-    line-height: 27px;
-    color: #727272;
-}
-.compensationmonth {
-    position: absolute;
-    top: 0px;
-    left: 0.39px;
-    letter-spacing: -0.02em;
-    line-height: 27px;
-    font-weight: 500;
-}
-.ngn10000 {
-    position: absolute;
-    top: 18.87px;
-    left: 0px;
-    font-size: 24.67px;
-    letter-spacing: -0.02em;
-    font-weight: 500;
-    color: #04a466;
-}
-.compensationmonthParent {
-    position: absolute;
-    top: 0.13px;
-    left: 558.61px;
-    width: 155.4px;
-    height: 50.9px;
-    color: #acacac;
-}
-.headercontentwrapperInner {
-    position: absolute;
-    top: 48.75px;
-    left: 0.38px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    font-size: 18px;
-    color: #0e0e0e;
-    font-family: 'DM Sans';
-}
-.headercontentwrapper {
-    width: 714px;
-    position: relative;
-    height: 102.3px;
-}
-.aboutTheJob {
-    margin: 0;
-}
-.aboutTheJobContainer {
-    align-self: stretch;
-    position: relative;
-    letter-spacing: -0.02em;
-    line-height: 22px;
-    color: #0e0e0e;
-}
-.reuseabout {
-    position: absolute;
-    top: 33.62px;
-    left: 98.69px;
-    width: 718.8px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 41px;
-}
-.content {
-    width: 904px;
-    position: relative;
-    height: 770px;
-}
-.nextStep {
+.apply {
     position: relative;
     letter-spacing: -0.02em;
     line-height: 20px;
@@ -157,75 +30,180 @@
     align-items: center;
     justify-content: center;
     padding: 10px;
+    text-align: left;
+    font-size: 16px;
     color: #fff;
 }
-.fullForm {
-    position: absolute;
-    top: 99px;
-    left: 215.42px;
-    width: 905px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 25px;
-}
-.aboutTask {
-    position: relative;
-}
-.activeaboutChild {
-    align-self: stretch;
-    position: relative;
-    border-radius: 8px;
-    background-color: #04a466;
-    height: 5.9px;
-}
-.activeabout {
-    width: 271.2px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 15px;
-}
-.applicationChild {
-    align-self: stretch;
-    position: relative;
-    border-radius: 8px;
-    background-color: #f0f0f0;
-    height: 5.9px;
-}
-.application {
-    width: 271.2px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 15px;
-    color: #000;
-}
-.stepCount {
-    position: absolute;
-    top: 32px;
-    left: 314.42px;
+.buttons {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
-    gap: 23px;
-    text-align: center;
+    gap: 40px;
 }
-.cancelIcon {
+.container {
     position: absolute;
-    top: 34.33px;
-    left: 1238.75px;
-    width: 33.3px;
-    height: 33.3px;
+    top: 0px;
+    left: 0px;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    width: 904px;
+    height: 720px;
+}
+.uxDesigner {
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+.uxDesignerWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+.onsiteWrapper {
+    border-radius: 8px;
+    background-color: #f3f3f3;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 19px;
+    font-size: 16px;
+    color: #212121;
+}
+.frameParent {
+    position: absolute;
+    top: 0px;
+    left: 0.44px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    font-size: 24px;
+}
+.badiruStrLagos {
+    position: absolute;
+    top: 70.31px;
+    left: 0px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    display: inline-block;
+    color: #727272;
+    width: 317.5px;
+    height: 25.2px;
+}
+.compensationmonth {
+    position: absolute;
+    top: 0px;
+    left: 0.44px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
+    font-weight: 500;
+    display: inline-block;
+    width: 177.6px;
+    height: 25.2px;
+}
+.ngn10000 {
+    position: absolute;
+    top: 17.62px;
+    left: 0px;
+    font-size: 24.67px;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    color: #04a466;
+    display: inline-block;
+    width: 155.9px;
+    height: 29.9px;
+}
+.compensationmonthParent {
+    position: absolute;
+    top: 0.12px;
+    left: 640.21px;
+    width: 178.1px;
+    height: 47.5px;
+    color: #acacac;
+}
+.headercontentwrapperInner {
+    position: absolute;
+    top: 45.53px;
+    left: 0.44px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 18px;
+    color: #0e0e0e;
+    font-family: 'DM Sans';
+}
+.headercontentwrapper {
+    width: 818.3px;
+    position: relative;
+    height: 95.5px;
+}
+.aboutTheJob {
+    margin: 0;
+}
+.aboutTheJobContainer {
+    align-self: stretch;
+    position: relative;
+    letter-spacing: -0.02em;
+    line-height: 22px;
+    color: #0e0e0e;
+    display: inline-block;
+    height: 410.9px;
+    flex-shrink: 0;
+}
+.headercontentwrapperParent {
+    position: absolute;
+    top: 32px;
+    left: 46.5px;
+    width: 824px;
+    height: 592px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 38px;
+}
+.content {
+    width: 904px;
+    position: relative;
+    height: 720px;
+    text-align: left;
+    font-size: 16px;
+    color: #04a466;
+}
+.buttonsParent {
+    width: 904px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 48px;
+}
+.applyForTaskInner {
+    position: absolute;
+    top: 0px;
+    left: 0.42px;
+    border-radius: 20px;
+    background-color: #fff;
+    width: 1335px;
+    height: 964px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 42px 215px;
+    box-sizing: border-box;
 }
 .applyForTask1 {
     position: absolute;
     top: 86px;
-    left: 49.58px;
+    left: auto;
+    right: auto;
+    border-radius: 20px;
     width: 1335px;
     height: 964.3px;
 }
@@ -234,85 +212,12 @@
     position: relative;
     background-color: #fff;
     height: 1136px;
+    margin-top: 80px;
     overflow: hidden;
-    margin-top: 60px;
     cursor: pointer;
-    text-align: left;
-    font-size: 16px;
-    color: #04a466;
+    text-align: center;
+    font-size: 20px;
+    color: #000;
     font-family: 'BR Hendrix';
 }
 
-.buttonContainer {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-.nextStep, .backStep, .submit {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.nextStep {
-    background-color: green;
-    color: white;
-    width: 224px;
-    position: relative;
-    border-radius: 8px;
-    background-color: #000;
-    border: 1px solid #444;
-    box-sizing: border-box;
-height: 46px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    text-align: left;
-    font-size: 16px;
-    color: #fff;
-    font-family: 'BR Hendrix';
-        }
-
-.backStep {
-    background-color: grey;
-    color: white;
-}
-
-.submit {
-    background-color: #04a466;
-    color: white;
-}
-
-/* Step Indicator */
-.step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.stepBar {
-    width: 340px;
-    height: 5px;
-    background-color: grey;
-    margin-top: 5px;
-    transition: background-color 0.3s ease-in-out;
-}
-
-.filled {
-    background-color: #008000;
-}
-
-/* Cancel Icon */
-.cancelIcon {
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    position: absolute;
-    top: 20px;
-    right: 20px;
-}

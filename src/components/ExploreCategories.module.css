@@ -24,7 +24,7 @@
     font-family: Roboto;
     color: #04a466;
     white-space: nowrap;
-overflow: hidden;
+      
 }
 .exploreheader {
     width: 352px;
@@ -38,7 +38,7 @@ overflow: hidden;
     position: relative;
     letter-spacing: -0.02em;
 }
-.plumbingWrapper {
+.activeState {
     width: 120px;
     border-radius: 8px;
     background-color: #080808;
@@ -52,7 +52,7 @@ overflow: hidden;
     padding: 10px;
     color: #fff;
 }
-.uiDesignWrapper {
+.inactiveState {
     width: 120px;
     border-radius: 8px;
     border: 1px solid #dbdbdb;
@@ -98,7 +98,11 @@ overflow: hidden;
     font-size: 20px;
     font-family: 'BR Hendrix';
 }
-
+.downIcon {
+    width: 14.5px;
+    position: relative;
+    height: 7.6px;
+}
 .timestampsort {
     display: flex;
     flex-direction: row;
@@ -116,7 +120,7 @@ overflow: hidden;
     color: #080808;
     font-family: 'BR Hendrix';
 }
-.frameParent {
+.headercontent {
     width: 867px;
     display: flex;
     flex-direction: column;
@@ -124,7 +128,7 @@ overflow: hidden;
     justify-content: flex-start;
     gap: 32px;
 }
-.groupChild {
+.jobCardChild {
     position: absolute;
     top: 0px;
     left: 0px;
@@ -134,7 +138,25 @@ overflow: hidden;
     width: 386.7px;
     height: 257.3px;
 }
-.compensationmonth {
+.jobtitle {
+    position: relative;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.jobtitleWrapper {
+    position: absolute;
+    top: 30px;
+    left: 41px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0px 0px 1px;
+    font-size: 24px;
+    color: #04a466;
+}
+.compensation {
     position: absolute;
     top: 169.33px;
     left: 40.8px;
@@ -143,43 +165,15 @@ overflow: hidden;
     font-weight: 500;
     color: #acacac;
 }
-.uxDesigner {
-    position: relative;
-    letter-spacing: -0.02em;
-    font-weight: 500;
-    white-space: nowrap; /* Prevents text from wrapping */
-    overflow: hidden;
-    text-overflow: ellipsis; /* Adds "..." if text is too long */
-    line-height: 1.2; /* Reduces the line height */
-    max-width: 140px;
-}
-
-.employer {
-    position: relative;
-    letter-spacing: -0.02em;
-    font-weight: 500;
-    white-space: nowrap; /* Prevents text from wrapping */
-    overflow: hidden;
-    text-overflow: ellipsis; /* Adds "..." if text is too long */
-    line-height: 1.2; /* Reduces the line height */
-    max-width: 140px;
-    color: #080808;
-}
- 
-
-
-.uxDesignerWrapper {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-}
 .onsite {
     position: relative;
     letter-spacing: -0.02em;
     line-height: 22px;
 }
-.onsiteWrapper {
+.jobtype {
+    position: absolute;
+    top: 188px;
+    left: 284px;
     border-radius: 8px;
     background-color: #f3f3f3;
     display: flex;
@@ -187,88 +181,93 @@ overflow: hidden;
     align-items: center;
     justify-content: center;
     padding: 6px 19px;
-    font-size: 16px;
     color: #212121;
 }
-.frameGroup {
-    position: absolute;
-    top: 31.2px;
-    left: 40.8px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 20px;
-    font-size: 24px;
-    color: #04a466;
-}
-.badiruStrLagos {
-    position: absolute;
-    top: 106.48px;
-    left: 40.8px;
-    letter-spacing: -0.02em;
-    line-height: 27px;
-    color: #727272;
-}
-.money {
+.ngn10000 {
     position: absolute;
     top: 188.33px;
     left: 40.8px;
-    font-size: 22px;
+    font-size: 24.67px;
     letter-spacing: -0.02em;
     line-height: 42.17px;
     font-weight: 500;
-    color: #04a466;
 }
-.shellNigeriaWrapper {
-    position: absolute;
-    top: 79.94px;
-    left: 40.8px;
+.tasklinkersLtdWrapper {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
-    font-size: 18px;
-    font-family: 'DM Sans';
-    color: 000
-
 }
-.rectangleParent {
-    width: 386.7px;
+.materialSymbolsverifiedRounIcon {
+    width: 24px;
     position: relative;
-    height: 257.3px;
+    max-height: 100%;
+    overflow: hidden;
+    flex-shrink: 0;
 }
-
-
-.groupParent {
+.employerstag {
     align-self: stretch;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
-    gap: 32px;
+    gap: 7px;
 }
-.jobs {
-    align-self: center;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 columns */
-    grid-template-rows: repeat(2, auto); /* 2 rows */
-    gap: 20px;
-    justify-content: center;
-    color: #0e0e0e;
+.location {
+    align-self: stretch;
+    position: relative;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+    line-height: 27px;
     font-family: 'BR Hendrix';
-    width: 100%;
-    max-width: 1200px; /* Adjust width if needed */
+    color: #727272;
+    margin-top: -1px;
 }
-  
+.employerstagParent {
+    position: absolute;
+    top: 79px;
+    left: 41px;
+    width: 152px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    font-size: 18px;
+    font-family: 'DM Sans';
+}
+.jobCard {
+    width: 386.7px;
+    position: relative;
+    height: 257.3px;
+    flex-shrink: 0;
+}
+.jobDisplay {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, auto); /* 3 items per row */
+    grid-template-rows: repeat(2, auto); /* 2 rows */
+    gap: 20px; /* Space between cards */
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
 
-  
-.explorecontent {
+.jobs {
     align-self: stretch;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+    gap: 20px;
+    color: #0e0e0e;
+    font-family: 'BR Hendrix';
+}
+.explorecontent {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 32px;
 }
 .seeMore {
@@ -278,18 +277,8 @@ overflow: hidden;
     text-decoration: underline;
     letter-spacing: -0.02em;
     font-family: 'BR Hendrix';
-    cursor: pointer;
     text-align: center;
-    padding: 10px;
-    transition: color 0.3s ease;
 }
-  
-  .seeMore:hover {
-    color: #04a466; /* Change to any highlight color you prefer */
-  }
-  
-
-
 .fullexplore {
     width: 100%;
     position: relative;
@@ -302,65 +291,6 @@ overflow: hidden;
     font-size: 16px;
     color: #000;
     font-family: 'DM Sans';
-    margin-top: 170px;
+    margin-top: 180px;
 }
 
-/* Dropdown Container */
-.dropdown {
-    position: absolute;
-    background: white;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    padding: 8px 0;
-    width: 180px;
-    z-index: 100;
-    margin-top: 5px;
-  }
-  
-  /* Dropdown Item */
-  .dropdownItem {
-    padding: 10px 16px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #333;
-    transition: background 0.2s ease-in-out;
-  }
-  
-  /* Hover Effect */
-  .dropdownItem:hover {
-    background: #f0f0f0;
-  }
-  
-  /* Active Selection */
-  .dropdownItem.active {
-    font-weight: bold;
-    background: #e6f7ff;
-    color: #04a466;
-  }
-  
-  /* Position Fix for Dropdown */
-  .timestampsort {
-    position: relative;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-  }
-
-  .loading {
-    font-size: 22px;
-    color: #04a466;
-  }
-  
-  .select {
-    border: 0;
-    stroke: 0;
-    font-size: 15px;
-  }
-
-  .select .active {
-    background-color: #f0f0f0; /* Light gray background */
-    color: #000; /* Black text */
-    font-weight: bold; /* Make text bold */
-    border-radius: 5px; /* Rounded corners */
-    padding: 5px 10px; /* Add some padding */
-  }

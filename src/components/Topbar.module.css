@@ -104,6 +104,8 @@
     position: relative;
     font-size: 32px;
     font-weight: 500;
+    line-height: 35px;
+
 }
 .completeYourProfile {
     position: absolute;

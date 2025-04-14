@@ -315,9 +315,11 @@
 .postATask {
     width: 100%;
     position: relative;
+    left: auto;
+    right: auto;
     margin-top: 80px;
     background-color: #fff;
-    height: 1300px;
+    height: 1100px;
     overflow: hidden;
     cursor: pointer;
     text-align: left;
