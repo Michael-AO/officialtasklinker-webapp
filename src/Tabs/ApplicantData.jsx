@@ -1,7 +1,7 @@
 import React from 'react';
 import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import styles from './Applicantdata.module.css';
+import styles from './ApplicantData.module.css';
 
 function Applicantdata({ applicant, onSelect, jobId }) { // Added jobId prop
   const [isUpdating, setIsUpdating] = React.useState(false);
