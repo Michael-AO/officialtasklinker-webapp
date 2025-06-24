@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -13,14 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Plus, X, FileText, Save, Eye, Clock, CheckCircle } from "lucide-react"
+import { Plus, X, FileText, Save, Eye, Clock, CheckCircle, AlertCircle } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import Link from "next/link"
 
 export default function NewTaskPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [taskPosted, setTaskPosted] = useState(false)
+  const [postedTaskId, setPostedTaskId] = useState<string>("")
   const [taskData, setTaskData] = useState({
     title: "",
     description: "",
@@ -60,58 +64,129 @@ export default function NewTaskPage() {
     "Other",
   ]
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <Clock className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login required message if not authenticated
+  if (!user) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Post New Task</h1>
+            <p className="text-muted-foreground">Create a detailed task posting to find the right freelancer</p>
+          </div>
+        </div>
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            You need to be logged in to post a task. Please{" "}
+            <Link href="/login" className="underline">
+              log in
+            </Link>{" "}
+            to continue.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to post a task.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
+      console.log("=== FRONTEND: Starting task submission ===")
+      console.log("User data:", user)
+      console.log("Task data:", taskData)
+
+      const requestBody = {
+        // User authentication data
+        user_data: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          userType: user.userType,
+          isVerified: user.isVerified,
+          skills: user.skills || [],
+          bio: user.bio || "",
+          location: user.location || "",
+          hourlyRate: user.hourlyRate,
+        },
+        // Task data
+        title: taskData.title,
+        description: taskData.description,
+        category: taskData.category,
+        budget_type: taskData.budget.type,
+        budget_min: Number.parseFloat(taskData.budget.min),
+        budget_max: Number.parseFloat(taskData.budget.max),
+        currency: taskData.budget.currency,
+        duration: taskData.duration,
+        location: taskData.location,
+        skills_required: taskData.skills,
+        questions: taskData.questions,
+        requirements: taskData.requirements,
+        visibility: taskData.visibility,
+        urgency: taskData.urgency,
+        requires_escrow: taskData.requiresEscrow,
+      }
+
+      console.log("Request body:", JSON.stringify(requestBody, null, 2))
+
       const response = await fetch("/api/tasks/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          title: taskData.title,
-          description: taskData.description,
-          category: taskData.category,
-          budget_type: taskData.budget.type,
-          budget_min: Number.parseFloat(taskData.budget.min),
-          budget_max: Number.parseFloat(taskData.budget.max),
-          currency: taskData.budget.currency,
-          duration: taskData.duration,
-          location: taskData.location,
-          skills_required: taskData.skills,
-          questions: taskData.questions,
-          requirements: taskData.requirements,
-          visibility: taskData.visibility,
-          urgency: taskData.urgency,
-          requires_escrow: taskData.requiresEscrow,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
+      console.log("Response status:", response.status)
+      console.log("Response ok:", response.ok)
+
       if (!response.ok) {
-        throw new Error("Failed to create task")
+        const errorData = await response.text()
+        console.error("API Error Response:", errorData)
+        throw new Error(`Failed to create task: ${response.status} - ${errorData}`)
       }
 
       const result = await response.json()
+      console.log("API Success Response:", result)
 
       if (result.success) {
+        setPostedTaskId(result.task.id)
         setTaskPosted(true)
         toast({
           title: "Task Posted Successfully!",
-          description: `Your task "${taskData.title}" has been posted and is now visible to freelancers.`,
+          description: `Your task "${taskData.title}" is now live and visible to freelancers.`,
         })
-
-        // Redirect after showing success
-        setTimeout(() => {
-          router.push("/dashboard/tasks")
-        }, 3000)
+      } else {
+        throw new Error(result.error || "Unknown error occurred")
       }
     } catch (error) {
       console.error("Failed to post task:", error)
       toast({
         title: "Error",
-        description: "Failed to post task. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to post task. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -217,10 +292,18 @@ export default function NewTaskPage() {
     }
   }
 
+  const handleSetupEscrow = () => {
+    router.push(`/dashboard/escrow/setup?taskId=${postedTaskId}`)
+  }
+
+  const handleViewTasks = () => {
+    router.push("/dashboard/tasks")
+  }
+
   if (taskPosted) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="w-full max-w-md text-center">
+        <Card className="w-full max-w-lg text-center">
           <CardContent className="pt-6">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
@@ -229,9 +312,10 @@ export default function NewTaskPage() {
             </div>
             <h2 className="text-2xl font-bold mb-2">Task Posted Successfully!</h2>
             <p className="text-muted-foreground mb-4">
-              Your task "{taskData.title}" has been posted and is now visible to freelancers.
+              Your task "{taskData.title}" is now live and visible to freelancers.
             </p>
-            <div className="space-y-2 text-sm">
+
+            <div className="space-y-2 text-sm mb-6">
               <div className="flex justify-between">
                 <span>Budget Range:</span>
                 <span className="font-medium">
@@ -242,8 +326,36 @@ export default function NewTaskPage() {
                 <span>Category:</span>
                 <span className="font-medium">{taskData.category}</span>
               </div>
+              <div className="flex justify-between">
+                <span>Status:</span>
+                <span className="font-medium text-green-600">Active & Visible</span>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-4">Redirecting to your tasks dashboard...</p>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h3 className="font-medium text-blue-900 mb-2">🛡️ Want Extra Protection?</h3>
+              <p className="text-sm text-blue-700 mb-3">
+                Set up escrow to protect your payment and build trust with freelancers.
+              </p>
+              <ul className="text-xs text-blue-600 space-y-1">
+                <li>✓ Secure payment holding</li>
+                <li>✓ Release funds only when satisfied</li>
+                <li>✓ Dispute resolution support</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <Button onClick={handleSetupEscrow} className="w-full" size="lg">
+                Setup Escrow Protection
+              </Button>
+              <Button onClick={handleViewTasks} variant="outline" className="w-full">
+                View My Tasks
+              </Button>
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-4">
+              You can set up escrow protection later from your tasks dashboard.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -256,6 +368,9 @@ export default function NewTaskPage() {
         <div>
           <h1 className="text-3xl font-bold">Post New Task</h1>
           <p className="text-muted-foreground">Create a detailed task posting to find the right freelancer</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Logged in as: {user.name} ({user.email})
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" disabled={isSubmitting}>
@@ -658,6 +773,13 @@ export default function NewTaskPage() {
                   </div>
                 </div>
               )}
+
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-medium text-green-900 mb-2">✅ Ready to Post</h3>
+                <p className="text-sm text-green-700">
+                  Your task will be immediately visible to freelancers and they can start applying right away.
+                </p>
+              </div>
             </CardContent>
           </Card>
         )}

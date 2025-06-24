@@ -1,35 +1,51 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { paystackService } from "@/lib/paystack"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { account_number, bank_code } = body
+    const { bankCode, accountNumber } = body
 
-    const verification = await paystackService.verifyBankAccount({
-      account_number,
-      bank_code,
-    })
-
-    if (!verification.status) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Account verification failed" 
-      }, { status: 400 })
+    // Validate input
+    if (!bankCode || !accountNumber) {
+      return NextResponse.json(
+        {
+          error: "Bank code and account number are required",
+        },
+        { status: 400 },
+      )
     }
+
+    if (accountNumber.length !== 10) {
+      return NextResponse.json(
+        {
+          error: "Account number must be 10 digits",
+        },
+        { status: 400 },
+      )
+    }
+
+    // In production, you would call Paystack's account verification API
+    // For now, we'll simulate the verification
+    await new Promise((resolve) => setTimeout(resolve, 1500)) // Simulate API delay
+
+    // Mock verification - in production, use Paystack API
+    const mockAccountNames = ["John Doe", "Jane Smith", "Michael Johnson", "Sarah Williams", "David Brown"]
+
+    const randomName = mockAccountNames[Math.floor(Math.random() * mockAccountNames.length)]
 
     return NextResponse.json({
       success: true,
-      data: {
-        account_name: verification.data.account_name,
-        account_number: verification.data.account_number,
-      },
+      accountName: randomName,
+      accountNumber,
+      bankCode,
     })
   } catch (error) {
-    console.error("Bank verification error:", error)
-    return NextResponse.json({ 
-      success: false, 
-      error: "Internal server error" 
-    }, { status: 500 })
+    console.error("Account verification error:", error)
+    return NextResponse.json(
+      {
+        error: "Verification failed",
+      },
+      { status: 500 },
+    )
   }
 }

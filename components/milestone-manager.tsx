@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -44,58 +44,19 @@ interface MilestoneManagerProps {
   taskId: string
   isClient: boolean
   totalBudget: number
+  escrowData?: any
+  realMilestones?: any[]
 }
 
-export function MilestoneManager({ taskId, isClient, totalBudget }: MilestoneManagerProps) {
-  const [milestones, setMilestones] = useState<Milestone[]>([
-    {
-      id: "1",
-      title: "Project Setup & Planning",
-      description: "Initial project setup, database design, and project architecture",
-      amount: 75000,
-      dueDate: "2024-02-15",
-      status: "approved",
-      deliverables: ["Database schema", "Project architecture document", "Initial setup"],
-      submissions: [
-        {
-          id: "1",
-          fileName: "project-setup.zip",
-          fileUrl: "#",
-          submittedAt: "2024-02-10T10:00:00Z",
-          notes: "Initial project setup with database schema and architecture documentation",
-        },
-      ],
-    },
-    {
-      id: "2",
-      title: "Frontend Development",
-      description: "Build the user interface and integrate with backend APIs",
-      amount: 125000,
-      dueDate: "2024-03-01",
-      status: "submitted",
-      deliverables: ["Responsive UI components", "API integration", "User authentication"],
-      submissions: [
-        {
-          id: "2",
-          fileName: "frontend-v1.zip",
-          fileUrl: "#",
-          submittedAt: "2024-02-28T15:30:00Z",
-          notes: "Complete frontend with all requested features implemented",
-        },
-      ],
-    },
-    {
-      id: "3",
-      title: "Testing & Deployment",
-      description: "Comprehensive testing and production deployment",
-      amount: 50000,
-      dueDate: "2024-03-15",
-      status: "pending",
-      deliverables: ["Test suite", "Production deployment", "Documentation"],
-      submissions: [],
-    },
-  ])
-
+export function MilestoneManager({
+  taskId,
+  isClient,
+  totalBudget,
+  escrowData,
+  realMilestones = [],
+}: MilestoneManagerProps) {
+  const [milestones, setMilestones] = useState<Milestone[]>([])
+  const [escrowId, setEscrowId] = useState<string | null>(null)
   const [isAddingMilestone, setIsAddingMilestone] = useState(false)
   const [newMilestone, setNewMilestone] = useState({
     title: "",
@@ -107,6 +68,60 @@ export function MilestoneManager({ taskId, isClient, totalBudget }: MilestoneMan
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null)
   const [feedback, setFeedback] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    if (realMilestones && realMilestones.length > 0) {
+      console.log("=== Using real milestones:", realMilestones)
+
+      // Transform escrow milestones to component format
+      const transformedMilestones = realMilestones.map((m: any) => ({
+        id: m.id,
+        title: m.title,
+        description: m.description,
+        amount: m.amount,
+        dueDate: m.due_date || new Date().toISOString().split("T")[0],
+        status: m.status,
+        deliverables: m.deliverables || [],
+        submissions: [], // This would come from a separate submissions table
+        feedback: m.feedback,
+      }))
+
+      setMilestones(transformedMilestones)
+      setEscrowId(escrowData?.id || null)
+    } else if (escrowData) {
+      // If we have escrow but no milestones, it's a single payment escrow
+      console.log("=== Single payment escrow detected")
+      setEscrowId(escrowData.id)
+      setMilestones([])
+    } else {
+      // No escrow set up yet - show mock data for demo
+      console.log("=== No escrow found, using fallback milestones")
+      setMilestones([
+        {
+          id: "mock-1",
+          title: "Project Setup & Planning",
+          description: "Initial project setup, database design, and project architecture",
+          amount: 75000,
+          dueDate: "2024-02-15",
+          status: "pending",
+          deliverables: ["Database schema", "Project architecture document", "Initial setup"],
+          submissions: [],
+        },
+        {
+          id: "mock-2",
+          title: "Frontend Development",
+          description: "Build the user interface and integrate with backend APIs",
+          amount: 125000,
+          dueDate: "2024-03-01",
+          status: "pending",
+          deliverables: ["Responsive UI components", "API integration", "User authentication"],
+          submissions: [],
+        },
+      ])
+    }
+    setIsLoading(false)
+  }, [realMilestones, escrowData])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -167,20 +182,44 @@ export function MilestoneManager({ taskId, isClient, totalBudget }: MilestoneMan
 
     setIsSubmitting(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Save to database if escrow exists
+      if (escrowId) {
+        const response = await fetch("/api/escrow/milestones", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "user-id": "current-user-id", // From auth context
+          },
+          body: JSON.stringify({
+            escrow_id: escrowId,
+            title: newMilestone.title,
+            description: newMilestone.description,
+            amount: Number.parseInt(newMilestone.amount),
+            due_date: newMilestone.dueDate,
+            deliverables: newMilestone.deliverables.filter((d) => d.trim()),
+          }),
+        })
 
-      const milestone: Milestone = {
-        id: Date.now().toString(),
-        title: newMilestone.title,
-        description: newMilestone.description,
-        amount: Number.parseInt(newMilestone.amount),
-        dueDate: newMilestone.dueDate,
-        status: "pending",
-        deliverables: newMilestone.deliverables.filter((d) => d.trim()),
-        submissions: [],
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            // Add the new milestone to state
+            const milestone: Milestone = {
+              id: data.milestone.id,
+              title: newMilestone.title,
+              description: newMilestone.description,
+              amount: Number.parseInt(newMilestone.amount),
+              dueDate: newMilestone.dueDate,
+              status: "pending",
+              deliverables: newMilestone.deliverables.filter((d) => d.trim()),
+              submissions: [],
+            }
+
+            setMilestones((prev) => [...prev, milestone])
+          }
+        }
       }
 
-      setMilestones((prev) => [...prev, milestone])
       setNewMilestone({
         title: "",
         description: "",

@@ -1,129 +1,129 @@
 import { type NextRequest, NextResponse } from "next/server"
-
-// Mock data for task details - in a real app, this would come from your database
-const mockTaskDetails = {
-  "1": {
-    id: "1",
-    title: "Build a Modern E-commerce Website",
-    description:
-      "We need a full-stack e-commerce website built with React and Node.js. The site should include user authentication, product catalog, shopping cart, payment integration, and admin dashboard. Must be responsive and SEO-friendly.",
-    category: "Web Development",
-    subcategory: "Full Stack Development",
-    skills_required: ["React", "Node.js", "MongoDB", "Stripe API", "CSS"],
-    budget_type: "fixed",
-    budget_min: 2500,
-    budget_max: 4000,
-    currency: "USD",
-    duration: "6-8 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "normal",
-    status: "open",
-    applications_count: 12,
-    views_count: 156,
-    deadline: "2024-02-15",
-    created_at: "2024-01-15T10:00:00Z",
-    requirements: [
-      "Experience with React and modern JavaScript",
-      "Knowledge of payment gateway integration",
-      "Portfolio of similar e-commerce projects",
-      "Available for regular communication during EST hours",
-    ],
-    questions: [
-      "Have you built e-commerce sites before?",
-      "Can you provide examples of your React work?",
-      "Are you familiar with Stripe integration?",
-    ],
-    attachments: ["wireframes.pdf", "brand-guidelines.pdf"],
-    client: {
-      id: "client-1",
-      name: "Sarah Johnson",
-      avatar_url: "/placeholder.svg?height=40&width=40",
-      rating: 4.8,
-      completed_tasks: 15,
-      total_earned: 25000,
-      location: "San Francisco, CA",
-      bio: "Experienced tech entrepreneur with 10+ years in software development.",
-      join_date: "2022-03-15T10:00:00Z",
-    },
-  },
-  "2": {
-    id: "2",
-    title: "Mobile App UI/UX Design",
-    description:
-      "Looking for a talented designer to create a modern, intuitive UI/UX for our fitness tracking mobile app. Need complete design system, wireframes, and high-fidelity mockups for both iOS and Android.",
-    category: "Design",
-    subcategory: "Mobile Design",
-    skills_required: ["Figma", "UI/UX Design", "Mobile Design", "Prototyping"],
-    budget_type: "fixed",
-    budget_min: 1500,
-    budget_max: 2500,
-    currency: "USD",
-    duration: "4-6 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "high",
-    status: "open",
-    applications_count: 8,
-    views_count: 89,
-    deadline: "2024-02-01",
-    created_at: "2024-01-10T14:30:00Z",
-    requirements: [
-      "3+ years of mobile app design experience",
-      "Proficiency in Figma or Sketch",
-      "Understanding of iOS and Android design guidelines",
-      "Portfolio showcasing mobile app designs",
-    ],
-    questions: [
-      "Can you show examples of fitness or health app designs?",
-      "How do you approach user research and testing?",
-      "What's your typical design process timeline?",
-    ],
-    attachments: ["app-requirements.pdf"],
-    client: {
-      id: "client-2",
-      name: "Mike Chen",
-      avatar_url: "/placeholder.svg?height=40&width=40",
-      rating: 4.9,
-      completed_tasks: 23,
-      total_earned: 45000,
-      location: "New York, NY",
-      bio: "Product manager at a growing startup, passionate about creating user-centered experiences.",
-      join_date: "2021-08-20T09:15:00Z",
-    },
-  },
-}
+import { supabase } from "@/lib/supabase"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const taskId = params.id
+    const { id: taskId } = params
 
-    // Get task from mock data
-    const task = mockTaskDetails[taskId as keyof typeof mockTaskDetails]
+    console.log("=== API: Fetching applications for task ID:", taskId)
 
-    if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 })
+    // Validate the task ID
+    if (!taskId || taskId === "undefined" || taskId === "null") {
+      return NextResponse.json({ success: false, error: "Invalid task ID" }, { status: 400 })
     }
 
-    // Mock similar tasks
-    const similarTasks = Object.values(mockTaskDetails)
-      .filter((t) => t.id !== taskId && t.category === task.category)
-      .slice(0, 3)
-      .map((t) => ({
-        id: t.id,
-        title: t.title,
-        budget_min: t.budget_min,
-        budget_max: t.budget_max,
-        applications_count: t.applications_count,
-      }))
+    // Get user ID from headers
+    const userId = request.headers.get("user-id")
+    const authHeader = request.headers.get("authorization")
+
+    console.log("=== API: User ID from headers:", userId)
+    console.log("=== API: Auth header present:", !!authHeader)
+
+    if (!userId) {
+      return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
+    }
+
+    // First verify the task exists and get its details
+    const { data: task, error: taskError } = await supabase
+      .from("tasks")
+      .select("id, client_id, title, status")
+      .eq("id", taskId)
+      .single()
+
+    if (taskError || !task) {
+      console.log("=== API: Task not found:", taskError)
+      return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 })
+    }
+
+    console.log("=== API: Task found:", { id: task.id, client_id: task.client_id, title: task.title })
+
+    // Check if user owns this task
+    if (task.client_id !== userId) {
+      console.log("=== API: User doesn't own this task. Task client:", task.client_id, "Request user:", userId)
+      return NextResponse.json(
+        { success: false, error: "You can only view applications for your own tasks" },
+        { status: 403 },
+      )
+    }
+
+    // Get applications for this task
+    const { data: applications, error: appsError } = await supabase
+      .from("applications")
+      .select(`
+        id,
+        freelancer_id,
+        proposed_budget,
+        cover_letter,
+        status,
+        created_at
+      `)
+      .eq("task_id", taskId)
+      .order("created_at", { ascending: false })
+
+    if (appsError) {
+      console.log("=== API: Error fetching applications:", appsError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to fetch applications",
+          details: appsError.message,
+        },
+        { status: 500 },
+      )
+    }
+
+    console.log("=== API: Found applications:", applications?.length || 0)
+
+    // Get freelancer profiles for the applications
+    const freelancerIds = applications?.map((app) => app.freelancer_id) || []
+    let freelancerProfiles: any[] = []
+
+    if (freelancerIds.length > 0) {
+      const { data: profiles, error: profilesError } = await supabase
+        .from("users")
+        .select("id, name, avatar_url")
+        .in("id", freelancerIds)
+
+      if (!profilesError && profiles) {
+        freelancerProfiles = profiles
+      }
+    }
+
+    // Transform applications with profile data
+    const transformedApplications = (applications || []).map((app) => {
+      const profile = freelancerProfiles.find((p) => p.id === app.freelancer_id)
+
+      return {
+        id: app.id,
+        freelancer_id: app.freelancer_id,
+        freelancer_name: profile?.name || "Anonymous Freelancer",
+        freelancer_avatar: profile?.avatar_url || "/placeholder.svg?height=40&width=40",
+        proposed_budget: app.proposed_budget,
+        cover_letter: app.cover_letter,
+        status: app.status,
+        applied_date: app.created_at,
+      }
+    })
+
+    console.log("=== API: Transformed applications:", transformedApplications.length)
 
     return NextResponse.json({
-      task,
-      is_saved: false, // Mock - would check user's saved tasks
-      similar_tasks: similarTasks,
+      success: true,
+      applications: transformedApplications,
+      task: {
+        id: task.id,
+        title: task.title,
+      },
     })
   } catch (error) {
-    console.error("Task detail API error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("=== API: Applications fetch error:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,99 +20,154 @@ import {
   Calendar,
   DollarSign,
 } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { toast } from "@/hooks/use-toast"
 
 interface Application {
   id: string
-  taskId: string
-  taskTitle: string
-  freelancerId: string
-  freelancerName: string
-  freelancerRating: number
-  clientId: string
-  clientName: string
-  proposedAmount: number
-  coverLetter: string
+  task_id: string
+  freelancer_id: string
+  proposed_amount: number
+  cover_letter: string
   status: "pending" | "accepted" | "rejected" | "withdrawn"
-  appliedDate: string
-  skills: string[]
-  estimatedDuration: string
+  created_at: string
+  estimated_duration: string
+  task: {
+    title: string
+    client: {
+      full_name: string
+      email: string
+    }
+  }
+  freelancer: {
+    full_name: string
+    email: string
+    user_profiles: {
+      skills: string[]
+      hourly_rate: number
+    }[]
+  }
+}
+
+interface ApplicationStats {
+  total: number
+  pending: number
+  accepted: number
+  rejected: number
 }
 
 export default function AdminApplicationsPage() {
+  const [applications, setApplications] = useState<Application[]>([])
+  const [stats, setStats] = useState<ApplicationStats>({
+    total: 0,
+    pending: 0,
+    accepted: 0,
+    rejected: 0,
+  })
+  const [loading, setLoading] = useState(true)
   const [selectedTab, setSelectedTab] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
 
-  const applications: Application[] = [
-    {
-      id: "app_001",
-      taskId: "task_001",
-      taskTitle: "E-commerce Website Development",
-      freelancerId: "freelancer_001",
-      freelancerName: "John Doe",
-      freelancerRating: 4.8,
-      clientId: "client_001",
-      clientName: "Sarah Johnson",
-      proposedAmount: 250000, // ₦2,500
-      coverLetter:
-        "I have 5+ years of experience in e-commerce development with React and Node.js. I've built similar platforms for 10+ clients with excellent results.",
-      status: "pending",
-      appliedDate: "2024-12-13T10:30:00Z",
-      skills: ["React", "Node.js", "MongoDB", "Stripe"],
-      estimatedDuration: "3 weeks",
-    },
-    {
-      id: "app_002",
-      taskId: "task_002",
-      taskTitle: "Mobile App UI/UX Design",
-      freelancerId: "freelancer_002",
-      freelancerName: "Lisa Wang",
-      freelancerRating: 4.9,
-      clientId: "client_002",
-      clientName: "Mike Chen",
-      proposedAmount: 120000, // ₦1,200
-      coverLetter:
-        "I specialize in mobile app design with a focus on user experience. My designs have helped increase user engagement by 40% on average.",
-      status: "accepted",
-      appliedDate: "2024-12-12T14:20:00Z",
-      skills: ["Figma", "Adobe XD", "Prototyping", "User Research"],
-      estimatedDuration: "2 weeks",
-    },
-    {
-      id: "app_003",
-      taskId: "task_003",
-      taskTitle: "Content Writing for Tech Blog",
-      freelancerId: "freelancer_003",
-      freelancerName: "David Smith",
-      freelancerRating: 4.6,
-      clientId: "client_003",
-      clientName: "TechCorp Inc.",
-      proposedAmount: 75000, // ₦750
-      coverLetter:
-        "I'm a technical writer with expertise in AI and blockchain. I've written 100+ articles for major tech publications.",
-      status: "rejected",
-      appliedDate: "2024-12-11T09:15:00Z",
-      skills: ["Technical Writing", "SEO", "Research", "AI"],
-      estimatedDuration: "1 week",
-    },
-    {
-      id: "app_004",
-      taskId: "task_004",
-      taskTitle: "Social Media Marketing Campaign",
-      freelancerId: "freelancer_004",
-      freelancerName: "Emma Wilson",
-      freelancerRating: 4.7,
-      clientId: "client_004",
-      clientName: "StartupXYZ",
-      proposedAmount: 180000, // ₦1,800
-      coverLetter:
-        "I've managed social media campaigns for 50+ brands, achieving an average of 300% increase in engagement and 150% growth in followers.",
-      status: "pending",
-      appliedDate: "2024-12-13T16:45:00Z",
-      skills: ["Social Media", "Content Strategy", "Analytics", "Advertising"],
-      estimatedDuration: "4 weeks",
-    },
-  ]
+  useEffect(() => {
+    fetchApplications()
+    fetchStats()
+  }, [])
+
+  const fetchApplications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("applications")
+        .select(`
+        id,
+        task_id,
+        freelancer_id,
+        proposed_budget,
+        cover_letter,
+        status,
+        created_at,
+        estimated_duration,
+        tasks (
+          title,
+          client_id,
+          users!tasks_client_id_fkey (
+            name,
+            email
+          )
+        ),
+        users!applications_freelancer_id_fkey (
+          name,
+          email
+        )
+      `)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+
+      const formattedApplications =
+        data?.map((app) => ({
+          ...app,
+          proposed_amount: app.proposed_budget,
+          task: {
+            title: app.tasks?.title,
+            client: {
+              full_name: app.tasks?.users?.name || "Unknown Client",
+              email: app.tasks?.users?.email || "",
+            },
+          },
+          freelancer: {
+            full_name: app.users?.name || "Unknown Freelancer",
+            email: app.users?.email || "",
+            user_profiles: [],
+          },
+        })) || []
+
+      setApplications(formattedApplications)
+    } catch (error) {
+      console.error("Error fetching applications:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch applications",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchStats = async () => {
+    try {
+      // Get total applications
+      const { count: totalApplications } = await supabase
+        .from("applications")
+        .select("*", { count: "exact", head: true })
+
+      // Get applications by status
+      const { count: pendingApplications } = await supabase
+        .from("applications")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending")
+
+      const { count: acceptedApplications } = await supabase
+        .from("applications")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "accepted")
+
+      const { count: rejectedApplications } = await supabase
+        .from("applications")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "rejected")
+
+      setStats({
+        total: totalApplications || 0,
+        pending: pendingApplications || 0,
+        accepted: acceptedApplications || 0,
+        rejected: rejectedApplications || 0,
+      })
+    } catch (error) {
+      console.error("Error fetching stats:", error)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -144,20 +199,26 @@ export default function AdminApplicationsPage() {
 
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
-      app.taskTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.freelancerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
+      app.task?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.freelancer?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.task?.client?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || app.status === statusFilter
     const matchesTab = selectedTab === "all" || app.status === selectedTab
 
     return matchesSearch && matchesStatus && matchesTab
   })
 
-  const stats = {
-    total: applications.length,
-    pending: applications.filter((app) => app.status === "pending").length,
-    accepted: applications.filter((app) => app.status === "accepted").length,
-    rejected: applications.filter((app) => app.status === "rejected").length,
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Clock className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading applications...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -168,9 +229,15 @@ export default function AdminApplicationsPage() {
           <p className="text-muted-foreground">Manage and monitor all task applications</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            onClick={() => {
+              fetchApplications()
+              fetchStats()
+            }}
+          >
             <Filter className="h-4 w-4 mr-2" />
-            Advanced Filters
+            Refresh Data
           </Button>
           <Button>Export Applications</Button>
         </div>
@@ -268,19 +335,20 @@ export default function AdminApplicationsPage() {
                       <Avatar>
                         <AvatarImage src="/placeholder.svg?height=40&width=40" />
                         <AvatarFallback>
-                          {application.freelancerName
-                            .split(" ")
+                          {application.freelancer?.full_name
+                            ?.split(" ")
                             .map((n) => n[0])
-                            .join("")}
+                            .join("") || "U"}
                         </AvatarFallback>
                       </Avatar>
 
                       <div className="space-y-3 flex-1">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="font-semibold text-lg">{application.taskTitle}</h3>
+                            <h3 className="font-semibold text-lg">{application.task?.title}</h3>
                             <p className="text-sm text-muted-foreground">
-                              Applied by {application.freelancerName} • Client: {application.clientName}
+                              Applied by {application.freelancer?.full_name} • Client:{" "}
+                              {application.task?.client?.full_name}
                             </p>
                           </div>
                           <Badge className={getStatusColor(application.status)}>
@@ -289,40 +357,35 @@ export default function AdminApplicationsPage() {
                           </Badge>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <p className="text-muted-foreground">Proposed Amount</p>
-                            <p className="font-medium">₦{(application.proposedAmount / 100).toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Rating</p>
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <span className="font-medium">{application.freelancerRating}</span>
-                            </div>
+                            <p className="font-medium">₦{(application.proposed_amount / 100).toLocaleString()}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Duration</p>
-                            <p className="font-medium">{application.estimatedDuration}</p>
+                            <p className="font-medium">{application.estimated_duration || "Not specified"}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Applied</p>
-                            <p className="font-medium">{new Date(application.appliedDate).toLocaleDateString()}</p>
+                            <p className="font-medium">{new Date(application.created_at).toLocaleDateString()}</p>
                           </div>
                         </div>
 
                         <div className="space-y-2">
                           <p className="text-sm font-medium">Cover Letter:</p>
-                          <p className="text-sm text-muted-foreground line-clamp-2">{application.coverLetter}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{application.cover_letter}</p>
                         </div>
 
-                        <div className="flex flex-wrap gap-2">
-                          {application.skills.map((skill) => (
-                            <Badge key={skill} variant="outline" className="text-xs">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
+                        {application.freelancer?.user_profiles?.[0]?.skills && (
+                          <div className="flex flex-wrap gap-2">
+                            {application.freelancer.user_profiles[0].skills.map((skill) => (
+                              <Badge key={skill} variant="outline" className="text-xs">
+                                {skill}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -330,9 +393,9 @@ export default function AdminApplicationsPage() {
                   <div className="flex items-center justify-between mt-4 pt-4 border-t">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      <span>Applied {new Date(application.appliedDate).toLocaleDateString()}</span>
+                      <span>Applied {new Date(application.created_at).toLocaleDateString()}</span>
                       <DollarSign className="h-4 w-4 ml-4" />
-                      <span>₦{(application.proposedAmount / 100).toLocaleString()}</span>
+                      <span>₦{(application.proposed_amount / 100).toLocaleString()}</span>
                     </div>
 
                     <div className="flex gap-2">
@@ -344,16 +407,6 @@ export default function AdminApplicationsPage() {
                         <MessageSquare className="h-4 w-4 mr-1" />
                         Contact
                       </Button>
-                      {application.status === "pending" && (
-                        <>
-                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                            Reject
-                          </Button>
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                            Accept
-                          </Button>
-                        </>
-                      )}
                     </div>
                   </div>
                 </CardContent>

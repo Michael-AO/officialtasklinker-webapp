@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,105 +15,220 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, MoreHorizontal, Eye, Ban, CheckCircle, XCircle } from "lucide-react"
+import { Search, MoreHorizontal, Eye, Ban, CheckCircle, XCircle, Users, UserCheck, UserX, Clock } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { toast } from "@/hooks/use-toast"
+
+interface User {
+  id: string
+  email: string
+  name: string
+  user_type: "client" | "freelancer"
+  created_at: string
+  last_active: string
+  is_verified: boolean
+  avatar_url?: string
+  bio?: string
+  skills?: string[]
+  hourly_rate?: number
+  rating?: number
+  completed_tasks?: number
+}
+
+interface UserStats {
+  total: number
+  active: number
+  pending: number
+  suspended: number
+  clients: number
+  freelancers: number
+}
 
 export default function AdminUsers() {
+  const [users, setUsers] = useState<User[]>([])
+  const [stats, setStats] = useState<UserStats>({
+    total: 0,
+    active: 0,
+    pending: 0,
+    suspended: 0,
+    clients: 0,
+    freelancers: 0,
+  })
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
   const [filterType, setFilterType] = useState("all")
 
-  const users = [
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john@example.com",
-      type: "Freelancer",
-      status: "Active",
-      joinedDate: "2024-01-15",
-      lastActive: "2 hours ago",
-      completedTasks: 24,
-      rating: 4.8,
-      avatar: "JD",
-      verified: true,
-      totalEarnings: "₦450,000",
-    },
-    {
-      id: "2",
-      name: "Sarah Smith",
-      email: "sarah@company.com",
-      type: "Client",
-      status: "Pending",
-      joinedDate: "2024-01-14",
-      lastActive: "1 day ago",
-      completedTasks: 8,
-      rating: 4.5,
-      avatar: "SS",
-      verified: false,
-      totalEarnings: "₦180,000",
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike@freelance.com",
-      type: "Freelancer",
-      status: "Active",
-      joinedDate: "2024-01-13",
-      lastActive: "30 minutes ago",
-      completedTasks: 56,
-      rating: 4.9,
-      avatar: "MJ",
-      verified: true,
-      totalEarnings: "₦890,000",
-    },
-    {
-      id: "4",
-      name: "Emily Davis",
-      email: "emily@startup.com",
-      type: "Client",
-      status: "Inactive",
-      joinedDate: "2024-01-12",
-      lastActive: "1 week ago",
-      completedTasks: 12,
-      rating: 4.2,
-      avatar: "ED",
-      verified: true,
-      totalEarnings: "₦320,000",
-    },
-    {
-      id: "5",
-      name: "Alex Wilson",
-      email: "alex@design.com",
-      type: "Freelancer",
-      status: "Suspended",
-      joinedDate: "2024-01-10",
-      lastActive: "3 days ago",
-      completedTasks: 18,
-      rating: 3.8,
-      avatar: "AW",
-      verified: false,
-      totalEarnings: "₦125,000",
-    },
-  ]
+  useEffect(() => {
+    fetchUsers()
+    fetchStats()
+  }, [])
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, string> = {
-      Active: "bg-green-100 text-green-800",
-      Pending: "bg-yellow-100 text-yellow-800",
-      Inactive: "bg-gray-100 text-gray-800",
-      Suspended: "bg-red-100 text-red-800",
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select(`
+        id,
+        email,
+        name,
+        user_type,
+        created_at,
+        last_active,
+        is_verified,
+        avatar_url,
+        bio,
+        skills,
+        hourly_rate,
+        rating,
+        completed_tasks
+      `)
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("Supabase error:", error)
+        throw error
+      }
+
+      console.log("Fetched users:", data)
+      setUsers(data || [])
+    } catch (error) {
+      console.error("Error fetching users:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch users",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
-    return variants[status] || "bg-gray-100 text-gray-800"
+  }
+
+  const fetchStats = async () => {
+    try {
+      // Get total users
+      const { count: totalUsers } = await supabase.from("users").select("*", { count: "exact", head: true })
+
+      // Get verified users (active)
+      const { count: activeUsers } = await supabase
+        .from("users")
+        .select("*", { count: "exact", head: true })
+        .eq("is_verified", true)
+
+      // Get unverified users (pending)
+      const { count: pendingUsers } = await supabase
+        .from("users")
+        .select("*", { count: "exact", head: true })
+        .eq("is_verified", false)
+
+      // Get clients
+      const { count: clients } = await supabase
+        .from("users")
+        .select("*", { count: "exact", head: true })
+        .eq("user_type", "client")
+
+      // Get freelancers
+      const { count: freelancers } = await supabase
+        .from("users")
+        .select("*", { count: "exact", head: true })
+        .eq("user_type", "freelancer")
+
+      setStats({
+        total: totalUsers || 0,
+        active: activeUsers || 0,
+        pending: pendingUsers || 0,
+        suspended: 0, // You can add a suspended field to track this
+        clients: clients || 0,
+        freelancers: freelancers || 0,
+      })
+    } catch (error) {
+      console.error("Error fetching stats:", error)
+    }
+  }
+
+  const handleVerifyUser = async (userId: string) => {
+    try {
+      const { error } = await supabase.from("users").update({ is_verified: true }).eq("id", userId)
+
+      if (error) throw error
+
+      toast({
+        title: "Success",
+        description: "User verified successfully",
+      })
+
+      fetchUsers()
+      fetchStats()
+    } catch (error) {
+      console.error("Error verifying user:", error)
+      toast({
+        title: "Error",
+        description: "Failed to verify user",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSuspendUser = async (userId: string) => {
+    try {
+      const { error } = await supabase.from("users").update({ is_verified: false }).eq("id", userId)
+
+      if (error) throw error
+
+      toast({
+        title: "Success",
+        description: "User suspended successfully",
+      })
+
+      fetchUsers()
+      fetchStats()
+    } catch (error) {
+      console.error("Error suspending user:", error)
+      toast({
+        title: "Error",
+        description: "Failed to suspend user",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const getStatusBadge = (user: User) => {
+    if (user.is_verified) {
+      return <Badge className="bg-green-100 text-green-800">Active</Badge>
+    } else if (user.email_confirmed_at) {
+      return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+    } else {
+      return <Badge className="bg-gray-100 text-gray-800">Unconfirmed</Badge>
+    }
   }
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = filterStatus === "all" || user.status.toLowerCase() === filterStatus
-    const matchesType = filterType === "all" || user.type.toLowerCase() === filterType
+
+    const matchesStatus =
+      filterStatus === "all" ||
+      (filterStatus === "active" && user.is_verified) ||
+      (filterStatus === "pending" && !user.is_verified)
+
+    const matchesType = filterType === "all" || user.user_type === filterType
 
     return matchesSearch && matchesStatus && matchesType
   })
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Clock className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading users...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -122,40 +237,58 @@ export default function AdminUsers() {
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-500 mt-1">Manage and monitor all platform users</p>
         </div>
+        <Button
+          onClick={() => {
+            fetchUsers()
+            fetchStats()
+          }}
+        >
+          Refresh Data
+        </Button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12,483</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.clients} clients, {stats.freelancers} freelancers
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">11,205</div>
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <p className="text-xs text-muted-foreground">Verified accounts</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Pending Verification</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">248</div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+            <p className="text-xs text-muted-foreground">Awaiting verification</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Suspended</CardTitle>
+            <UserX className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">32</div>
+            <div className="text-2xl font-bold text-red-600">{stats.suspended}</div>
+            <p className="text-xs text-muted-foreground">Suspended accounts</p>
           </CardContent>
         </Card>
       </div>
@@ -186,8 +319,7 @@ export default function AdminUsers() {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="unconfirmed">Unconfirmed</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterType} onValueChange={setFilterType}>
@@ -209,9 +341,7 @@ export default function AdminUsers() {
                 <TableHead>User</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Tasks</TableHead>
-                <TableHead>Rating</TableHead>
-                <TableHead>Earnings</TableHead>
+                <TableHead>Joined</TableHead>
                 <TableHead>Last Active</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
@@ -222,32 +352,29 @@ export default function AdminUsers() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium">
-                        {user.avatar}
+                        {user.name?.charAt(0) || user.email.charAt(0)}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-medium">{user.name}</p>
-                          {user.verified && <CheckCircle className="h-4 w-4 text-blue-600" />}
+                          <p className="font-medium">{user.name || "No name"}</p>
+                          {user.is_verified && <CheckCircle className="h-4 w-4 text-blue-600" />}
                         </div>
                         <p className="text-sm text-gray-500">{user.email}</p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{user.type}</Badge>
+                    <Badge variant="outline" className="capitalize">
+                      {user.user_type}
+                    </Badge>
                   </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusBadge(user.status)}>{user.status}</Badge>
+                  <TableCell>{getStatusBadge(user)}</TableCell>
+                  <TableCell className="text-sm text-gray-500">
+                    {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>{user.completedTasks}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <span>{user.rating}</span>
-                      <span className="text-yellow-400">★</span>
-                    </div>
+                  <TableCell className="text-sm text-gray-500">
+                    {user.last_active ? new Date(user.last_active).toLocaleDateString() : "Never"}
                   </TableCell>
-                  <TableCell className="font-medium">{user.totalEarnings}</TableCell>
-                  <TableCell className="text-sm text-gray-500">{user.lastActive}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -263,14 +390,17 @@ export default function AdminUsers() {
                           View Profile
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Verify User
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Ban className="mr-2 h-4 w-4" />
-                          Suspend User
-                        </DropdownMenuItem>
+                        {!user.is_verified ? (
+                          <DropdownMenuItem onClick={() => handleVerifyUser(user.id)}>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Verify User
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => handleSuspendUser(user.id)}>
+                            <Ban className="mr-2 h-4 w-4" />
+                            Suspend User
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem className="text-red-600">
                           <XCircle className="mr-2 h-4 w-4" />
                           Delete User
@@ -282,6 +412,18 @@ export default function AdminUsers() {
               ))}
             </TableBody>
           </Table>
+
+          {filteredUsers.length === 0 && (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Users Found</h3>
+              <p className="text-muted-foreground">
+                {searchTerm || filterStatus !== "all" || filterType !== "all"
+                  ? "Try adjusting your search or filter criteria."
+                  : "No users match the current selection."}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

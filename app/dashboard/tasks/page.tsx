@@ -5,132 +5,208 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Calendar, Clock, DollarSign, Eye, MessageSquare, MoreHorizontal, Plus, Search, Users } from "lucide-react"
+import {
+  Calendar,
+  Clock,
+  Eye,
+  MapPin,
+  Plus,
+  Search,
+  Users,
+  Briefcase,
+  TrendingUp,
+  RefreshCw,
+  MoreHorizontal,
+} from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import Link from "next/link"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/contexts/auth-context"
+import { formatNaira } from "@/lib/currency"
+import { formatDate, getStatusColor, generateTaskCode } from "@/lib/api-utils"
 import { toast } from "@/hooks/use-toast"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+const categories = [
+  "All Categories",
+  "Web Development",
+  "Mobile Development",
+  "Design",
+  "Writing",
+  "Programming",
+  "Marketing",
+  "Data Science",
+  "DevOps",
+  "AI/ML",
+]
+
+const statusOptions = [
+  { value: "all", label: "All Status" },
+  { value: "draft", label: "Draft" },
+  { value: "active", label: "Active" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+]
 
 interface Task {
   id: string
   title: string
   description: string
-  budget_min: number
-  budget_max: number
-  budget_type: "fixed" | "hourly"
-  status: string
   category: string
   skills_required: string[]
+  budget_type: "fixed" | "hourly"
+  budget_min: number
+  budget_max: number
+  currency: string
+  status: "draft" | "active" | "in_progress" | "completed" | "cancelled"
   applications_count: number
+  views_count: number
   created_at: string
+  updated_at: string
   deadline?: string
-  urgency: string
+  urgency: "low" | "normal" | "high"
   location: string
 }
 
-const statusColors = {
-  active: "bg-green-100 text-green-800",
-  in_progress: "bg-blue-100 text-blue-800",
-  completed: "bg-gray-100 text-gray-800",
-  draft: "bg-yellow-100 text-yellow-800",
-  paused: "bg-orange-100 text-orange-800",
-  cancelled: "bg-red-100 text-red-800",
-}
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: 0,
-  }).format(amount)
-}
-
 export default function MyTasksPage() {
+  const { user } = useAuth()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedStatus, setSelectedStatus] = useState("all")
+  const [sortBy, setSortBy] = useState("newest")
 
   useEffect(() => {
-    fetchTasks()
-  }, [statusFilter, categoryFilter, searchTerm])
+    if (user) {
+      fetchMyTasks()
+    }
+  }, [user, searchTerm, selectedCategory, selectedStatus, sortBy])
 
-  const fetchTasks = async () => {
+  const fetchMyTasks = async (showRefreshToast = false) => {
     try {
-      setLoading(true)
-      setError(null)
+      if (showRefreshToast) setRefreshing(true)
 
       const params = new URLSearchParams()
-      if (statusFilter !== "all") params.append("status", statusFilter)
-      if (categoryFilter !== "all") params.append("category", categoryFilter)
-      if (searchTerm) params.append("search", searchTerm)
+      params.append("user_id", user?.id || "")
 
-      const response = await fetch(`/api/tasks/my-tasks?${params}`)
+      if (searchTerm) params.append("search", searchTerm)
+      if (selectedCategory !== "all") params.append("category", selectedCategory)
+      if (selectedStatus !== "all") params.append("status", selectedStatus)
+
+      const response = await fetch(`/api/tasks/my-tasks?${params.toString()}`)
 
       if (!response.ok) {
-        throw new Error("Failed to fetch tasks")
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
       const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to fetch tasks")
+      }
+
       setTasks(data.tasks || [])
-    } catch (err) {
-      console.error("Fetch tasks error:", err)
-      setError(err instanceof Error ? err.message : "An error occurred")
+
+      if (showRefreshToast) {
+        toast({
+          title: "Tasks Updated",
+          description: `Found ${data.tasks?.length || 0} tasks`,
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching my tasks:", error)
       toast({
         title: "Error",
-        description: "Failed to load tasks. Please try again.",
+        description: "Failed to fetch your tasks. Please try again.",
         variant: "destructive",
       })
+      setTasks([])
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
-  // Auto-refresh tasks every 30 seconds to pick up new tasks
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTasks()
-    }, 30000)
+  const timeAgo = (date: string) => {
+    const now = new Date()
+    const posted = new Date(date)
+    const diffInHours = Math.floor((now.getTime() - posted.getTime()) / (1000 * 60 * 60))
 
-    return () => clearInterval(interval)
-  }, [statusFilter, categoryFilter, searchTerm])
-
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch =
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || task.status === statusFilter
-    const matchesCategory = categoryFilter === "all" || task.category === categoryFilter
-
-    return matchesSearch && matchesStatus && matchesCategory
-  })
-
-  const taskCounts = {
-    all: tasks.length,
-    active: tasks.filter((t) => t.status === "active").length,
-    in_progress: tasks.filter((t) => t.status === "in_progress").length,
-    completed: tasks.filter((t) => t.status === "completed").length,
-    draft: tasks.filter((t) => t.status === "draft").length,
+    if (diffInHours < 24) {
+      return `${diffInHours} hours ago`
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24)
+      return `${diffInDays} days ago`
+    }
   }
 
-  if (error) {
+  // Calculate stats from tasks
+  const stats = {
+    totalTasks: tasks.length,
+    activeTasks: tasks.filter((task) => task.status === "active").length,
+    inProgressTasks: tasks.filter((task) => task.status === "in_progress").length,
+    completedTasks: tasks.filter((task) => task.status === "completed").length,
+    totalApplications: tasks.reduce((sum, task) => sum + task.applications_count, 0),
+    avgBudget:
+      tasks.length > 0
+        ? Math.round(tasks.reduce((sum, task) => sum + (task.budget_min + task.budget_max) / 2, 0) / tasks.length)
+        : 0,
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold">Authentication Required</h3>
+          <p className="text-muted-foreground">Please log in to view your tasks</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-red-600">Error Loading Tasks</h3>
-              <p className="text-muted-foreground">{error}</p>
-              <Button onClick={fetchTasks} className="mt-4">
-                Try Again
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">My Tasks</h1>
+            <p className="text-muted-foreground">Loading your tasks...</p>
+          </div>
+        </div>
+
+        {/* Loading Stats */}
+        <div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     )
   }
@@ -140,14 +216,15 @@ export default function MyTasksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">My Tasks</h1>
-          <p className="text-muted-foreground">Manage your posted tasks and track their progress</p>
+          <p className="text-muted-foreground">Manage and track your posted tasks</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={fetchTasks} variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => fetchMyTasks(true)} disabled={refreshing}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
             Refresh
           </Button>
           <Button asChild>
-            <Link href="/dashboard/tasks/new">
+            <Link href="/dashboard/tasks/create">
               <Plus className="mr-2 h-4 w-4" />
               Post New Task
             </Link>
@@ -155,205 +232,241 @@ export default function MyTasksPage() {
         </div>
       </div>
 
+      {/* Quick Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalTasks}</div>
+            <p className="text-xs text-muted-foreground">All time</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Tasks</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activeTasks}</div>
+            <p className="text-xs text-muted-foreground">Currently open</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalApplications}</div>
+            <p className="text-xs text-muted-foreground">From freelancers</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Budget</CardTitle>
+            <NairaIcon className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatNaira(stats.avgBudget)}</div>
+            <p className="text-xs text-muted-foreground">Per task</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search tasks..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search your tasks..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status.value} value={status.value}>
+                        {status.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.slice(1).map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="budget_high">Budget: High to Low</SelectItem>
+                    <SelectItem value="budget_low">Budget: Low to High</SelectItem>
+                    <SelectItem value="applications">Most Applications</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="Web Development">Web Development</SelectItem>
-                <SelectItem value="Design">Design</SelectItem>
-                <SelectItem value="Writing">Writing</SelectItem>
-                <SelectItem value="Data Science">Data Science</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Task Tabs */}
-      <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="all">All ({taskCounts.all})</TabsTrigger>
-          <TabsTrigger value="active">Active ({taskCounts.active})</TabsTrigger>
-          <TabsTrigger value="in_progress">In Progress ({taskCounts.in_progress})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({taskCounts.completed})</TabsTrigger>
-          <TabsTrigger value="draft">Draft ({taskCounts.draft})</TabsTrigger>
-        </TabsList>
+      {/* Results */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">Showing {tasks.length} tasks</p>
+      </div>
 
-        <TabsContent value={statusFilter} className="space-y-4">
-          {loading ? (
-            <div className="grid gap-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i}>
-                  <CardHeader>
-                    <div className="space-y-2">
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-full" />
-                      <div className="flex gap-2">
-                        <Skeleton className="h-6 w-16" />
-                        <Skeleton className="h-6 w-20" />
+      {/* Task List */}
+      <div className="space-y-4">
+        {tasks.map((task) => (
+          <Card key={task.id} className="hover:shadow-md transition-shadow">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Link href={`/dashboard/tasks/${task.id}`} className="hover:underline">
+                      <CardTitle className="text-lg">{task.title}</CardTitle>
+                    </Link>
+                    <Badge variant="outline" className="text-xs">
+                      {generateTaskCode(task.id)}
+                    </Badge>
+                    {task.urgency === "high" && <Badge variant="destructive">Urgent</Badge>}
+                    <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <NairaIcon className="h-4 w-4" />
+                      {formatNaira(task.budget_min)} - {formatNaira(task.budget_max)}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      {task.location}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      Created {timeAgo(task.created_at)}
+                    </div>
+                    {task.deadline && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        Deadline: {formatDate(task.deadline)}
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-4 gap-4">
-                      <Skeleton className="h-4 w-20" />
-                      <Skeleton className="h-4 w-16" />
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-18" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : filteredTasks.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold">No tasks found</h3>
-                  <p className="text-muted-foreground">
-                    {searchTerm || statusFilter !== "all" || categoryFilter !== "all"
-                      ? "Try adjusting your filters"
-                      : "Start by posting your first task"}
-                  </p>
-                  {!searchTerm && statusFilter === "all" && categoryFilter === "all" && (
-                    <Button asChild className="mt-4">
-                      <Link href="/dashboard/tasks/new">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Post Your First Task
-                      </Link>
+                    )}
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
                     </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/tasks/${task.id}`}>View Details</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/tasks/${task.id}/applications`}>View Applications</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600">Delete Task</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
+
+                <div className="flex flex-wrap gap-2">
+                  {task.skills_required?.slice(0, 4).map((skill) => (
+                    <Badge key={skill} variant="secondary">
+                      {skill}
+                    </Badge>
+                  ))}
+                  {(task.skills_required?.length || 0) > 4 && (
+                    <Badge variant="outline">+{(task.skills_required?.length || 0) - 4} more</Badge>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {filteredTasks.map((task) => (
-                <Card key={task.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-xl">{task.title}</CardTitle>
-                          <Badge className={statusColors[task.status as keyof typeof statusColors]}>
-                            {task.status.replace("_", " ")}
-                          </Badge>
-                          {task.urgency === "high" && <Badge variant="destructive">Urgent</Badge>}
-                        </div>
-                        <p className="text-muted-foreground">{task.description}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {task.skills_required?.map((skill) => (
-                            <Badge key={skill} variant="secondary">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/browse/${task.id}`}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/tasks/${task.id}/edit`}>Edit Task</Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/tasks/${task.id}/applications`}>View Applications</Link>
-                          </DropdownMenuItem>
-                          {task.status === "draft" && <DropdownMenuItem>Publish Task</DropdownMenuItem>}
-                          {task.status === "active" && <DropdownMenuItem>Pause Task</DropdownMenuItem>}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      {task.applications_count} applications
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold">
-                          {formatCurrency(task.budget_min)} - {formatCurrency(task.budget_max)}
-                          {task.budget_type === "hourly" ? "/hr" : ""}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{task.applications_count} applications</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          {task.deadline ? `Due ${new Date(task.deadline).toLocaleDateString()}` : "No deadline"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>Posted {new Date(task.created_at).toLocaleDateString()}</span>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Eye className="h-4 w-4" />
+                      {task.views_count} views
                     </div>
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Category: {task.category}</span>
-                        <span className="text-sm text-muted-foreground">• {task.location}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/dashboard/tasks/${task.id}/applications`}>
-                            <Users className="mr-2 h-4 w-4" />
-                            Applications
-                          </Link>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/dashboard/messages?task=${task.id}`}>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Messages
-                          </Link>
-                        </Button>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      Updated {timeAgo(task.updated_at)}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" asChild>
+                      <Link href={`/dashboard/tasks/${task.id}/applications`}>
+                        Applications ({task.applications_count})
+                      </Link>
+                    </Button>
+                    <Button size="sm" asChild>
+                      <Link href={`/dashboard/tasks/${task.id}`}>View Details</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* No Results */}
+      {tasks.length === 0 && !loading && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold">No tasks found</h3>
+              <p className="text-muted-foreground mb-4">
+                {searchTerm || selectedCategory !== "all" || selectedStatus !== "all"
+                  ? "Try adjusting your filters"
+                  : "You haven't posted any tasks yet"}
+              </p>
+              <Button asChild>
+                <Link href="/dashboard/tasks/create">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Post Your First Task
+                </Link>
+              </Button>
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

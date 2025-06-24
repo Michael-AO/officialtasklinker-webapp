@@ -1,225 +1,433 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Separator } from "@/components/ui/separator"
 import {
   ArrowLeft,
-  Bookmark,
   Calendar,
   Clock,
-  DollarSign,
-  Eye,
-  Flag,
   MapPin,
   MessageSquare,
-  Share2,
   Star,
-  Users,
+  CheckCircle2,
+  AlertCircle,
+  Send,
   FileText,
-  Download,
+  Plus,
+  X,
+  User,
+  Upload,
+  File,
+  ImageIcon,
+  ArrowRight,
+  ArrowLeftIcon,
 } from "lucide-react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
-import { FileUpload } from "@/components/file-upload"
+import { formatNaira } from "@/lib/currency"
+import { NairaIcon } from "@/components/naira-icon"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
-import { formatCurrency, formatDate, generateTaskCode, getStatusColor } from "@/lib/api-utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-interface TaskDetail {
+interface TaskData {
   id: string
   title: string
   description: string
-  category: string
-  subcategory?: string
-  skills_required: string[]
-  budget_type: "fixed" | "hourly"
   budget_min: number
   budget_max: number
-  currency: string
-  duration: string
-  location: string
-  experience_level: string
-  urgency: "low" | "normal" | "high"
+  budget_type: string
   status: string
-  applications_count: number
-  views_count: number
-  deadline?: string
-  created_at: string
+  category: string
+  location: string
+  skills_required: string[]
   requirements: string[]
   questions: string[]
-  attachments: string[]
+  applications_count: number
+  views_count: number
+  created_at: string
+  deadline: string
+  urgency: string
   client: {
     id: string
     name: string
-    avatar_url?: string
+    avatar_url: string
     rating: number
-    completed_tasks: number
-    total_earned: number
-    location?: string
-    bio?: string
+    reviews: number
+    is_verified: boolean
+    location: string
     join_date: string
+    bio: string
   }
 }
 
-export default function TaskDetailPage() {
+interface MyApplication {
+  id: string
+  status: string
+  proposed_budget: number
+  budget_type: string
+  estimated_duration: string
+  cover_letter: string
+  portfolio_items: any[]
+  question_responses: Record<string, string>
+  applied_date: string
+}
+
+interface PortfolioItem {
+  id: string
+  title: string
+  description: string
+  file_url: string
+  file_type: string
+  file_name: string
+  file_size: number
+  file?: File
+}
+
+export default function TaskViewPage() {
   const params = useParams()
+  const router = useRouter()
   const { user } = useAuth()
-  const [task, setTask] = useState<TaskDetail | null>(null)
+  const taskId = params.id as string
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [task, setTask] = useState<TaskData | null>(null)
+  const [myApplication, setMyApplication] = useState<MyApplication | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isApplying, setIsApplying] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [showApplicationForm, setShowApplicationForm] = useState(false)
+  const [currentTab, setCurrentTab] = useState("proposal")
+
+  // Application form state
   const [proposedBudget, setProposedBudget] = useState("")
-  const [coverLetter, setCoverLetter] = useState("")
+  const [budgetType, setBudgetType] = useState("fixed")
   const [estimatedDuration, setEstimatedDuration] = useState("")
-  const [similarTasks, setSimilarTasks] = useState<any[]>([])
+  const [coverLetter, setCoverLetter] = useState("")
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([])
+  const [questionResponses, setQuestionResponses] = useState<Record<string, string>>({})
+  const [newPortfolioTitle, setNewPortfolioTitle] = useState("")
+  const [newPortfolioDescription, setNewPortfolioDescription] = useState("")
 
+  // Tab navigation
+  const tabs = ["proposal", "portfolio", "questions", "review"]
+  const currentTabIndex = tabs.indexOf(currentTab)
+
+  // Fetch task details and check if user has applied
   useEffect(() => {
-    fetchTaskDetail()
-    fetchSimilarTasks()
-  }, [params.id])
+    const fetchTaskData = async () => {
+      if (!taskId || !user?.id) return
 
-  const fetchTaskDetail = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+      try {
+        setLoading(true)
+        setError(null)
 
-      const response = await fetch(`/api/tasks/${params.id}`)
+        console.log("=== Fetching task details for freelancer view:", taskId)
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("Task not found")
+        // Fetch task details
+        const taskResponse = await fetch(`/api/tasks/${taskId}`, {
+          headers: {
+            "user-id": user.id,
+          },
+        })
+
+        if (!taskResponse.ok) {
+          throw new Error(`Failed to fetch task: ${taskResponse.status}`)
         }
-        throw new Error("Failed to fetch task details")
-      }
 
-      const data = await response.json()
-      setTask(data.task)
-      setIsSaved(data.is_saved || false)
-    } catch (err) {
-      console.error("Task detail error:", err)
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setLoading(false)
+        const taskData = await taskResponse.json()
+        console.log("=== Task data:", taskData)
+
+        if (!taskData.success) {
+          throw new Error(taskData.error || "Failed to fetch task")
+        }
+
+        // Transform task data
+        const transformedTask: TaskData = {
+          id: taskData.task.id,
+          title: taskData.task.title,
+          description: taskData.task.description,
+          budget_min: taskData.task.budget_min || 0,
+          budget_max: taskData.task.budget_max || 0,
+          budget_type: taskData.task.budget_type || "fixed",
+          status: taskData.task.status,
+          category: taskData.task.category || "General",
+          location: taskData.task.location || "Remote",
+          skills_required: taskData.task.skills_required || [],
+          requirements: taskData.task.requirements || [],
+          questions: taskData.task.questions || [],
+          applications_count: taskData.task.applications_count || 0,
+          views_count: taskData.task.views_count || 0,
+          created_at: taskData.task.created_at,
+          deadline: taskData.task.deadline || taskData.task.created_at,
+          urgency: taskData.task.urgency || "normal",
+          client: {
+            id: taskData.task.client?.id || "",
+            name: taskData.task.client?.name || "Anonymous Client",
+            avatar_url: taskData.task.client?.avatar_url || "",
+            rating: taskData.task.client?.rating || 4.8,
+            reviews: taskData.task.client?.completed_tasks || 0,
+            is_verified: taskData.task.client?.is_verified || false,
+            location: taskData.task.client?.location || "Not specified",
+            join_date: taskData.task.client?.join_date || taskData.task.created_at,
+            bio: taskData.task.client?.bio || "Experienced client on Tasklinkers platform",
+          },
+        }
+
+        setTask(transformedTask)
+
+        // Initialize question responses
+        const initialResponses: Record<string, string> = {}
+        transformedTask.questions.forEach((question, index) => {
+          initialResponses[`question_${index}`] = ""
+        })
+        setQuestionResponses(initialResponses)
+
+        // Check if user has applied to this task
+        const applicationResponse = await fetch(`/api/tasks/${taskId}/my-application`, {
+          headers: {
+            "user-id": user.id,
+          },
+        })
+
+        if (applicationResponse.ok) {
+          const applicationData = await applicationResponse.json()
+          console.log("=== My application data:", applicationData)
+
+          if (applicationData.success && applicationData.application) {
+            setMyApplication(applicationData.application)
+          }
+        }
+      } catch (error) {
+        console.error("=== Error fetching task:", error)
+        setError(error instanceof Error ? error.message : "Failed to fetch task")
+      } finally {
+        setLoading(false)
+      }
     }
-  }
 
-  const fetchSimilarTasks = async () => {
-    try {
-      const response = await fetch(`/api/tasks/${params.id}/similar`)
+    fetchTaskData()
+  }, [taskId, user?.id])
 
-      if (response.ok) {
-        const data = await response.json()
-        setSimilarTasks(data.tasks || [])
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files) return
+
+    Array.from(files).forEach((file) => {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: `${file.name} is larger than 10MB. Please choose a smaller file.`,
+          variant: "destructive",
+        })
+        return
       }
-    } catch (err) {
-      console.error("Similar tasks error:", err)
-      // Don't show error for similar tasks, just log it
+
+      // Validate file type
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      ]
+
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a supported file type.`,
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Create portfolio item with file
+      const newItem: PortfolioItem = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        title: file.name.split(".")[0],
+        description: "",
+        file_url: URL.createObjectURL(file),
+        file_type: file.type,
+        file_name: file.name,
+        file_size: file.size,
+        file: file,
+      }
+
+      setPortfolioItems((prev) => [...prev, newItem])
+    })
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
   const handleApply = async () => {
-    if (!proposedBudget || !coverLetter || !estimatedDuration) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      })
-      return
-    }
+    if (!task || !user?.id) return
 
     try {
-      const response = await fetch(`/api/tasks/${params.id}/apply`, {
+      setApplying(true)
+
+      const applicationData = {
+        proposed_budget: Number.parseFloat(proposedBudget),
+        budget_type: budgetType,
+        estimated_duration: estimatedDuration,
+        cover_letter: coverLetter,
+        portfolio_items: portfolioItems.map((item) => ({
+          title: item.title,
+          description: item.description,
+          file_url: item.file_url,
+          file_type: item.file_type,
+          file_name: item.file_name,
+          file_size: item.file_size,
+        })),
+        question_responses: questionResponses,
+      }
+
+      const response = await fetch(`/api/tasks/${taskId}/apply`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${user?.access_token}`,
           "Content-Type": "application/json",
+          "user-id": user.id,
         },
-        body: JSON.stringify({
-          proposed_budget: Number.parseFloat(proposedBudget),
-          budget_type: task?.budget_type,
-          estimated_duration: estimatedDuration,
-          cover_letter: coverLetter,
-        }),
+        body: JSON.stringify(applicationData),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to submit application")
-      }
+      const data = await response.json()
 
-      toast({
-        title: "Application Submitted!",
-        description: "Your application has been sent to the client.",
-      })
-
-      setIsApplying(false)
-      setProposedBudget("")
-      setCoverLetter("")
-      setEstimatedDuration("")
-
-      // Refresh task to update application count
-      fetchTaskDetail()
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to submit application",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const toggleSaveTask = async () => {
-    try {
-      const response = await fetch(`/api/tasks/${params.id}/save`, {
-        method: isSaved ? "DELETE" : "POST",
-        headers: {
-          Authorization: `Bearer ${user?.access_token}`,
-        },
-      })
-
-      if (response.ok) {
-        setIsSaved(!isSaved)
+      if (data.success) {
         toast({
-          title: isSaved ? "Task unsaved" : "Task saved",
-          description: isSaved ? "Removed from saved tasks" : "Added to saved tasks",
+          title: "Application Submitted!",
+          description: "Your detailed application has been sent to the client.",
         })
+
+        // Refresh the page to show the application
+        window.location.reload()
+      } else {
+        throw new Error(data.error || "Failed to submit application")
       }
     } catch (error) {
+      console.error("=== Error applying:", error)
       toast({
         title: "Error",
-        description: "Failed to save task. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to submit application",
         variant: "destructive",
       })
+    } finally {
+      setApplying(false)
     }
   }
 
-  const timeAgo = (date: string) => {
-    const now = new Date()
-    const posted = new Date(date)
-    const diffInHours = Math.floor((now.getTime() - posted.getTime()) / (1000 * 60 * 60))
+  const addPortfolioItem = () => {
+    if (newPortfolioTitle.trim() && newPortfolioDescription.trim()) {
+      const newItem: PortfolioItem = {
+        id: Date.now().toString(),
+        title: newPortfolioTitle.trim(),
+        description: newPortfolioDescription.trim(),
+        file_url: "/placeholder.svg?height=200&width=300&text=Portfolio+Item",
+        file_type: "image",
+        file_name: "portfolio-item.jpg",
+        file_size: 0,
+      }
+      setPortfolioItems([...portfolioItems, newItem])
+      setNewPortfolioTitle("")
+      setNewPortfolioDescription("")
+    }
+  }
 
-    if (diffInHours < 24) {
-      return `${diffInHours} hours ago`
-    } else {
-      const diffInDays = Math.floor(diffInHours / 24)
-      return `${diffInDays} days ago`
+  const removePortfolioItem = (id: string) => {
+    setPortfolioItems(portfolioItems.filter((item) => item.id !== id))
+  }
+
+  const updatePortfolioItem = (id: string, updates: Partial<PortfolioItem>) => {
+    setPortfolioItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)))
+  }
+
+  const updateQuestionResponse = (questionIndex: number, response: string) => {
+    setQuestionResponses((prev) => ({
+      ...prev,
+      [`question_${questionIndex}`]: response,
+    }))
+  }
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith("image/")) return <ImageIcon className="h-4 w-4" />
+    if (fileType === "application/pdf") return <FileText className="h-4 w-4" />
+    return <File className="h-4 w-4" />
+  }
+
+  const canProceedToNext = () => {
+    switch (currentTab) {
+      case "proposal":
+        return proposedBudget && estimatedDuration && coverLetter
+      case "portfolio":
+        return true // Portfolio is optional
+      case "questions":
+        return (
+          task?.questions.length === 0 || task?.questions.every((_, index) => questionResponses[`question_${index}`])
+        )
+      case "review":
+        return true
+      default:
+        return false
+    }
+  }
+
+  const nextTab = () => {
+    if (currentTabIndex < tabs.length - 1) {
+      setCurrentTab(tabs[currentTabIndex + 1])
+    }
+  }
+
+  const prevTab = () => {
+    if (currentTabIndex > 0) {
+      setCurrentTab(tabs[currentTabIndex - 1])
+    }
+  }
+
+  const getApplicationStatusColor = (status: string) => {
+    switch (status) {
+      case "accepted":
+        return "bg-green-100 text-green-800"
+      case "rejected":
+        return "bg-red-100 text-red-800"
+      case "interviewing":
+        return "bg-blue-100 text-blue-800"
+      case "withdrawn":
+        return "bg-gray-100 text-gray-800"
+      default:
+        return "bg-yellow-100 text-yellow-800"
+    }
+  }
+
+  const getApplicationStatusIcon = (status: string) => {
+    switch (status) {
+      case "accepted":
+        return <CheckCircle2 className="h-4 w-4" />
+      case "rejected":
+        return <AlertCircle className="h-4 w-4" />
+      case "interviewing":
+        return <MessageSquare className="h-4 w-4" />
+      default:
+        return <Clock className="h-4 w-4" />
     }
   }
 
@@ -227,39 +435,32 @@ export default function TaskDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-32" />
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-32" />
+          </div>
         </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-8 w-3/4" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-32" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-32 w-full" />
-              </CardContent>
-            </Card>
-          </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-32 w-full" />
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
@@ -268,14 +469,20 @@ export default function TaskDetailPage() {
   if (error || !task) {
     return (
       <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-red-600">Error Loading Task</h3>
-              <p className="text-muted-foreground">{error || "Task not found"}</p>
-              <Button onClick={fetchTaskDetail} className="mt-4">
-                Try Again
-              </Button>
+              <h3 className="text-lg font-semibold mb-2">Task Not Found</h3>
+              <p className="text-muted-foreground mb-4">
+                {error || "The task you're looking for doesn't exist or is no longer available."}
+              </p>
+              <Button onClick={() => router.push("/dashboard/browse")}>Back to Browse Tasks</Button>
             </div>
           </CardContent>
         </Card>
@@ -285,362 +492,662 @@ export default function TaskDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/browse">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Browse
-          </Link>
-        </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">{task.title}</h1>
+            <p className="text-muted-foreground">{myApplication ? "Your Application Status" : "Available Task"}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {myApplication && (
+            <Badge className={getApplicationStatusColor(myApplication.status)}>
+              {getApplicationStatusIcon(myApplication.status)}
+              <span className="ml-1 capitalize">{myApplication.status}</span>
+            </Badge>
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Task Header */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-2xl">{task.title}</CardTitle>
-                    <Badge variant="outline" className="text-xs">
-                      {generateTaskCode(task.id)}
+      {/* Application Status Alert */}
+      {myApplication && (
+        <Card className="border-l-4 border-l-blue-500">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">{getApplicationStatusIcon(myApplication.status)}</div>
+              <div className="flex-1">
+                <h3 className="font-semibold mb-1">Application Status: {myApplication.status}</h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Applied on {new Date(myApplication.applied_date).toLocaleDateString()} with a proposed budget of{" "}
+                  <span className="font-medium">
+                    {formatNaira(myApplication.proposed_budget)}
+                    {myApplication.budget_type === "hourly" ? "/hr" : ""}
+                  </span>
+                </p>
+                {myApplication.status === "pending" && (
+                  <p className="text-sm text-blue-600">
+                    Your application is under review. The client will respond soon.
+                  </p>
+                )}
+                {myApplication.status === "accepted" && (
+                  <p className="text-sm text-green-600">
+                    Congratulations! Your application has been accepted. You can now start working on this project.
+                  </p>
+                )}
+                {myApplication.status === "rejected" && (
+                  <p className="text-sm text-red-600">
+                    Unfortunately, your application was not selected for this project.
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Task Details */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Task Description</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
+
+            {task.skills_required.length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-2">Required Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {task.skills_required.map((skill) => (
+                    <Badge key={skill} variant="secondary">
+                      {skill}
                     </Badge>
-                    <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
-                    {task.urgency === "high" && <Badge variant="destructive">Urgent</Badge>}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4" />
-                      {formatCurrency(task.budget_min)} - {formatCurrency(task.budget_max)}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {task.location}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {task.duration}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      Posted {timeAgo(task.created_at)}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      {task.applications_count} applications
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Eye className="h-4 w-4" />
-                      {task.views_count} views
-                    </div>
-                    {task.deadline && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        Deadline: {formatDate(task.deadline)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={toggleSaveTask}>
-                    <Bookmark className={`mr-2 h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
-                    {isSaved ? "Saved" : "Save"}
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Flag className="mr-2 h-4 w-4" />
-                    Report
-                  </Button>
+                  ))}
                 </div>
               </div>
-            </CardHeader>
-          </Card>
+            )}
 
-          {/* Task Details */}
-          <Tabs defaultValue="description" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="requirements">Requirements</TabsTrigger>
-              <TabsTrigger value="attachments">Attachments</TabsTrigger>
-            </TabsList>
+            {task.requirements.length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-2">Project Requirements</h4>
+                <ul className="list-disc list-inside space-y-1">
+                  {task.requirements.map((requirement, index) => (
+                    <li key={index} className="text-sm text-muted-foreground">
+                      {requirement}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-            <TabsContent value="description" className="space-y-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="prose max-w-none">
-                    <div className="whitespace-pre-wrap">{task.description}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <div className="grid grid-cols-2 gap-4 text-sm border-t pt-4">
+              <div className="flex items-center gap-2">
+                <NairaIcon className="h-4 w-4 text-muted-foreground" />
+                <span>
+                  {task.budget_type === "fixed"
+                    ? `${formatNaira(task.budget_max)} (Fixed Price)`
+                    : `${formatNaira(task.budget_min)} - ${formatNaira(task.budget_max)} (${task.budget_type})`}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span>{task.location}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span>Deadline: {new Date(task.deadline).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span>Posted: {new Date(task.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-            <TabsContent value="requirements" className="space-y-4">
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Skills Required</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {task.skills_required.map((skill) => (
-                        <Badge key={skill} variant="secondary">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <Separator />
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">Experience Level</h4>
-                      <p className="capitalize">{task.experience_level}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">Project Duration</h4>
-                      <p>{task.duration}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">Budget Type</h4>
-                      <p className="capitalize">{task.budget_type} Price</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">Category</h4>
-                      <p>{task.category}</p>
-                    </div>
-                  </div>
-                  {task.requirements.length > 0 && (
-                    <>
-                      <Separator />
-                      <div>
-                        <h3 className="font-semibold mb-2">Additional Requirements</h3>
-                        <ul className="list-disc list-inside space-y-1">
-                          {task.requirements.map((req, index) => (
-                            <li key={index} className="text-sm">
-                              {req}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </>
-                  )}
-                  {task.questions.length > 0 && (
-                    <>
-                      <Separator />
-                      <div>
-                        <h3 className="font-semibold mb-2">Client Questions</h3>
-                        <ul className="space-y-2">
-                          {task.questions.map((question, index) => (
-                            <li key={index} className="text-sm p-2 bg-muted rounded">
-                              {question}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="attachments" className="space-y-4">
-              <Card>
-                <CardContent className="pt-6">
-                  {task.attachments.length > 0 ? (
-                    <div className="space-y-3">
-                      {task.attachments.map((attachment, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <FileText className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{attachment}</p>
-                              <p className="text-sm text-muted-foreground">Attachment {index + 1}</p>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            <Download className="mr-2 h-4 w-4" />
-                            Download
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-center py-8">No attachments provided</p>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Sidebar */}
         <div className="space-y-6">
-          {/* Apply Card */}
+          {/* Client Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Apply for this Task</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(task.budget_min)} - {formatCurrency(task.budget_max)}
-                </div>
-                <p className="text-sm text-muted-foreground capitalize">{task.budget_type} Price</p>
-              </div>
-              <Dialog open={isApplying} onOpenChange={setIsApplying}>
-                <DialogTrigger asChild>
-                  <Button className="w-full" size="lg">
-                    Apply Now
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Apply for: {task.title}</DialogTitle>
-                    <DialogDescription>Submit your proposal to the client</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="budget">Your Proposed Budget ({task.currency})</Label>
-                      <Input
-                        id="budget"
-                        type="number"
-                        placeholder={`e.g., ${task.budget_min}`}
-                        value={proposedBudget}
-                        onChange={(e) => setProposedBudget(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="duration">Estimated Duration</Label>
-                      <Input
-                        id="duration"
-                        placeholder="e.g., 6 weeks"
-                        value={estimatedDuration}
-                        onChange={(e) => setEstimatedDuration(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="cover-letter">Cover Letter</Label>
-                      <Textarea
-                        id="cover-letter"
-                        placeholder="Explain why you're the best fit for this project..."
-                        rows={6}
-                        value={coverLetter}
-                        onChange={(e) => setCoverLetter(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="attachments">Attachments (Optional)</Label>
-                      <FileUpload
-                        maxFiles={3}
-                        maxSize={5}
-                        acceptedTypes={["application/pdf", ".doc", ".docx", "image/*"]}
-                        onFilesChange={(files) => console.log("Files uploaded:", files)}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleApply} className="flex-1">
-                        Submit Application
-                      </Button>
-                      <Button variant="outline" onClick={() => setIsApplying(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              <Button variant="outline" className="w-full" asChild>
-                <Link href={`/dashboard/messages?client=${task.client.id}`}>
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Message Client
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Client Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>About the Client</CardTitle>
+              <CardTitle>Client Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={task.client.avatar_url || "/placeholder.svg"} />
-                  <AvatarFallback>
-                    {task.client.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
+                  {task.client.avatar_url ? (
+                    <AvatarImage src={task.client.avatar_url || "/placeholder.svg"} />
+                  ) : (
+                    <AvatarFallback className="bg-black text-white">
+                      <User className="h-6 w-6" />
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <div>
-                  <h3 className="font-semibold">{task.client.name}</h3>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{task.client.rating}</span>
-                    <span className="text-sm text-muted-foreground">({task.client.completed_tasks} tasks)</span>
+                  <p className="font-medium">{task.client.name}</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm">{task.client.rating}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">({task.client.reviews} reviews)</span>
+                    {task.client.is_verified && (
+                      <Badge variant="secondary" className="text-xs">
+                        Verified
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {task.client.bio && <p className="text-sm text-muted-foreground">{task.client.bio}</p>}
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Total Spent</p>
-                  <p className="font-semibold">{formatCurrency(task.client.total_earned)}</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Member Since</span>
+                  <span>{new Date(task.client.join_date).toLocaleDateString()}</span>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Tasks Completed</p>
-                  <p className="font-semibold">{task.client.completed_tasks}</p>
+                <div className="flex justify-between">
+                  <span>Location</span>
+                  <span>{task.client.location}</span>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Member Since</p>
-                  <p className="font-semibold">{new Date(task.client.join_date).getFullYear()}</p>
+                <div className="flex justify-between">
+                  <span>Total Jobs Posted</span>
+                  <span>{task.client.reviews}</span>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Location</p>
-                  <p className="font-semibold">{task.client.location || "Not specified"}</p>
+                <div className="flex justify-between">
+                  <span>Category</span>
+                  <span>{task.category}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Applications</span>
+                  <span>{task.applications_count}</span>
                 </div>
               </div>
+
+              {task.client.bio && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{task.client.bio}</p>
+                </div>
+              )}
+
+              {myApplication?.status === "accepted" && (
+                <Button className="w-full" asChild>
+                  <Link href={`/dashboard/messages?client=${task.client.id}`}>
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Message Client
+                  </Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
 
-          {/* Similar Tasks */}
-          {similarTasks.length > 0 && (
+          {/* Application Action */}
+          {!myApplication && (
             <Card>
               <CardHeader>
-                <CardTitle>Similar Tasks</CardTitle>
+                <CardTitle>Apply for this Task</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {similarTasks.map((similarTask) => (
-                  <div key={similarTask.id} className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <Link href={`/dashboard/browse/${similarTask.id}`} className="block">
-                      <h4 className="font-medium text-sm mb-1">{similarTask.title}</h4>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          {formatCurrency(similarTask.budget_min)} - {formatCurrency(similarTask.budget_max)}
-                        </span>
-                        <span>{similarTask.applications_count} applications</span>
+              <CardContent>
+                {!showApplicationForm ? (
+                  <Button className="w-full" onClick={() => setShowApplicationForm(true)}>
+                    <Send className="h-4 w-4 mr-2" />
+                    Submit Detailed Application
+                  </Button>
+                ) : (
+                  <Dialog open={showApplicationForm} onOpenChange={setShowApplicationForm}>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Submit Application</DialogTitle>
+                        <DialogDescription>
+                          Provide detailed information about your proposal for this project.
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-4">
+                        <TabsList className="grid w-full grid-cols-4">
+                          <TabsTrigger value="proposal">Proposal</TabsTrigger>
+                          <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+                          <TabsTrigger value="questions">Questions</TabsTrigger>
+                          <TabsTrigger value="review">Review</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="proposal" className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="budget">Your Proposed Budget</Label>
+                            <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                <NairaIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                  id="budget"
+                                  type="number"
+                                  placeholder="Enter amount"
+                                  value={proposedBudget}
+                                  onChange={(e) => setProposedBudget(e.target.value)}
+                                  className="pl-10"
+                                />
+                              </div>
+                              <Select value={budgetType} onValueChange={setBudgetType}>
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="fixed">Fixed</SelectItem>
+                                  <SelectItem value="hourly">Per Hour</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Client's budget: {formatNaira(task.budget_max)} ({task.budget_type})
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="duration">Estimated Duration</Label>
+                            <Input
+                              id="duration"
+                              placeholder="e.g., 2 weeks, 1 month"
+                              value={estimatedDuration}
+                              onChange={(e) => setEstimatedDuration(e.target.value)}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="cover-letter">Cover Letter</Label>
+                            <Textarea
+                              id="cover-letter"
+                              placeholder="Explain why you're the best fit for this project. Include your approach, relevant experience, and what makes you unique..."
+                              value={coverLetter}
+                              onChange={(e) => setCoverLetter(e.target.value)}
+                              rows={8}
+                            />
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="portfolio" className="space-y-4">
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="font-semibold mb-2">Add Portfolio Items</h4>
+                              <p className="text-sm text-muted-foreground mb-4">
+                                Showcase relevant work samples that demonstrate your skills for this project.
+                              </p>
+                            </div>
+
+                            {/* File Upload Section */}
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                              <p className="text-sm font-medium mb-1">Upload Documents & Images</p>
+                              <p className="text-xs text-muted-foreground mb-3">
+                                PDF, DOC, DOCX, PPT, PPTX, JPG, PNG, GIF (Max 10MB each)
+                              </p>
+                              <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm">
+                                Choose Files
+                              </Button>
+                              <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.txt"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                              />
+                            </div>
+
+                            {/* Manual Portfolio Entry */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="portfolio-title">Portfolio Title</Label>
+                                <Input
+                                  id="portfolio-title"
+                                  placeholder="e.g., E-commerce Website Design"
+                                  value={newPortfolioTitle}
+                                  onChange={(e) => setNewPortfolioTitle(e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="portfolio-description">Description</Label>
+                                <Input
+                                  id="portfolio-description"
+                                  placeholder="Brief description of the work"
+                                  value={newPortfolioDescription}
+                                  onChange={(e) => setNewPortfolioDescription(e.target.value)}
+                                />
+                              </div>
+                            </div>
+
+                            <Button
+                              type="button"
+                              onClick={addPortfolioItem}
+                              disabled={!newPortfolioTitle.trim() || !newPortfolioDescription.trim()}
+                              variant="outline"
+                              className="w-full"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add Portfolio Item
+                            </Button>
+
+                            <Separator />
+
+                            <div className="space-y-3">
+                              {portfolioItems.map((item) => (
+                                <Card key={item.id} className="p-4">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        {getFileIcon(item.file_type)}
+                                        <h5 className="font-medium">{item.title}</h5>
+                                        {item.file && (
+                                          <Badge variant="secondary" className="text-xs">
+                                            {(item.file_size / 1024 / 1024).toFixed(1)}MB
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Input
+                                          placeholder="Portfolio title..."
+                                          value={item.title}
+                                          onChange={(e) => updatePortfolioItem(item.id, { title: e.target.value })}
+                                        />
+                                        <Textarea
+                                          placeholder="Describe this work..."
+                                          value={item.description}
+                                          onChange={(e) =>
+                                            updatePortfolioItem(item.id, { description: e.target.value })
+                                          }
+                                          rows={2}
+                                        />
+                                      </div>
+                                      {item.file_type.startsWith("image/") && (
+                                        <div className="mt-2">
+                                          <img
+                                            src={item.file_url || "/placeholder.svg"}
+                                            alt={item.title}
+                                            className="w-full h-32 object-cover rounded border"
+                                          />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removePortfolioItem(item.id)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </Card>
+                              ))}
+                              {portfolioItems.length === 0 && (
+                                <div className="text-center py-8 text-muted-foreground">
+                                  <FileText className="h-8 w-8 mx-auto mb-2" />
+                                  <p>No portfolio items added yet</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="questions" className="space-y-4">
+                          <div>
+                            <h4 className="font-semibold mb-2">Client Questions</h4>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Please answer the following questions from the client.
+                            </p>
+                          </div>
+
+                          {task.questions.length > 0 ? (
+                            <div className="space-y-4">
+                              {task.questions.map((question, index) => (
+                                <div key={index} className="space-y-2">
+                                  <Label htmlFor={`question-${index}`}>
+                                    Question {index + 1}: {question}
+                                  </Label>
+                                  <Textarea
+                                    id={`question-${index}`}
+                                    placeholder="Your answer..."
+                                    value={questionResponses[`question_${index}`] || ""}
+                                    onChange={(e) => updateQuestionResponse(index, e.target.value)}
+                                    rows={3}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <MessageSquare className="h-8 w-8 mx-auto mb-2" />
+                              <p>No specific questions from the client</p>
+                            </div>
+                          )}
+                        </TabsContent>
+
+                        <TabsContent value="review" className="space-y-4">
+                          <div>
+                            <h4 className="font-semibold mb-4">Review Your Application</h4>
+                          </div>
+
+                          <div className="space-y-4">
+                            <Card className="p-4">
+                              <h5 className="font-medium mb-2">Proposal Summary</h5>
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <span className="text-muted-foreground">Proposed Budget:</span>
+                                  <p className="font-medium">
+                                    {proposedBudget ? formatNaira(Number.parseFloat(proposedBudget)) : "Not specified"}
+                                    {budgetType === "hourly" ? "/hr" : ""}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Duration:</span>
+                                  <p className="font-medium">{estimatedDuration || "Not specified"}</p>
+                                </div>
+                              </div>
+                            </Card>
+
+                            <Card className="p-4">
+                              <h5 className="font-medium mb-2">Cover Letter</h5>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {coverLetter || "No cover letter provided"}
+                              </p>
+                            </Card>
+
+                            <Card className="p-4">
+                              <h5 className="font-medium mb-2">Portfolio Items ({portfolioItems.length})</h5>
+                              {portfolioItems.length > 0 ? (
+                                <div className="space-y-2">
+                                  {portfolioItems.map((item) => (
+                                    <div key={item.id} className="flex items-center gap-2 text-sm">
+                                      {getFileIcon(item.file_type)}
+                                      <span className="font-medium">{item.title}</span> - {item.description}
+                                      {item.file && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          {item.file_name}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">No portfolio items added</p>
+                              )}
+                            </Card>
+
+                            <Card className="p-4">
+                              <h5 className="font-medium mb-2">Question Responses</h5>
+                              {task.questions.length > 0 ? (
+                                <div className="space-y-2">
+                                  {task.questions.map((question, index) => (
+                                    <div key={index} className="text-sm">
+                                      <p className="font-medium">{question}</p>
+                                      <p className="text-muted-foreground">
+                                        {questionResponses[`question_${index}`] || "No response provided"}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">No questions to answer</p>
+                              )}
+                            </Card>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+
+                      {/* Navigation Buttons */}
+                      <div className="flex justify-between pt-4 border-t">
+                        <Button
+                          variant="outline"
+                          onClick={prevTab}
+                          disabled={currentTabIndex === 0}
+                          className="flex items-center gap-2"
+                        >
+                          <ArrowLeftIcon className="h-4 w-4" />
+                          Previous
+                        </Button>
+
+                        <div className="flex gap-2">
+                          {currentTabIndex < tabs.length - 1 ? (
+                            <Button
+                              onClick={nextTab}
+                              disabled={!canProceedToNext()}
+                              className="flex items-center gap-2"
+                            >
+                              Next
+                              <ArrowRight className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={handleApply}
+                              disabled={applying || !canProceedToNext()}
+                              className="flex items-center gap-2"
+                            >
+                              {applying ? "Submitting..." : "Submit Application"}
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button variant="outline" onClick={() => setShowApplicationForm(false)}>
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
-                    </Link>
-                  </div>
-                ))}
+                    </DialogContent>
+                  </Dialog>
+                )}
               </CardContent>
             </Card>
           )}
         </div>
       </div>
+
+      {/* Application Details Tab (if applied) */}
+      {myApplication && (
+        <Tabs defaultValue="application" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="application">My Application</TabsTrigger>
+            <TabsTrigger value="project">Project Details</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="application">
+            <Card>
+              <CardHeader>
+                <CardTitle>Application Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Proposed Budget</p>
+                    <p className="font-semibold">
+                      {formatNaira(myApplication.proposed_budget)}
+                      {myApplication.budget_type === "hourly" ? "/hr" : ""}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Estimated Duration</p>
+                    <p className="font-semibold">{myApplication.estimated_duration}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Cover Letter</p>
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-sm whitespace-pre-wrap">{myApplication.cover_letter}</p>
+                  </div>
+                </div>
+
+                {myApplication.portfolio_items && myApplication.portfolio_items.length > 0 && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Portfolio Items</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      {myApplication.portfolio_items.map((item, index) => (
+                        <Card key={index} className="p-3">
+                          <div className="flex items-center gap-2">
+                            {getFileIcon(item.file_type || "file")}
+                            <div>
+                              <h6 className="font-medium text-sm">{item.title}</h6>
+                              <p className="text-xs text-muted-foreground">{item.description}</p>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Application Date</p>
+                    <p className="font-medium">{new Date(myApplication.applied_date).toLocaleDateString()}</p>
+                  </div>
+                  <Badge className={getApplicationStatusColor(myApplication.status)}>{myApplication.status}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="project">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Project Budget</p>
+                    <p className="font-semibold">
+                      {task.budget_type === "fixed"
+                        ? formatNaira(task.budget_max)
+                        : `${formatNaira(task.budget_min)} - ${formatNaira(task.budget_max)}`}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Project Status</p>
+                    <p className="font-semibold capitalize">{task.status.replace("_", " ")}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Urgency</p>
+                    <p className="font-semibold capitalize">{task.urgency}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Total Applications</p>
+                    <p className="font-semibold">{task.applications_count}</p>
+                  </div>
+                </div>
+
+                {myApplication.status === "accepted" && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h4 className="font-semibold text-green-800 mb-2">🎉 Project Awarded!</h4>
+                    <p className="text-sm text-green-700">
+                      You've been selected for this project. The client may set up escrow protection for secure
+                      payments.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   )
 }

@@ -398,17 +398,9 @@ export default function ApplicationsPage() {
                               View Task
                             </Link>
                           </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link
-                              href={`/dashboard/messages?${
-                                user?.user_type === "client"
-                                  ? `freelancer=${application.freelancer?.name}`
-                                  : `client=${application.task.client.name}`
-                              }`}
-                            >
-                              <MessageSquare className="mr-2 h-4 w-4" />
-                              Message {user?.user_type === "client" ? "Freelancer" : "Client"}
-                            </Link>
+                          <Button variant="outline" size="sm" disabled className="opacity-50 cursor-not-allowed">
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Message {user?.user_type === "client" ? "Freelancer" : "Client"}
                           </Button>
                         </div>
 

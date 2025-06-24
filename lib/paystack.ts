@@ -90,7 +90,7 @@ class PaystackService {
     return response.json()
   }
 
-  // Verify payment
+  // Verify payment (client-side method)
   async verifyPayment(reference: string): Promise<VerificationResponse> {
     const response = await fetch(`${this.baseUrl}/transaction/verify/${reference}`, {
       method: "GET",
@@ -98,6 +98,36 @@ class PaystackService {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         "Content-Type": "application/json",
       },
+    })
+
+    return response.json()
+  }
+
+  // Server-side verify transaction (for API routes)
+  async verifyTransaction(reference: string): Promise<VerificationResponse> {
+    const response = await fetch(`${this.baseUrl}/transaction/verify/${reference}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+    })
+
+    return response.json()
+  }
+
+  // Initialize transaction (server-side)
+  async initializeTransaction(paymentData: PaymentData): Promise<PaymentResponse> {
+    const response = await fetch(`${this.baseUrl}/transaction/initialize`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...paymentData,
+        reference: paymentData.reference || this.generateReference(),
+      }),
     })
 
     return response.json()
@@ -126,4 +156,62 @@ class PaystackService {
   }
 }
 
+// Create a server-side service that works in API routes
+class ServerPaystackService {
+  private baseUrl = "https://api.paystack.co"
+
+  // Server-side verify transaction
+  async verifyTransaction(reference: string): Promise<VerificationResponse> {
+    if (!process.env.PAYSTACK_SECRET_KEY) {
+      throw new Error("PAYSTACK_SECRET_KEY is not configured")
+    }
+
+    const response = await fetch(`${this.baseUrl}/transaction/verify/${reference}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Paystack API error: ${response.status} ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Initialize transaction (server-side)
+  async initializeTransaction(paymentData: PaymentData): Promise<PaymentResponse> {
+    if (!process.env.PAYSTACK_SECRET_KEY) {
+      throw new Error("PAYSTACK_SECRET_KEY is not configured")
+    }
+
+    const response = await fetch(`${this.baseUrl}/transaction/initialize`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...paymentData,
+        reference: paymentData.reference || this.generateReference(),
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Paystack API error: ${response.status} ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Generate unique reference
+  private generateReference(): string {
+    return `TL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+}
+
+// Export both client and server instances
 export const paystack = new PaystackService(process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "")
+export const paystackService = new ServerPaystackService()

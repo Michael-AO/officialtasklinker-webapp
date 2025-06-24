@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Save, Shield, Bell, DollarSign, Users, Building2, X, Plus } from "lucide-react"
+import { Save, Shield, Bell, DollarSign, Users, Building2, X, Plus, Download, Loader2 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
 export default function AdminSettingsPage() {
@@ -60,6 +60,15 @@ export default function AdminSettingsPage() {
     country: "Nigeria",
     postalCode: "101001",
 
+    // Bank Account Details
+    bankName: "",
+    accountNumber: "",
+    accountName: "",
+    remittanceDay: "friday",
+    minimumRemittanceAmount: 5000,
+    autoRemittanceEnabled: false,
+    remittanceNotifications: true,
+
     // Business Details
     registrationNumber: "RC123456789",
     taxId: "TIN987654321",
@@ -92,20 +101,129 @@ export default function AdminSettingsPage() {
   })
 
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isWithdrawing, setIsWithdrawing] = useState(false)
+  const [pendingRevenue, setPendingRevenue] = useState(0)
+
+  // Load settings on component mount
+  useEffect(() => {
+    loadSettings()
+    loadPendingRevenue()
+  }, [])
+
+  const loadSettings = async () => {
+    try {
+      const response = await fetch("/api/admin/settings")
+      if (response.ok) {
+        const data = await response.json()
+        if (data.settings) {
+          setSettings((prev) => ({ ...prev, ...data.settings }))
+        }
+        if (data.companyData) {
+          setCompanyData((prev) => ({ ...prev, ...data.companyData }))
+        }
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadPendingRevenue = async () => {
+    try {
+      const response = await fetch("/api/admin/revenue/pending")
+      if (response.ok) {
+        const data = await response.json()
+        setPendingRevenue(data.amount || 0)
+      }
+    } catch (error) {
+      console.error("Error loading pending revenue:", error)
+    }
+  }
+
+  const handleManualWithdrawal = async () => {
+    if (!companyData.bankName || !companyData.accountNumber || !companyData.accountName) {
+      toast({
+        title: "Bank Account Required",
+        description: "Please configure your company bank account first.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (pendingRevenue < companyData.minimumRemittanceAmount) {
+      toast({
+        title: "Insufficient Amount",
+        description: `Minimum withdrawal amount is ₦${companyData.minimumRemittanceAmount.toLocaleString()}`,
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsWithdrawing(true)
+    try {
+      const response = await fetch("/api/admin/revenue/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: pendingRevenue,
+          bankName: companyData.bankName,
+          accountNumber: companyData.accountNumber,
+          accountName: companyData.accountName,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        toast({
+          title: "Withdrawal Initiated",
+          description: `₦${pendingRevenue.toLocaleString()} withdrawal has been initiated. Reference: ${result.reference}`,
+        })
+        // Refresh pending revenue
+        loadPendingRevenue()
+      } else {
+        throw new Error(result.message || "Withdrawal failed")
+      }
+    } catch (error) {
+      console.error("Error initiating withdrawal:", error)
+      toast({
+        title: "Withdrawal Failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsWithdrawing(false)
+    }
+  }
 
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log("Settings saved:", settings)
-      console.log("Company data saved:", companyData)
-
-      toast({
-        title: "Settings saved",
-        description: "All settings have been updated successfully.",
+      const response = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          settings,
+          companyData,
+        }),
       })
+
+      if (response.ok) {
+        toast({
+          title: "Settings saved",
+          description: "All settings have been updated successfully.",
+        })
+      } else {
+        throw new Error("Failed to save settings")
+      }
     } catch (error) {
+      console.error("Error saving settings:", error)
       toast({
         title: "Error saving settings",
         description: "Please try again later.",
@@ -146,6 +264,17 @@ export default function AdminSettingsPage() {
       ...companyData,
       features: companyData.features.filter((feature) => feature !== featureToRemove),
     })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading settings...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -315,6 +444,222 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
 
+          {/* Company Bank Account */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Company Bank Account</CardTitle>
+              <CardDescription>
+                Configure your company's bank account for receiving escrow fees and remittances
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Select
+                    value={companyData.bankName || ""}
+                    onValueChange={(value) => updateCompanyField("bankName", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your bank" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="access-bank">Access Bank</SelectItem>
+                      <SelectItem value="gtbank">Guaranty Trust Bank (GTBank)</SelectItem>
+                      <SelectItem value="zenith-bank">Zenith Bank</SelectItem>
+                      <SelectItem value="first-bank">First Bank of Nigeria</SelectItem>
+                      <SelectItem value="uba">United Bank for Africa (UBA)</SelectItem>
+                      <SelectItem value="fidelity-bank">Fidelity Bank</SelectItem>
+                      <SelectItem value="union-bank">Union Bank</SelectItem>
+                      <SelectItem value="sterling-bank">Sterling Bank</SelectItem>
+                      <SelectItem value="stanbic-ibtc">Stanbic IBTC Bank</SelectItem>
+                      <SelectItem value="fcmb">First City Monument Bank (FCMB)</SelectItem>
+                      <SelectItem value="ecobank">Ecobank Nigeria</SelectItem>
+                      <SelectItem value="wema-bank">Wema Bank</SelectItem>
+                      <SelectItem value="polaris-bank">Polaris Bank</SelectItem>
+                      <SelectItem value="keystone-bank">Keystone Bank</SelectItem>
+                      <SelectItem value="providus-bank">Providus Bank</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Input
+                    id="accountNumber"
+                    value={companyData.accountNumber || ""}
+                    onChange={(e) => updateCompanyField("accountNumber", e.target.value)}
+                    placeholder="Enter 10-digit account number"
+                    maxLength={10}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="accountName">Account Name</Label>
+                  <Input
+                    id="accountName"
+                    value={companyData.accountName || ""}
+                    onChange={(e) => updateCompanyField("accountName", e.target.value)}
+                    placeholder="Account holder name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="remittanceDay">Weekly Remittance Day</Label>
+                  <Select
+                    value={companyData.remittanceDay || "friday"}
+                    onValueChange={(value) => updateCompanyField("remittanceDay", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monday">Monday</SelectItem>
+                      <SelectItem value="tuesday">Tuesday</SelectItem>
+                      <SelectItem value="wednesday">Wednesday</SelectItem>
+                      <SelectItem value="thursday">Thursday</SelectItem>
+                      <SelectItem value="friday">Friday</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="minimumRemittance">Minimum Remittance Amount (₦)</Label>
+                <Input
+                  id="minimumRemittance"
+                  type="number"
+                  value={companyData.minimumRemittanceAmount || 5000}
+                  onChange={(e) => updateCompanyField("minimumRemittanceAmount", Number.parseInt(e.target.value))}
+                  placeholder="5000"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Minimum amount required before automatic remittance is triggered
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Auto Remittance Enabled</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically transfer escrow fees to bank account weekly
+                    </p>
+                  </div>
+                  <Switch
+                    checked={companyData.autoRemittanceEnabled || false}
+                    onCheckedChange={(checked) => updateCompanyField("autoRemittanceEnabled", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Email Remittance Notifications</Label>
+                    <p className="text-sm text-muted-foreground">Send email notifications for successful remittances</p>
+                  </div>
+                  <Switch
+                    checked={companyData.remittanceNotifications || true}
+                    onCheckedChange={(checked) => updateCompanyField("remittanceNotifications", checked)}
+                  />
+                </div>
+              </div>
+
+              {/* Manual Withdrawal Section */}
+              <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="font-medium text-orange-900">Manual Withdrawal</h4>
+                    <p className="text-sm text-orange-800">Withdraw pending revenue immediately via Paystack</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-orange-700">Pending Revenue</p>
+                    <p className="text-lg font-bold text-orange-900">₦{pendingRevenue.toLocaleString()}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handleManualWithdrawal}
+                    disabled={
+                      isWithdrawing ||
+                      !companyData.bankName ||
+                      !companyData.accountNumber ||
+                      !companyData.accountName ||
+                      pendingRevenue < companyData.minimumRemittanceAmount
+                    }
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    {isWithdrawing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Withdraw Now
+                      </>
+                    )}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={loadPendingRevenue}
+                    className="text-orange-700 border-orange-300"
+                  >
+                    Refresh Balance
+                  </Button>
+                </div>
+
+                {pendingRevenue < companyData.minimumRemittanceAmount && (
+                  <p className="text-xs text-orange-600 mt-2">
+                    Minimum withdrawal amount: ₦{companyData.minimumRemittanceAmount.toLocaleString()}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                <h4 className="font-medium text-green-900 mb-2">Remittance Schedule</h4>
+                <div className="text-sm text-green-800 space-y-1">
+                  <p>
+                    • <strong>Frequency:</strong> Every {companyData.remittanceDay || "Friday"}
+                  </p>
+                  <p>
+                    • <strong>Time:</strong> 10:00 AM WAT
+                  </p>
+                  <p>
+                    • <strong>Minimum Amount:</strong> ₦{(companyData.minimumRemittanceAmount || 5000).toLocaleString()}
+                  </p>
+                  <p>
+                    • <strong>Processing Time:</strong> 1-2 business days
+                  </p>
+                  <p>
+                    • <strong>Status:</strong> {companyData.autoRemittanceEnabled ? "✅ Active" : "❌ Disabled"}
+                  </p>
+                </div>
+              </div>
+
+              {companyData.accountNumber && companyData.bankName && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-blue-900 mb-2">Connected Account</h4>
+                  <div className="text-sm text-blue-800">
+                    <p>
+                      <strong>Bank:</strong>{" "}
+                      {companyData.bankName.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                    </p>
+                    <p>
+                      <strong>Account:</strong> {companyData.accountNumber}
+                    </p>
+                    <p>
+                      <strong>Name:</strong> {companyData.accountName}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Escrow Configuration */}
           <Card>
             <CardHeader>
@@ -324,14 +669,22 @@ export default function AdminSettingsPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="escrowFee">Escrow Fee (%)</Label>
+                  <Label htmlFor="escrowFee">Escrow Service Fee (%)</Label>
                   <Input
                     id="escrowFee"
                     type="number"
                     step="0.1"
+                    min="0"
+                    max="10"
                     value={companyData.escrowFeePercentage}
                     onChange={(e) => updateCompanyField("escrowFeePercentage", Number.parseFloat(e.target.value))}
                   />
+                  <p className="text-sm text-muted-foreground">
+                    Fee deducted from freelancer's payment and transferred to company account
+                  </p>
+                  <p className="text-xs text-orange-600">
+                    Note: This fee is automatically remitted to your connected bank account weekly
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="minEscrow">Minimum Amount (₦)</Label>
@@ -364,6 +717,26 @@ export default function AdminSettingsPage() {
                 <p className="text-sm text-muted-foreground">
                   Number of days after which funds are automatically released if no disputes
                 </p>
+              </div>
+
+              <div className="space-y-4 p-4 bg-blue-50 rounded-lg border">
+                <h4 className="font-medium text-blue-900">Escrow Fee Structure</h4>
+                <div className="text-sm text-blue-800 space-y-2">
+                  <p>
+                    • <strong>Fee Source:</strong> Deducted from freelancer's final payment
+                  </p>
+                  <p>
+                    • <strong>Fee Destination:</strong> Transferred to company escrow account
+                  </p>
+                  <p>
+                    • <strong>Remittance:</strong> Weekly automatic transfer to connected bank account
+                  </p>
+                  <p>
+                    • <strong>Example:</strong> Task budget ₦10,000 → Freelancer receives ₦
+                    {(10000 * (1 - companyData.escrowFeePercentage / 100)).toLocaleString()}, Company fee ₦
+                    {((10000 * companyData.escrowFeePercentage) / 100).toLocaleString()}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -667,6 +1040,7 @@ export default function AdminSettingsPage() {
                     onChange={(e) => updateSetting("passwordMinLength", Number.parseInt(e.target.value))}
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
                   <Input

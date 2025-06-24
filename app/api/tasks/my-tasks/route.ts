@@ -1,114 +1,131 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { supabase } from "@/lib/supabase"
 
-// In-memory storage for demo (in production, this would be your database)
-const mockTasks = [
-  {
-    id: "task-1",
-    title: "E-commerce Website Development",
-    description: "Build a modern e-commerce platform with React and Node.js",
-    budget_min: 2500,
-    budget_max: 4000,
-    budget_type: "fixed",
-    status: "active",
-    category: "Web Development",
-    skills_required: ["React", "Node.js", "MongoDB"],
-    applications_count: 12,
-    created_at: "2024-01-15T10:00:00Z",
-    deadline: "2024-02-15T23:59:59Z",
-    urgency: "normal",
-    location: "Remote",
-  },
-  {
-    id: "task-2",
-    title: "Mobile App UI/UX Design",
-    description: "Design modern and intuitive mobile app interface",
-    budget_min: 1200,
-    budget_max: 2000,
-    budget_type: "fixed",
-    status: "in_progress",
-    category: "Design",
-    skills_required: ["Figma", "UI/UX", "Mobile Design"],
-    applications_count: 8,
-    created_at: "2024-01-10T14:30:00Z",
-    deadline: "2024-01-30T23:59:59Z",
-    urgency: "high",
-    location: "Remote",
-  },
-  {
-    id: "task-3",
-    title: "Content Writing for Blog",
-    description: "Write 10 SEO-optimized blog posts about technology",
-    budget_min: 800,
-    budget_max: 1200,
-    budget_type: "fixed",
-    status: "completed",
-    category: "Writing",
-    skills_required: ["Content Writing", "SEO", "Technology"],
-    applications_count: 15,
-    created_at: "2023-12-20T09:15:00Z",
-    deadline: "2024-01-05T23:59:59Z",
-    urgency: "normal",
-    location: "Remote",
-  },
-  {
-    id: "task-4",
-    title: "Python Data Analysis Script",
-    description: "Create data analysis scripts for financial data processing",
-    budget_min: 500,
-    budget_max: 800,
-    budget_type: "fixed",
-    status: "draft",
-    category: "Data Science",
-    skills_required: ["Python", "Pandas", "Data Analysis"],
-    applications_count: 0,
-    created_at: "2024-01-18T11:45:00Z",
-    deadline: "2024-02-20T23:59:59Z",
-    urgency: "normal",
-    location: "Remote",
-  },
-]
+// Helper function to convert simple IDs to UUID format
+function convertToUUID(id: string): string {
+  if (id.length === 36 && id.includes("-")) {
+    return id // Already a UUID
+  }
+  // Convert simple ID like "1" to UUID format
+  const paddedId = id.padStart(8, "0")
+  return `${paddedId}-0000-4000-8000-000000000000`
+}
 
 export async function GET(request: NextRequest) {
   try {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    console.log("=== MY TASKS API START ===")
 
     const { searchParams } = new URL(request.url)
+    const rawUserId = searchParams.get("user_id")
+
+    if (!rawUserId) {
+      return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 })
+    }
+
+    // Convert user ID to UUID format
+    const userId = convertToUUID(rawUserId)
+    console.log(`User ID conversion: ${rawUserId} -> ${userId}`)
+
+    // Get filters from query params
     const status = searchParams.get("status")
     const category = searchParams.get("category")
     const search = searchParams.get("search")
 
-    let filteredTasks = [...mockTasks]
+    // Build query
+    let query = supabase
+      .from("tasks")
+      .select(`
+        id,
+        title,
+        description,
+        budget_min,
+        budget_max,
+        budget_type,
+        status,
+        category,
+        skills_required,
+        created_at,
+        updated_at,
+        deadline,
+        urgency,
+        location,
+        currency,
+        views_count
+      `)
+      .eq("client_id", userId)
+      .order("created_at", { ascending: false })
 
     // Apply filters
     if (status && status !== "all") {
-      filteredTasks = filteredTasks.filter((task) => task.status === status)
+      query = query.eq("status", status)
     }
 
     if (category && category !== "all") {
-      filteredTasks = filteredTasks.filter((task) => task.category === category)
+      query = query.eq("category", category)
     }
 
     if (search) {
-      filteredTasks = filteredTasks.filter(
-        (task) =>
-          task.title.toLowerCase().includes(search.toLowerCase()) ||
-          task.description.toLowerCase().includes(search.toLowerCase()),
-      )
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
     }
+
+    const { data: tasks, error: tasksError } = await query
+
+    if (tasksError) {
+      console.error("Tasks query error:", tasksError)
+      return NextResponse.json({ success: false, error: `Database error: ${tasksError.message}` }, { status: 500 })
+    }
+
+    console.log(`Found ${tasks?.length || 0} tasks for user ${userId}`)
+
+    // Get application counts for each task
+    const tasksWithCounts = await Promise.all(
+      (tasks || []).map(async (task) => {
+        try {
+          const { count, error: countError } = await supabase
+            .from("applications")
+            .select("*", { count: "exact", head: true })
+            .eq("task_id", task.id)
+
+          if (countError) {
+            console.warn("Error getting application count for task", task.id, countError)
+          }
+
+          return {
+            ...task,
+            applications_count: count || 0,
+            skills_required: task.skills_required || [],
+            views_count: task.views_count || 0,
+          }
+        } catch (err) {
+          console.warn("Error processing task", task.id, err)
+          return {
+            ...task,
+            applications_count: 0,
+            skills_required: task.skills_required || [],
+            views_count: task.views_count || 0,
+          }
+        }
+      }),
+    )
+
+    console.log("=== MY TASKS API SUCCESS ===")
 
     return NextResponse.json({
       success: true,
-      tasks: filteredTasks,
-      total: filteredTasks.length,
+      tasks: tasksWithCounts,
+      total: tasksWithCounts.length,
     })
   } catch (error) {
-    console.error("Error fetching tasks:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch tasks" }, { status: 500 })
-  }
-}
+    console.error("=== MY TASKS API ERROR ===")
+    console.error("Unexpected error:", error)
 
-// Add a function to add new tasks to the mock data
-export function addTaskToMockData(task: any) {
-  mockTasks.unshift(task) // Add to beginning of array
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
+  }
 }

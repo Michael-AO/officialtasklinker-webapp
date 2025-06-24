@@ -1,31 +1,29 @@
 "use client"
 
-import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
-import { DollarSign, CreditCard, Clock, CheckCircle, AlertTriangle, Plus, Download, Eye, Banknote } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  DollarSign,
+  CreditCard,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Plus,
+  Settings,
+  Download,
+  Eye,
+  RefreshCw,
+} from "lucide-react"
 import { WithdrawalModal } from "@/components/withdrawal-modal"
-import { BankAccountModal } from "@/components/bank-account-modal"
-
-interface WithdrawalRequest {
-  id: string
-  amount: number
-  currency: string
-  status: "pending" | "processing" | "completed" | "failed"
-  bankAccount: {
-    bankName: string
-    accountNumber: string
-    accountName: string
-  }
-  requestDate: string
-  processedDate?: string
-  reference: string
-  fee: number
-  netAmount: number
-}
+import { BankAccountManagement } from "@/components/bank-account-management"
+import { PinSetupModal } from "@/components/pin-setup-modal"
+import { useAuth } from "@/contexts/auth-context"
+import { formatNaira } from "@/lib/currency"
+import { NairaIcon } from "@/components/naira-icon"
 
 interface BankAccount {
   id: string
@@ -38,97 +36,75 @@ interface BankAccount {
   addedDate: string
 }
 
+interface WithdrawalRequest {
+  id: string
+  amount: number
+  fee: number
+  netAmount: number
+  bankAccount: BankAccount
+  status: "pending" | "processing" | "completed" | "failed" | "cancelled"
+  requestDate: string
+  processedDate?: string
+  reference: string
+  narration: string
+  failureReason?: string
+}
+
 export default function WithdrawalsPage() {
+  const { user } = useAuth()
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false)
-  const [showBankAccountModal, setShowBankAccountModal] = useState(false)
-  const [selectedWithdrawal, setSelectedWithdrawal] = useState<string | null>(null)
+  const [showBankModal, setShowBankModal] = useState(false)
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [pinModalMode, setPinModalMode] = useState<"setup" | "change" | "verify">("setup")
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([])
+  const [availableBalance, setAvailableBalance] = useState(250000) // In kobo
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Mock data - in real app, this would come from API/context
-  const availableBalance = 375000 // 3,750 NGN in kobo
-  const pendingWithdrawals = 125000 // 1,250 NGN in kobo
-  const totalEarnings = 845000 // 8,450 NGN in kobo
+  useEffect(() => {
+    fetchData()
+  }, [])
 
-  const withdrawalRequests: WithdrawalRequest[] = [
-    {
-      id: "wd_001",
-      amount: 200000,
-      currency: "NGN",
-      status: "completed",
-      bankAccount: {
-        bankName: "GTBank",
-        accountNumber: "0123456789",
-        accountName: "John Doe",
-      },
-      requestDate: "2024-12-10T10:00:00Z",
-      processedDate: "2024-12-10T14:30:00Z",
-      reference: "TL_WD_1733832000_abc123",
-      fee: 5000,
-      netAmount: 195000,
-    },
-    {
-      id: "wd_002",
-      amount: 150000,
-      currency: "NGN",
-      status: "processing",
-      bankAccount: {
-        bankName: "Access Bank",
-        accountNumber: "0987654321",
-        accountName: "John Doe",
-      },
-      requestDate: "2024-12-12T09:15:00Z",
-      reference: "TL_WD_1734004500_def456",
-      fee: 3750,
-      netAmount: 146250,
-    },
-    {
-      id: "wd_003",
-      amount: 100000,
-      currency: "NGN",
-      status: "pending",
-      bankAccount: {
-        bankName: "First Bank",
-        accountNumber: "3001234567",
-        accountName: "John Doe",
-      },
-      requestDate: "2024-12-13T16:20:00Z",
-      reference: "TL_WD_1734115200_ghi789",
-      fee: 2500,
-      netAmount: 97500,
-    },
-  ]
+  const fetchData = async () => {
+    try {
+      setIsLoading(true)
+      // Fetch bank accounts
+      const bankResponse = await fetch("/api/bank-accounts")
+      if (bankResponse.ok) {
+        const bankData = await bankResponse.json()
+        setBankAccounts(bankData.accounts || [])
+      }
 
-  const bankAccounts: BankAccount[] = [
-    {
-      id: "bank_001",
-      bankName: "GTBank",
-      bankCode: "058",
-      accountNumber: "0123456789",
-      accountName: "John Doe",
-      isDefault: true,
-      isVerified: true,
-      addedDate: "2024-11-15T10:00:00Z",
-    },
-    {
-      id: "bank_002",
-      bankName: "Access Bank",
-      bankCode: "044",
-      accountNumber: "0987654321",
-      accountName: "John Doe",
-      isDefault: false,
-      isVerified: true,
-      addedDate: "2024-11-20T14:30:00Z",
-    },
-    {
-      id: "bank_003",
-      bankName: "First Bank",
-      bankCode: "011",
-      accountNumber: "3001234567",
-      accountName: "John Doe",
-      isDefault: false,
-      isVerified: false,
-      addedDate: "2024-12-01T09:15:00Z",
-    },
-  ]
+      // Fetch withdrawal history
+      const withdrawalResponse = await fetch("/api/withdrawals")
+      if (withdrawalResponse.ok) {
+        const withdrawalData = await withdrawalResponse.json()
+        setWithdrawals(withdrawalData.withdrawals || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch data:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const calculateFee = (amount: number) => {
+    // Fee structure: 1.5% + ₦100 (minimum ₦50, maximum ₦2000)
+    const percentageFee = Math.round(amount * 0.015)
+    const fixedFee = 100 * 100 // ₦100 in kobo
+    const totalFee = percentageFee + fixedFee
+
+    // Apply min/max limits
+    const minFee = 50 * 100 // ₦50 in kobo
+    const maxFee = 2000 * 100 // ₦2000 in kobo
+
+    return Math.max(minFee, Math.min(maxFee, totalFee))
+  }
+
+  const handlePinSetup = () => {
+    setPinModalMode("setup")
+    setShowPinModal(true)
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -140,6 +116,8 @@ export default function WithdrawalsPage() {
         return "bg-green-100 text-green-800"
       case "failed":
         return "bg-red-100 text-red-800"
+      case "cancelled":
+        return "bg-gray-100 text-gray-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -150,310 +128,240 @@ export default function WithdrawalsPage() {
       case "pending":
         return <Clock className="h-4 w-4" />
       case "processing":
-        return <Clock className="h-4 w-4" />
+        return <RefreshCw className="h-4 w-4 animate-spin" />
       case "completed":
         return <CheckCircle className="h-4 w-4" />
       case "failed":
+        return <AlertTriangle className="h-4 w-4" />
+      case "cancelled":
         return <AlertTriangle className="h-4 w-4" />
       default:
         return <Clock className="h-4 w-4" />
     }
   }
 
-  const calculateWithdrawalFee = (amount: number) => {
-    // Paystack transfer fee structure (simplified)
-    if (amount <= 5000) return 1000 // ₦10
-    if (amount <= 50000) return 2500 // ₦25
-    return Math.min(amount * 0.025, 10000) // 2.5% capped at ₦100
-  }
+  const totalWithdrawn = withdrawals.filter((w) => w.status === "completed").reduce((sum, w) => sum + w.netAmount, 0)
+
+  const pendingWithdrawals = withdrawals.filter((w) => ["pending", "processing"].includes(w.status))
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Withdrawals</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Withdrawals</h1>
+          <p className="text-muted-foreground">Manage your earnings and bank account withdrawals</p>
+        </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowBankAccountModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Bank Account
+          {!user?.hasPinSetup && (
+            <Button variant="outline" onClick={handlePinSetup}>
+              <Settings className="mr-2 h-4 w-4" />
+              Setup Security PIN
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => setShowBankModal(true)}>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Manage Banks
           </Button>
           <Button onClick={() => setShowWithdrawalModal(true)}>
-            <Banknote className="h-4 w-4 mr-2" />
-            Request Withdrawal
+            <Plus className="mr-2 h-4 w-4" />
+            New Withdrawal
           </Button>
         </div>
       </div>
+
+      {/* Security Alerts */}
+      {!user?.hasPinSetup && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Security PIN Required:</strong> Set up your 4-digit security PIN to make withdrawals and manage your
+            funds securely.{" "}
+            <Button variant="link" className="p-0 h-auto" onClick={handlePinSetup}>
+              Set up now
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {bankAccounts.filter((acc) => acc.isVerified).length === 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Bank Account Required:</strong> Add and verify a bank account to make withdrawals.{" "}
+            <Button variant="link" className="p-0 h-auto" onClick={() => setShowBankModal(true)}>
+              Add bank account
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Balance Overview */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <NairaIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">₦{(availableBalance / 100).toLocaleString()}</div>
+            <div className="text-2xl font-bold text-green-600">{formatNaira(availableBalance / 100)}</div>
             <p className="text-xs text-muted-foreground">Ready for withdrawal</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Withdrawals</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Withdrawn</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatNaira(totalWithdrawn / 100)}</div>
+            <p className="text-xs text-muted-foreground">All time withdrawals</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">₦{(pendingWithdrawals / 100).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Being processed</p>
+            <div className="text-2xl font-bold">
+              {formatNaira(pendingWithdrawals.reduce((sum, w) => sum + w.netAmount, 0) / 100)}
+            </div>
+            <p className="text-xs text-muted-foreground">{pendingWithdrawals.length} requests</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Bank Accounts</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₦{(totalEarnings / 100).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">All time earnings</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">98%</div>
-            <p className="text-xs text-muted-foreground">Successful withdrawals</p>
+            <div className="text-2xl font-bold">{bankAccounts.filter((acc) => acc.isVerified).length}</div>
+            <p className="text-xs text-muted-foreground">Verified accounts</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="requests" className="space-y-4">
+      {/* Withdrawal History */}
+      <Tabs defaultValue="history" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="requests">Withdrawal Requests</TabsTrigger>
-          <TabsTrigger value="accounts">Bank Accounts</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="history">Withdrawal History</TabsTrigger>
+          <TabsTrigger value="banks">Bank Accounts</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="requests" className="space-y-4">
-          <div className="space-y-4">
-            {withdrawalRequests.map((withdrawal) => (
-              <Card key={withdrawal.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
-                        <Banknote className="h-6 w-6 text-blue-600" />
-                      </div>
-
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-lg">
-                            ₦{(withdrawal.amount / 100).toLocaleString()} Withdrawal
-                          </h3>
-                          <Badge className={getStatusColor(withdrawal.status)}>
-                            {getStatusIcon(withdrawal.status)}
-                            <span className="ml-1 capitalize">{withdrawal.status}</span>
-                          </Badge>
-                        </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Bank</p>
-                            <p className="font-medium">{withdrawal.bankAccount.bankName}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Account</p>
-                            <p className="font-medium">***{withdrawal.bankAccount.accountNumber.slice(-4)}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Fee</p>
-                            <p className="font-medium">₦{(withdrawal.fee / 100).toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Net Amount</p>
-                            <p className="font-medium text-green-600">
-                              ₦{(withdrawal.netAmount / 100).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>Requested: {new Date(withdrawal.requestDate).toLocaleDateString()}</span>
-                          {withdrawal.processedDate && (
-                            <span>Processed: {new Date(withdrawal.processedDate).toLocaleDateString()}</span>
-                          )}
-                          <span>Ref: {withdrawal.reference}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <div className="text-sm text-muted-foreground">
-                      {withdrawal.status === "completed" && "Funds transferred successfully"}
-                      {withdrawal.status === "processing" && "Transfer in progress"}
-                      {withdrawal.status === "pending" && "Awaiting processing"}
-                      {withdrawal.status === "failed" && "Transfer failed - contact support"}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View Details
-                      </Button>
-                      {withdrawal.status === "completed" && (
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-1" />
-                          Receipt
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="accounts" className="space-y-4">
-          <div className="space-y-4">
-            {bankAccounts.map((account) => (
-              <Card key={account.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full">
-                        <CreditCard className="h-6 w-6 text-gray-600" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{account.bankName}</h3>
-                          {account.isDefault && <Badge variant="secondary">Default</Badge>}
-                          {account.isVerified ? (
-                            <Badge className="bg-green-100 text-green-800">Verified</Badge>
-                          ) : (
-                            <Badge variant="outline">Pending Verification</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {account.accountName} • ***{account.accountNumber.slice(-4)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Added {new Date(account.addedDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      {!account.isVerified && (
-                        <Button variant="outline" size="sm">
-                          Verify
-                        </Button>
-                      )}
-                      {!account.isDefault && account.isVerified && (
-                        <Button variant="outline" size="sm">
-                          Set as Default
-                        </Button>
-                      )}
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid gap-6 md:grid-cols-2">
+        <TabsContent value="history" className="space-y-4">
+          {withdrawals.length === 0 ? (
             <Card>
-              <CardHeader>
-                <CardTitle>Withdrawal Trends</CardTitle>
-                <CardDescription>Your withdrawal patterns over time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">This Month</span>
-                    <span className="font-medium">₦{(450000 / 100).toLocaleString()}</span>
-                  </div>
-                  <Progress value={75} className="h-2" />
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Last Month</span>
-                    <span className="font-medium">₦{(320000 / 100).toLocaleString()}</span>
-                  </div>
-                  <Progress value={53} className="h-2" />
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Average Monthly</span>
-                    <span className="font-medium">₦{(385000 / 100).toLocaleString()}</span>
-                  </div>
-                  <Progress value={64} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Processing Times</CardTitle>
-                <CardDescription>Average time to process withdrawals</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Instant Transfers</span>
-                    <span className="font-medium">&lt; 1 hour</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Standard Transfers</span>
-                    <span className="font-medium">2-4 hours</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Your Average</span>
-                    <span className="font-medium text-green-600">1.5 hours</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Fee Breakdown</CardTitle>
-              <CardDescription>Understanding withdrawal fees</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="text-center p-3 border rounded-lg">
-                    <p className="font-medium">₦0 - ₦50</p>
-                    <p className="text-muted-foreground">₦10 fee</p>
-                  </div>
-                  <div className="text-center p-3 border rounded-lg">
-                    <p className="font-medium">₦50 - ₦500</p>
-                    <p className="text-muted-foreground">₦25 fee</p>
-                  </div>
-                  <div className="text-center p-3 border rounded-lg">
-                    <p className="font-medium">₦500+</p>
-                    <p className="text-muted-foreground">2.5% (max ₦100)</p>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Tip:</strong> Withdraw larger amounts less frequently to minimize fees. Fees are
-                    automatically calculated and shown before confirmation.
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Withdrawals Yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    You haven't made any withdrawal requests. Start by requesting your first withdrawal.
                   </p>
+                  <Button onClick={() => setShowWithdrawalModal(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Request Withdrawal
+                  </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {withdrawals.map((withdrawal) => (
+                <Card key={withdrawal.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4 flex-1">
+                        <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <NairaIcon className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-semibold">{formatNaira(withdrawal.netAmount / 100)}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                To {withdrawal.bankAccount.bankName} •••{withdrawal.bankAccount.accountNumber.slice(-4)}
+                              </p>
+                            </div>
+                            <Badge className={getStatusColor(withdrawal.status)}>
+                              {getStatusIcon(withdrawal.status)}
+                              <span className="ml-1 capitalize">{withdrawal.status}</span>
+                            </Badge>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <p className="text-muted-foreground">Amount</p>
+                              <p className="font-medium">{formatNaira(withdrawal.amount / 100)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Fee</p>
+                              <p className="font-medium">{formatNaira(withdrawal.fee / 100)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Reference</p>
+                              <p className="font-medium text-xs">{withdrawal.reference}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Date</p>
+                              <p className="font-medium">{new Date(withdrawal.requestDate).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+
+                          {withdrawal.narration && (
+                            <div>
+                              <p className="text-muted-foreground text-sm">Note</p>
+                              <p className="text-sm">{withdrawal.narration}</p>
+                            </div>
+                          )}
+
+                          {withdrawal.failureReason && (
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                              <p className="font-medium text-sm text-red-800">Failure Reason:</p>
+                              <p className="text-sm text-red-700">{withdrawal.failureReason}</p>
+                            </div>
+                          )}
+
+                          {withdrawal.status === "completed" && withdrawal.processedDate && (
+                            <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                              <p className="font-medium text-sm text-green-800">
+                                Completed on {new Date(withdrawal.processedDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View Details
+                        </Button>
+                        {withdrawal.status === "completed" && (
+                          <Button variant="outline" size="sm">
+                            <Download className="h-4 w-4 mr-1" />
+                            Receipt
+                          </Button>
+                        )}
+                      </div>
+
+                      {withdrawal.status === "pending" && (
+                        <Button variant="outline" size="sm">
+                          Cancel Request
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="banks" className="space-y-4">
+          <BankAccountManagement />
         </TabsContent>
       </Tabs>
 
@@ -463,10 +371,12 @@ export default function WithdrawalsPage() {
         onClose={() => setShowWithdrawalModal(false)}
         availableBalance={availableBalance}
         bankAccounts={bankAccounts}
-        calculateFee={calculateWithdrawalFee}
+        calculateFee={calculateFee}
       />
 
-      <BankAccountModal isOpen={showBankAccountModal} onClose={() => setShowBankAccountModal(false)} />
+      <BankAccountManagement />
+
+      <PinSetupModal isOpen={showPinModal} onClose={() => setShowPinModal(false)} mode={pinModalMode} />
     </div>
   )
 }

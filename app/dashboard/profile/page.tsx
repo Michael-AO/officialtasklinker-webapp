@@ -1,74 +1,259 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarDays, MapPin, Star, Edit, Camera, ExternalLink } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { CalendarDays, MapPin, Star, Edit, Camera, ExternalLink, AlertCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
-import { IdentityVerification } from "@/components/identity-verification"
+import { ProfileCompletionWizard } from "@/components/profile-completion-wizard"
+
+interface UserProfile {
+  id: string
+  name: string
+  email: string
+  user_type: string
+  avatar_url?: string
+  bio?: string
+  location?: string
+  hourly_rate?: number
+  skills: string[]
+  rating: number
+  completed_tasks: number
+  total_earned: number
+  join_date: string
+  last_active: string
+  is_verified: boolean
+  phone?: string
+  portfolio?: PortfolioItem[]
+}
+
+interface PortfolioItem {
+  id: string
+  title: string
+  description: string
+  image_url?: string
+  project_url?: string
+  created_at: string
+}
+
+interface Review {
+  id: string
+  rating: number
+  comment: string
+  project_title?: string
+  created_at: string
+  reviewer: {
+    name: string
+    avatar_url?: string
+  }
+}
+
+interface ProfileStats {
+  activeTasks: number
+  pendingApplications: number
+  completionRate: number
+  responseTime: string
+}
 
 export default function ProfilePage() {
-  const { user } = useAuth()
-  const [isEditing, setIsEditing] = useState(false)
+  const { user: authUser } = useAuth()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([])
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [stats, setStats] = useState<ProfileStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  if (!user) {
-    return <div>Loading...</div>
+  useEffect(() => {
+    if (authUser?.id) {
+      fetchProfileData()
+    }
+  }, [authUser?.id])
+
+  const fetchProfileData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      if (!authUser?.id) {
+        throw new Error("User not authenticated")
+      }
+
+      console.log("🔍 Fetching profile for user:", authUser.id)
+
+      // Fetch profile data with user ID in headers
+      const profileResponse = await fetch(`/api/user/profile`, {
+        method: "GET",
+        headers: {
+          "x-user-id": authUser.id,
+          "Content-Type": "application/json",
+        },
+      })
+
+      console.log("📡 Profile response status:", profileResponse.status)
+
+      if (!profileResponse.ok) {
+        const errorText = await profileResponse.text()
+        console.error("❌ Profile response error:", errorText)
+
+        let errorData
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = { error: `HTTP ${profileResponse.status}: ${errorText}` }
+        }
+
+        throw new Error(errorData.error || `Failed to fetch profile: ${profileResponse.status}`)
+      }
+
+      const profileData = await profileResponse.json()
+      console.log("📦 Profile data received:", profileData)
+
+      if (profileData.success) {
+        setProfile(profileData.data)
+        // Set portfolio from profile data if available
+        if (profileData.data.portfolio) {
+          setPortfolio(profileData.data.portfolio)
+        }
+        console.log("✅ Profile set successfully")
+      } else {
+        throw new Error(profileData.error || "Failed to load profile")
+      }
+
+      // Fetch optional data (reviews, stats) - don't fail if these don't work
+      await Promise.allSettled([fetchReviewsData(), fetchStatsData()])
+    } catch (err) {
+      console.error("❌ Error fetching profile data:", err)
+      setError(err instanceof Error ? err.message : "Failed to load profile data")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const mockPortfolio = [
-    {
-      id: "1",
-      title: "E-commerce Website",
-      description: "Modern React-based e-commerce platform with payment integration",
-      image: "/placeholder.svg?height=200&width=300",
-      url: "https://example.com",
-    },
-    {
-      id: "2",
-      title: "Mobile App Design",
-      description: "UI/UX design for a fitness tracking mobile application",
-      image: "/placeholder.svg?height=200&width=300",
-      url: "https://example.com",
-    },
-    {
-      id: "3",
-      title: "Brand Identity",
-      description: "Complete brand identity design including logo and guidelines",
-      image: "/placeholder.svg?height=200&width=300",
-      url: "https://example.com",
-    },
-  ]
+  const fetchReviewsData = async () => {
+    try {
+      const reviewsResponse = await fetch(`/api/user/reviews`, {
+        headers: { "x-user-id": authUser!.id },
+      })
+      if (reviewsResponse.ok) {
+        const reviewsData = await reviewsResponse.json()
+        if (reviewsData.success) {
+          setReviews(reviewsData.data || [])
+        }
+      }
+    } catch (err) {
+      console.log("ℹ️ Reviews not available:", err)
+    }
+  }
 
-  const mockReviews = [
-    {
-      id: "1",
-      client: "Sarah Johnson",
-      rating: 5,
-      comment: "Excellent work! John delivered exactly what we needed on time and within budget.",
-      project: "Website Redesign",
-      date: "2 weeks ago",
-    },
-    {
-      id: "2",
-      client: "Mike Chen",
-      rating: 5,
-      comment: "Great communication and high-quality deliverables. Would definitely work with again.",
-      project: "Mobile App Development",
-      date: "1 month ago",
-    },
-    {
-      id: "3",
-      client: "TechCorp Inc.",
-      rating: 4,
-      comment: "Professional and reliable. The project was completed successfully.",
-      project: "API Integration",
-      date: "2 months ago",
-    },
-  ]
+  const fetchStatsData = async () => {
+    try {
+      const statsResponse = await fetch(`/api/user/stats`, {
+        headers: { "x-user-id": authUser!.id },
+      })
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        if (statsData.success) {
+          setStats(statsData.data)
+        }
+      }
+    } catch (err) {
+      console.log("ℹ️ Stats not available:", err)
+    }
+  }
+
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = () => {
+    if (!profile) return 0
+
+    let completed = 0
+    const total = 5 // Total sections to complete
+
+    if (profile.bio && profile.bio.trim()) completed++
+    if (profile.skills && profile.skills.length > 0) completed++
+    if (profile.location && profile.location.trim()) completed++
+    if (profile.hourly_rate && profile.hourly_rate > 0) completed++
+    if (profile.portfolio && profile.portfolio.length > 0) completed++
+
+    return Math.round((completed / total) * 100)
+  }
+
+  const profileCompletion = calculateProfileCompletion()
+  const isProfileIncomplete = profileCompletion < 100
+
+  if (!authUser) {
+    return (
+      <div className="space-y-6">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Please log in to view your profile.</AlertDescription>
+        </Alert>
+        <Button asChild>
+          <Link href="/login">Login</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return <ProfileSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        <Button onClick={fetchProfileData}>Try Again</Button>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="space-y-6">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Profile not found. Please complete your profile setup.</AlertDescription>
+        </Alert>
+        <Button asChild>
+          <Link href="/dashboard/profile/edit">Complete Profile</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+  }
 
   return (
     <div className="space-y-6">
@@ -82,6 +267,9 @@ export default function ProfilePage() {
         </Button>
       </div>
 
+      {/* Profile Completion Wizard - Show if profile is incomplete */}
+      {isProfileIncomplete && <ProfileCompletionWizard />}
+
       {/* Profile Header */}
       <Card>
         <CardContent className="pt-6">
@@ -89,13 +277,8 @@ export default function ProfilePage() {
             <div className="flex flex-col items-center md:items-start">
               <div className="relative">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                  <AvatarFallback className="text-lg">
-                    {user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
+                  <AvatarImage src={profile.avatar_url || "/placeholder.svg"} alt={profile.name} />
+                  <AvatarFallback className="text-lg">{getInitials(profile.name)}</AvatarFallback>
                 </Avatar>
                 <Button size="sm" variant="outline" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0">
                   <Camera className="h-4 w-4" />
@@ -103,56 +286,72 @@ export default function ProfilePage() {
               </div>
               <div className="mt-4 text-center md:text-left">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-2xl font-bold">{user.name}</h2>
-                  {user.isVerified && (
+                  <h2 className="text-2xl font-bold">{profile.name}</h2>
+                  {profile.is_verified && (
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
                       Verified
                     </Badge>
                   )}
+                  <Badge
+                    variant="outline"
+                    className={
+                      profileCompletion === 100 ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"
+                    }
+                  >
+                    {profileCompletion}% Complete
+                  </Badge>
                 </div>
-                <p className="text-muted-foreground capitalize">{user.userType}</p>
+                <p className="text-muted-foreground capitalize">{profile.user_type}</p>
               </div>
             </div>
 
             <div className="flex-1 space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{user.completedTasks}</div>
+                  <div className="text-2xl font-bold">{profile.completed_tasks}</div>
                   <div className="text-sm text-muted-foreground">Tasks Completed</div>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1">
-                    <span className="text-2xl font-bold">{user.rating}</span>
+                    <span className="text-2xl font-bold">{profile.rating.toFixed(1)}</span>
                     <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   </div>
                   <div className="text-sm text-muted-foreground">Rating</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">98%</div>
+                  <div className="text-2xl font-bold">{stats?.completionRate ? `${stats.completionRate}%` : "N/A"}</div>
                   <div className="text-sm text-muted-foreground">Success Rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">$45</div>
+                  <div className="text-2xl font-bold">
+                    {profile.hourly_rate ? formatCurrency(profile.hourly_rate) : "Not Set"}
+                  </div>
                   <div className="text-sm text-muted-foreground">Hourly Rate</div>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {user.skills.map((skill) => (
-                  <Badge key={skill} variant="outline">
-                    {skill}
-                  </Badge>
-                ))}
+                {profile.skills.length > 0 ? (
+                  profile.skills.map((skill) => (
+                    <Badge key={skill} variant="outline">
+                      {skill}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-sm">No skills added yet</p>
+                )}
               </div>
 
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  San Francisco, CA
-                </div>
+                {profile.location && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    {profile.location}
+                  </div>
+                )}
                 <div className="flex items-center gap-1">
                   <CalendarDays className="h-4 w-4" />
-                  Joined {new Date(user.joinDate).toLocaleDateString()}
+                  Joined {formatDate(profile.join_date)}
                 </div>
               </div>
             </div>
@@ -160,14 +359,11 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Identity Verification */}
-      <IdentityVerification />
-
       <Tabs defaultValue="about" className="space-y-4">
         <TabsList>
           <TabsTrigger value="about">About</TabsTrigger>
-          <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-          <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          <TabsTrigger value="portfolio">Portfolio ({portfolio.length})</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews ({reviews.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="about" className="space-y-4">
@@ -176,10 +372,16 @@ export default function ProfilePage() {
               <CardTitle>About Me</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
-                {user.bio ||
-                  "I'm a passionate full-stack developer with over 5 years of experience building web applications and mobile solutions. I specialize in React, Node.js, and modern JavaScript frameworks. I love working on challenging projects and helping businesses achieve their goals through technology."}
-              </p>
+              {profile.bio ? (
+                <p className="text-muted-foreground leading-relaxed">{profile.bio}</p>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">No bio added yet</p>
+                  <Button asChild variant="outline">
+                    <Link href="/dashboard/profile/edit">Add Bio</Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -188,94 +390,199 @@ export default function ProfilePage() {
               <CardTitle>Skills & Expertise</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {user.skills.map((skill) => (
-                  <div key={skill} className="flex items-center justify-between p-3 border rounded-lg">
-                    <span className="font-medium">{skill}</span>
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                        />
-                      ))}
+              {profile.skills.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {profile.skills.map((skill) => (
+                    <div key={skill} className="flex items-center justify-between p-3 border rounded-lg">
+                      <span className="font-medium">{skill}</span>
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">No skills added yet</p>
+                  <Button asChild variant="outline">
+                    <Link href="/dashboard/profile/edit">Add Skills</Link>
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Earnings Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Earnings Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{formatCurrency(profile.total_earned)}</div>
+                  <div className="text-sm text-muted-foreground">Total Earned</div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold">{stats?.activeTasks || 0}</div>
+                  <div className="text-sm text-muted-foreground">Active Tasks</div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold">{stats?.pendingApplications || 0}</div>
+                  <div className="text-sm text-muted-foreground">Pending Applications</div>
+                </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="portfolio" className="space-y-4">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {mockPortfolio.map((item) => (
-              <Card key={item.id} className="overflow-hidden">
-                <div className="aspect-video bg-muted">
-                  <img src={item.image || "/placeholder.svg"} alt={item.title} className="w-full h-full object-cover" />
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    </div>
-                    {item.url && (
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={item.url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
+          {portfolio.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {portfolio.map((item) => (
+                <Card key={item.id} className="overflow-hidden">
+                  <div className="aspect-video bg-muted">
+                    <img
+                      src={item.image_url || "/placeholder.svg?height=200&width=300"}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <h3 className="font-semibold">{item.title}</h3>
+                        <p className="text-sm text-muted-foreground">{item.description}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
+                      </div>
+                      {item.project_url && (
+                        <Button variant="ghost" size="sm" asChild>
+                          <a href={item.project_url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <p className="text-muted-foreground mb-4">No portfolio items yet</p>
+                <Button asChild variant="outline">
+                  <Link href="/dashboard/profile/edit">Add Portfolio Items</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-4">
-          <div className="space-y-4">
-            {mockReviews.map((review) => (
-              <Card key={review.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <Avatar>
-                      <AvatarImage src="/placeholder.svg?height=40&width=40" />
-                      <AvatarFallback>
-                        {review.client
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{review.client}</p>
-                          <p className="text-sm text-muted-foreground">{review.project}</p>
+          {reviews.length > 0 ? (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <Card key={review.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <Avatar>
+                        <AvatarImage src={review.reviewer.avatar_url || "/placeholder.svg?height=40&width=40"} />
+                        <AvatarFallback>{getInitials(review.reviewer.name)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{review.reviewer.name}</p>
+                            {review.project_title && (
+                              <p className="text-sm text-muted-foreground">{review.project_title}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-4 w-4 ${
+                                  i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                            <span className="ml-2 text-sm text-muted-foreground">{formatDate(review.created_at)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${
-                                i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                          <span className="ml-2 text-sm text-muted-foreground">{review.date}</span>
-                        </div>
+                        <p className="text-muted-foreground">{review.comment}</p>
                       </div>
-                      <p className="text-muted-foreground">{review.comment}</p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <p className="text-muted-foreground mb-4">No reviews yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Complete some tasks to start receiving reviews from clients
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+function ProfileSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-start">
+        <Skeleton className="h-9 w-32" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex flex-col items-center md:items-start">
+              <Skeleton className="h-24 w-24 rounded-full" />
+              <div className="mt-4 space-y-2">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <div className="flex-1 space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="text-center">
+                    <Skeleton className="h-8 w-16 mx-auto mb-2" />
+                    <Skeleton className="h-4 w-20 mx-auto" />
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-6 w-16" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Card>
+          <CardContent className="pt-6">
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

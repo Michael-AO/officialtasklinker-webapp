@@ -1,0 +1,225 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { CheckCircle, XCircle, AlertCircle, RefreshCw, Zap } from "lucide-react"
+
+interface ConfigStatus {
+  paystack_configured: boolean
+  paystack_mode: string
+  environment: string
+  app_url: string
+  testing_mode: boolean
+  secret_key_present: boolean
+  public_key_present: boolean
+  keys_from_env: boolean
+}
+
+interface ConnectionTest {
+  success: boolean
+  message: string
+  configured: boolean
+  mode?: string
+  banks_count?: number
+}
+
+export function PaystackConfigCheck() {
+  const [config, setConfig] = useState<ConfigStatus | null>(null)
+  const [connectionTest, setConnectionTest] = useState<ConnectionTest | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [testing, setTesting] = useState(false)
+
+  const checkConfig = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch("/api/admin/revenue/config")
+      const data = await response.json()
+      setConfig(data.config)
+    } catch (error) {
+      console.error("Error checking config:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const testConnection = async () => {
+    setTesting(true)
+    try {
+      const response = await fetch("/api/paystack/test-connection")
+      const data = await response.json()
+      setConnectionTest(data)
+    } catch (error) {
+      console.error("Error testing connection:", error)
+      setConnectionTest({
+        success: false,
+        message: "Connection test failed",
+        configured: false,
+      })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  useEffect(() => {
+    checkConfig()
+  }, [])
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <span>Checking configuration...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!config) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          {config.paystack_configured ? (
+            <CheckCircle className="h-5 w-5 text-green-600" />
+          ) : (
+            <AlertCircle className="h-5 w-5 text-orange-600" />
+          )}
+          Paystack Configuration Status
+        </CardTitle>
+        <CardDescription>Payment gateway configuration and connection status</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Paystack Integration</span>
+              <Badge variant={config.paystack_configured ? "default" : "secondary"}>
+                {config.paystack_configured ? (
+                  <>
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Configured
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3 w-3 mr-1" />
+                    Not Configured
+                  </>
+                )}
+              </Badge>
+            </div>
+
+            {config.paystack_configured && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Paystack Mode</span>
+                <Badge variant={config.paystack_mode === "live" ? "destructive" : "default"}>
+                  <Zap className="h-3 w-3 mr-1" />
+                  {config.paystack_mode.toUpperCase()}
+                </Badge>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Environment</span>
+              <Badge variant={config.environment === "production" ? "default" : "outline"}>{config.environment}</Badge>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Keys Source</span>
+              <Badge variant={config.keys_from_env ? "default" : "secondary"}>
+                {config.keys_from_env ? "Environment" : "Hardcoded"}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Secret Key</span>
+              <Badge variant={config.secret_key_present ? "default" : "secondary"}>
+                {config.secret_key_present ? "Present" : "Missing"}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Public Key</span>
+              <Badge variant={config.public_key_present ? "default" : "secondary"}>
+                {config.public_key_present ? "Present" : "Missing"}
+              </Badge>
+            </div>
+
+            {connectionTest && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Connection</span>
+                <Badge variant={connectionTest.success ? "default" : "destructive"}>
+                  {connectionTest.success ? (
+                    <>
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Connected
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Failed
+                    </>
+                  )}
+                </Badge>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {config.paystack_configured ? (
+          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+            <h4 className="font-medium text-green-900 mb-2">✅ Paystack Ready</h4>
+            <p className="text-sm text-green-800 mb-2">
+              Paystack is properly configured in <strong>{config.paystack_mode.toUpperCase()}</strong> mode. Withdrawals
+              will be processed through the live payment gateway.
+            </p>
+            {connectionTest?.success && connectionTest.banks_count && (
+              <p className="text-xs text-green-700">
+                Connection verified • {connectionTest.banks_count} banks available
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+            <h4 className="font-medium text-orange-900 mb-2">⚠️ Using Hardcoded Keys</h4>
+            <p className="text-sm text-orange-800 mb-3">
+              Currently using hardcoded Paystack test keys. For production, add keys to environment variables:
+            </p>
+            <div className="text-xs text-orange-700 bg-orange-100 p-2 rounded font-mono space-y-1">
+              <div>PAYSTACK_SECRET_KEY=sk_test_ef56928a6d163751f875d2dd5319b957846b86ad</div>
+              <div>NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_50596166815e556fc669cd96003c1d2851d40621</div>
+            </div>
+          </div>
+        )}
+
+        {connectionTest && !connectionTest.success && (
+          <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+            <h4 className="font-medium text-red-900 mb-2">❌ Connection Failed</h4>
+            <p className="text-sm text-red-800">{connectionTest.message}</p>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <Button onClick={checkConfig} variant="outline" size="sm" disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh Config
+          </Button>
+
+          {config.paystack_configured && (
+            <Button onClick={testConnection} variant="outline" size="sm" disabled={testing}>
+              <Zap className={`h-4 w-4 mr-2 ${testing ? "animate-pulse" : ""}`} />
+              Test Connection
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

@@ -11,12 +11,14 @@ import { Settings, CreditCard, Lock, LayoutDashboard, DollarSign } from "lucide-
 
 export default function DashboardSettingsPage() {
   const searchParams = useSearchParams()
-  const [activeTab, setActiveTab] = useState("security")
+  const [activeTab, setActiveTab] = useState("dashboard")
 
   useEffect(() => {
     const tab = searchParams.get("tab")
-    if (tab && ["security", "payment", "bank-accounts", "dashboard"].includes(tab)) {
+    if (tab === "dashboard") {
       setActiveTab(tab)
+    } else {
+      setActiveTab("dashboard")
     }
   }, [searchParams])
 
@@ -34,15 +36,15 @@ export default function DashboardSettingsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="security" className="flex items-center gap-2">
+          <TabsTrigger value="security" disabled className="flex items-center gap-2 opacity-50 cursor-not-allowed">
             <Lock className="h-4 w-4" />
             Security
           </TabsTrigger>
-          <TabsTrigger value="payment" className="flex items-center gap-2">
+          <TabsTrigger value="payment" disabled className="flex items-center gap-2 opacity-50 cursor-not-allowed">
             <DollarSign className="h-4 w-4" />
             Payment
           </TabsTrigger>
-          <TabsTrigger value="bank-accounts" className="flex items-center gap-2">
+          <TabsTrigger value="bank-accounts" disabled className="flex items-center gap-2 opacity-50 cursor-not-allowed">
             <CreditCard className="h-4 w-4" />
             Bank Accounts
           </TabsTrigger>

@@ -1,5 +1,8 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
+import { toast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -7,11 +10,107 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Users, FileText, CreditCard, TrendingUp, AlertTriangle, DollarSign, Eye, UserCheck } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 
+interface User {
+  id: string
+  email: string
+  name: string
+  user_type: "client" | "freelancer"
+  created_at: string
+  last_active: string
+  is_verified: boolean
+}
+
+interface Task {
+  id: string
+  title: string
+  budget_min: number
+  budget_max: number
+  status: string
+  deadline: string
+  created_at: string
+  client: {
+    name: string
+  }
+}
+
 export default function AdminDashboard() {
-  const stats = [
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeTasks: 0,
+    totalRevenue: 0,
+    pendingDisputes: 0,
+  })
+  const [recentUsers, setRecentUsers] = useState<User[]>([])
+  const [recentTasks, setRecentTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch stats
+      const [
+        { count: userCount },
+        { count: taskCount },
+        { data: escrowData },
+        { count: disputeCount },
+        { data: usersData },
+        { data: tasksData },
+      ] = await Promise.all([
+        supabase.from("users").select("*", { count: "exact", head: true }),
+        supabase.from("tasks").select("*", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
+        supabase.from("escrow").select("amount").eq("status", "released"),
+        supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "disputed"),
+        supabase
+          .from("users")
+          .select("id, email, name, user_type, created_at, last_active, is_verified")
+          .order("created_at", { ascending: false })
+          .limit(4),
+        supabase
+          .from("tasks")
+          .select(`
+            id,
+            title,
+            budget_min,
+            budget_max,
+            status,
+            deadline,
+            created_at,
+            client:client_id(name)
+          `)
+          .order("created_at", { ascending: false })
+          .limit(4),
+      ])
+
+      const totalRevenue = escrowData?.reduce((sum, escrow) => sum + (escrow.amount || 0), 0) || 0
+
+      setStats({
+        totalUsers: userCount || 0,
+        activeTasks: taskCount || 0,
+        totalRevenue,
+        pendingDisputes: disputeCount || 0,
+      })
+
+      setRecentUsers(usersData || [])
+      setRecentTasks(tasksData || [])
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch dashboard data",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const statsCards = [
     {
       title: "Total Users",
-      value: "12,483",
+      value: stats.totalUsers.toLocaleString(),
       change: "+12%",
       icon: Users,
       color: "text-blue-600",
@@ -19,7 +118,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Active Tasks",
-      value: "1,247",
+      value: stats.activeTasks.toLocaleString(),
       change: "+8%",
       icon: FileText,
       color: "text-green-600",
@@ -27,7 +126,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Total Revenue",
-      value: "₦2.4M",
+      value: `₦${(stats.totalRevenue / 100).toLocaleString()}`,
       change: "+15%",
       icon: DollarSign,
       color: "text-purple-600",
@@ -35,89 +134,11 @@ export default function AdminDashboard() {
     },
     {
       title: "Pending Disputes",
-      value: "23",
+      value: stats.pendingDisputes.toString(),
       change: "-5%",
       icon: AlertTriangle,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
-    },
-  ]
-
-  const recentUsers = [
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john@example.com",
-      type: "Freelancer",
-      status: "Active",
-      joinedDate: "2024-01-15",
-      avatar: "JD",
-    },
-    {
-      id: "2",
-      name: "Sarah Smith",
-      email: "sarah@company.com",
-      type: "Client",
-      status: "Pending",
-      joinedDate: "2024-01-14",
-      avatar: "SS",
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike@freelance.com",
-      type: "Freelancer",
-      status: "Active",
-      joinedDate: "2024-01-13",
-      avatar: "MJ",
-    },
-    {
-      id: "4",
-      name: "Emily Davis",
-      email: "emily@startup.com",
-      type: "Client",
-      status: "Active",
-      joinedDate: "2024-01-12",
-      avatar: "ED",
-    },
-  ]
-
-  const recentTasks = [
-    {
-      id: "1",
-      title: "E-commerce Website Development",
-      client: "TechCorp Ltd",
-      freelancer: "John Doe",
-      budget: "₦150,000",
-      status: "In Progress",
-      deadline: "2024-02-15",
-    },
-    {
-      id: "2",
-      title: "Mobile App UI/UX Design",
-      client: "StartupXYZ",
-      freelancer: "Sarah Smith",
-      budget: "₦80,000",
-      status: "Completed",
-      deadline: "2024-01-30",
-    },
-    {
-      id: "3",
-      title: "Content Writing & SEO",
-      client: "Marketing Pro",
-      freelancer: "Mike Johnson",
-      budget: "₦45,000",
-      status: "Review",
-      deadline: "2024-02-05",
-    },
-    {
-      id: "4",
-      title: "Data Analysis Dashboard",
-      client: "FinanceHub",
-      freelancer: "Emily Davis",
-      budget: "₦120,000",
-      status: "Pending",
-      deadline: "2024-02-20",
     },
   ]
 
@@ -126,11 +147,24 @@ export default function AdminDashboard() {
       Active: "bg-green-100 text-green-800",
       Pending: "bg-yellow-100 text-yellow-800",
       Inactive: "bg-gray-100 text-gray-800",
-      "In Progress": "bg-blue-100 text-blue-800",
-      Completed: "bg-green-100 text-green-800",
-      Review: "bg-orange-100 text-orange-800",
+      open: "bg-blue-100 text-blue-800",
+      in_progress: "bg-yellow-100 text-yellow-800",
+      completed: "bg-green-100 text-green-800",
+      disputed: "bg-red-100 text-red-800",
     }
     return variants[status] || "bg-gray-100 text-gray-800"
+  }
+
+  const getUserStatus = (user: User) => {
+    if (user.is_verified) return "Active"
+    return "Pending"
+  }
+
+  const formatBudget = (min: number, max: number) => {
+    if (min && max) {
+      return `₦${(min / 100).toLocaleString()} - ₦${(max / 100).toLocaleString()}`
+    }
+    return "Budget not set"
   }
 
   const activityFeed = [
@@ -200,6 +234,17 @@ export default function AdminDashboard() {
     { month: "Jun", users: 1550, revenue: 3000 },
   ]
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -209,13 +254,13 @@ export default function AdminDashboard() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline">Export Report</Button>
-          <Button>Refresh Data</Button>
+          <Button onClick={fetchDashboardData}>Refresh Data</Button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statsCards.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
@@ -235,7 +280,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Users */}
+        {/* Recent Users - Real Data */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -265,29 +310,36 @@ export default function AdminDashboard() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium">
-                          {user.avatar}
+                          {user.name?.charAt(0) || user.email.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-medium text-sm">{user.name}</p>
+                          <p className="font-medium text-sm">{user.name || "No name"}</p>
                           <p className="text-xs text-gray-500">{user.email}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{user.type}</Badge>
+                      <Badge variant="outline" className="capitalize">
+                        {user.user_type}
+                      </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusBadge(user.status)}>{user.status}</Badge>
+                      <Badge className={getStatusBadge(getUserStatus(user))}>{getUserStatus(user)}</Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">{user.joinedDate}</TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            {recentUsers.length === 0 && (
+              <div className="text-center py-4 text-muted-foreground">No recent users found</div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Recent Tasks */}
+        {/* Recent Tasks - Real Data */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -317,18 +369,25 @@ export default function AdminDashboard() {
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{task.title}</p>
-                        <p className="text-xs text-gray-500">{task.client}</p>
+                        <p className="text-xs text-gray-500">{task.client?.name || "Unknown Client"}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{task.budget}</TableCell>
+                    <TableCell className="font-medium">{formatBudget(task.budget_min, task.budget_max)}</TableCell>
                     <TableCell>
-                      <Badge className={getStatusBadge(task.status)}>{task.status}</Badge>
+                      <Badge className={getStatusBadge(task.status)} className="capitalize">
+                        {task.status.replace("_", " ")}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">{task.deadline}</TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {task.deadline ? new Date(task.deadline).toLocaleDateString() : "No deadline"}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            {recentTasks.length === 0 && (
+              <div className="text-center py-4 text-muted-foreground">No recent tasks found</div>
+            )}
           </CardContent>
         </Card>
       </div>

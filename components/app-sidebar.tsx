@@ -53,29 +53,6 @@ const navigationItems = [
     url: "/dashboard/applications",
     icon: Users,
   },
-  {
-    title: "Messages",
-    url: "/dashboard/messages",
-    icon: MessageSquare,
-  },
-]
-
-const paymentItems = [
-  {
-    title: "Payments",
-    url: "/dashboard/payments",
-    icon: CreditCard,
-  },
-  {
-    title: "Escrow",
-    url: "/dashboard/payments/escrow",
-    icon: Shield,
-  },
-  {
-    title: "Withdrawals",
-    url: "/dashboard/payments/withdrawals",
-    icon: Banknote,
-  },
 ]
 
 const quickActions = [
@@ -88,6 +65,29 @@ const quickActions = [
     title: "Find Work",
     url: "/dashboard/browse",
     icon: Briefcase,
+  },
+]
+
+const disabledItems = [
+  {
+    title: "Messages",
+    icon: MessageSquare,
+    disabled: true,
+  },
+  {
+    title: "Payments",
+    icon: CreditCard,
+    disabled: true,
+  },
+  {
+    title: "Escrow",
+    icon: Shield,
+    disabled: true,
+  },
+  {
+    title: "Withdrawals",
+    icon: Banknote,
+    disabled: true,
   },
 ]
 
@@ -116,28 +116,6 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
-                  >
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-300">Payments</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {paymentItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
@@ -193,6 +171,21 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {disabledItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton disabled className="text-gray-500 cursor-not-allowed opacity-60">
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

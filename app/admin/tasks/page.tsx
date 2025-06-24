@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +8,17 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import {
   Search,
   Filter,
@@ -23,101 +34,183 @@ import {
   User,
   FileText,
 } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { toast } from "@/hooks/use-toast"
 
 interface Task {
   id: string
   title: string
   description: string
-  clientId: string
-  clientName: string
-  freelancerId?: string
-  freelancerName?: string
-  budget: number
-  status: "open" | "in_progress" | "completed" | "cancelled" | "disputed"
+  budget_min: number
+  budget_max: number
+  status: string
   category: string
   skills: string[]
   deadline: string
-  createdDate: string
-  applicationsCount: number
-  priority: "low" | "medium" | "high"
+  created_at: string
+  client: {
+    full_name: string
+    email: string
+  }
+  applications: {
+    id: string
+  }[]
+}
+
+interface TaskStats {
+  total: number
+  open: number
+  inProgress: number
+  completed: number
+  disputed: number
 }
 
 export default function AdminTasksPage() {
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [stats, setStats] = useState<TaskStats>({
+    total: 0,
+    open: 0,
+    inProgress: 0,
+    completed: 0,
+    disputed: 0,
+  })
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [selectedTab, setSelectedTab] = useState("all")
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const tasks: Task[] = [
-    {
-      id: "task_001",
-      title: "E-commerce Website Development",
-      description: "Build a modern e-commerce platform with React and Node.js",
-      clientId: "client_001",
-      clientName: "Sarah Johnson",
-      freelancerId: "freelancer_001",
-      freelancerName: "John Doe",
-      budget: 250000,
-      status: "in_progress",
-      category: "Web Development",
-      skills: ["React", "Node.js", "MongoDB", "Stripe"],
-      deadline: "2024-02-15",
-      createdDate: "2024-01-15",
-      applicationsCount: 12,
-      priority: "high",
-    },
-    {
-      id: "task_002",
-      title: "Mobile App UI/UX Design",
-      description: "Design user interface for iOS and Android mobile application",
-      clientId: "client_002",
-      clientName: "Mike Chen",
-      freelancerId: "freelancer_002",
-      freelancerName: "Lisa Wang",
-      budget: 120000,
-      status: "completed",
-      category: "Design",
-      skills: ["Figma", "Adobe XD", "Prototyping"],
-      deadline: "2024-01-30",
-      createdDate: "2024-01-10",
-      applicationsCount: 8,
-      priority: "medium",
-    },
-    {
-      id: "task_003",
-      title: "Content Writing for Tech Blog",
-      description: "Write SEO-optimized articles about emerging technologies",
-      clientId: "client_003",
-      clientName: "TechCorp Inc.",
-      budget: 75000,
-      status: "open",
-      category: "Writing",
-      skills: ["Technical Writing", "SEO", "Research"],
-      deadline: "2024-02-20",
-      createdDate: "2024-01-20",
-      applicationsCount: 15,
-      priority: "low",
-    },
-    {
-      id: "task_004",
-      title: "Data Analysis Dashboard",
-      description: "Create interactive dashboard for business analytics",
-      clientId: "client_004",
-      clientName: "FinanceHub",
-      budget: 180000,
-      status: "disputed",
-      category: "Data Science",
-      skills: ["Python", "Tableau", "SQL"],
-      deadline: "2024-02-10",
-      createdDate: "2024-01-05",
-      applicationsCount: 6,
-      priority: "high",
-    },
-  ]
+  useEffect(() => {
+    fetchTasks()
+    fetchStats()
+  }, [])
+
+  const fetchTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select(`
+        id,
+        title,
+        description,
+        budget_min,
+        budget_max,
+        status,
+        category,
+        skills_required,
+        deadline,
+        created_at,
+        client_id,
+        users!tasks_client_id_fkey (
+          name,
+          email
+        )
+      `)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+
+      // Get applications count for each task
+      const tasksWithApplications = await Promise.all(
+        (data || []).map(async (task) => {
+          const { count } = await supabase
+            .from("applications")
+            .select("*", { count: "exact", head: true })
+            .eq("task_id", task.id)
+
+          return {
+            ...task,
+            skills: task.skills_required || [],
+            client: {
+              full_name: task.users?.name || "Unknown Client",
+              email: task.users?.email || "",
+            },
+            applications: Array(count || 0).fill({ id: "dummy" }),
+          }
+        }),
+      )
+
+      setTasks(tasksWithApplications)
+    } catch (error) {
+      console.error("Error fetching tasks:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch tasks",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchStats = async () => {
+    try {
+      // Get total tasks
+      const { count: totalTasks } = await supabase.from("tasks").select("*", { count: "exact", head: true })
+
+      // Get tasks by status
+      const { count: openTasks } = await supabase
+        .from("tasks")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active")
+
+      const { count: inProgressTasks } = await supabase
+        .from("tasks")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "in_progress")
+
+      const { count: completedTasks } = await supabase
+        .from("tasks")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "completed")
+
+      const { count: disputedTasks } = await supabase
+        .from("tasks")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "disputed")
+
+      setStats({
+        total: totalTasks || 0,
+        open: openTasks || 0,
+        inProgress: inProgressTasks || 0,
+        completed: completedTasks || 0,
+        disputed: disputedTasks || 0,
+      })
+    } catch (error) {
+      console.error("Error fetching stats:", error)
+    }
+  }
+
+  const handleDeleteTask = async (taskId: string) => {
+    setIsDeleting(true)
+    try {
+      const { error } = await supabase.from("tasks").delete().eq("id", taskId)
+
+      if (error) throw error
+
+      toast({
+        title: "Success",
+        description: "Task deleted successfully",
+      })
+
+      fetchTasks()
+      fetchStats()
+    } catch (error) {
+      console.error("Error deleting task:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete task",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "open":
+      case "active":
         return "bg-blue-100 text-blue-800"
       case "in_progress":
         return "bg-yellow-100 text-yellow-800"
@@ -134,7 +227,7 @@ export default function AdminTasksPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "open":
+      case "active":
         return <Clock className="h-4 w-4" />
       case "in_progress":
         return <Clock className="h-4 w-4" />
@@ -149,23 +242,10 @@ export default function AdminTasksPage() {
     }
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-800"
-      case "medium":
-        return "bg-yellow-100 text-yellow-800"
-      case "low":
-        return "bg-green-100 text-green-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch =
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      task.client?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.category.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || task.status === statusFilter
     const matchesCategory = categoryFilter === "all" || task.category === categoryFilter
@@ -174,12 +254,17 @@ export default function AdminTasksPage() {
     return matchesSearch && matchesStatus && matchesCategory && matchesTab
   })
 
-  const stats = {
-    total: tasks.length,
-    open: tasks.filter((task) => task.status === "open").length,
-    inProgress: tasks.filter((task) => task.status === "in_progress").length,
-    completed: tasks.filter((task) => task.status === "completed").length,
-    disputed: tasks.filter((task) => task.status === "disputed").length,
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Clock className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading tasks...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -190,9 +275,15 @@ export default function AdminTasksPage() {
           <p className="text-muted-foreground">Monitor and manage all platform tasks</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            onClick={() => {
+              fetchTasks()
+              fetchStats()
+            }}
+          >
             <Filter className="h-4 w-4 mr-2" />
-            Advanced Filters
+            Refresh Data
           </Button>
           <Button>Export Tasks</Button>
         </div>
@@ -274,7 +365,7 @@ export default function AdminTasksPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="active">Open</SelectItem>
               <SelectItem value="in_progress">In Progress</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -299,7 +390,7 @@ export default function AdminTasksPage() {
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="all">All Tasks</TabsTrigger>
-          <TabsTrigger value="open">Open ({stats.open})</TabsTrigger>
+          <TabsTrigger value="active">Open ({stats.open})</TabsTrigger>
           <TabsTrigger value="in_progress">In Progress ({stats.inProgress})</TabsTrigger>
           <TabsTrigger value="completed">Completed ({stats.completed})</TabsTrigger>
           <TabsTrigger value="disputed">Disputed ({stats.disputed})</TabsTrigger>
@@ -313,10 +404,8 @@ export default function AdminTasksPage() {
                   <TableRow>
                     <TableHead>Task</TableHead>
                     <TableHead>Client</TableHead>
-                    <TableHead>Freelancer</TableHead>
                     <TableHead>Budget</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Priority</TableHead>
                     <TableHead>Deadline</TableHead>
                     <TableHead>Applications</TableHead>
                     <TableHead className="w-[100px]">Actions</TableHead>
@@ -334,29 +423,16 @@ export default function AdminTasksPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{task.clientName}</span>
+                          <span className="text-sm">{task.client?.full_name || "Unknown"}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        {task.freelancerName ? (
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{task.freelancerName}</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Not assigned</span>
-                        )}
+                      <TableCell className="font-medium">
+                        ₦{(task.budget_min / 100).toLocaleString()} - ₦{(task.budget_max / 100).toLocaleString()}
                       </TableCell>
-                      <TableCell className="font-medium">₦{(task.budget / 100).toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(task.status)}>
                           {getStatusIcon(task.status)}
                           <span className="ml-1 capitalize">{task.status.replace("_", " ")}</span>
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getPriorityColor(task.priority)} variant="outline">
-                          {task.priority}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -366,7 +442,7 @@ export default function AdminTasksPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm font-medium">{task.applicationsCount}</span>
+                        <span className="text-sm font-medium">{task.applications?.length || 0}</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
@@ -376,9 +452,32 @@ export default function AdminTasksPage() {
                           <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this task? This action cannot be undone and will also
+                                  delete all associated applications and escrow data.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteTask(task.id)}
+                                  disabled={isDeleting}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  {isDeleting ? "Deleting..." : "Delete Task"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>

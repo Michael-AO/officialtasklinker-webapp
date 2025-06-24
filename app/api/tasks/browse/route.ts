@@ -1,224 +1,150 @@
 import { type NextRequest, NextResponse } from "next/server"
-
-// Extended mock data for browse
-const mockBrowseTasks = [
-  {
-    id: "browse-1",
-    client_id: "client-1",
-    title: "E-commerce Website Development",
-    description:
-      "Build a modern e-commerce platform with React and Node.js. Need someone experienced with payment integration and responsive design.",
-    category: "Web Development",
-    subcategory: "Full Stack",
-    skills_required: ["React", "Node.js", "MongoDB", "Stripe"],
-    budget_type: "fixed",
-    budget_min: 2500,
-    budget_max: 4000,
-    currency: "USD",
-    duration: "6-8 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "normal",
-    status: "active",
-    applications_count: 12,
-    views_count: 156,
-    created_at: "2024-01-15T10:00:00Z",
-    client: {
-      id: "client-1",
-      name: "TechCorp Solutions",
-      rating: 4.8,
-      location: "San Francisco, CA",
-    },
-  },
-  {
-    id: "browse-2",
-    client_id: "client-2",
-    title: "Mobile App UI/UX Design",
-    description:
-      "Design a modern mobile app interface for a fitness tracking application. Looking for creative designs with great user experience.",
-    category: "Design",
-    subcategory: "UI/UX Design",
-    skills_required: ["Figma", "Adobe XD", "Prototyping", "Mobile Design"],
-    budget_type: "fixed",
-    budget_min: 1200,
-    budget_max: 2000,
-    currency: "USD",
-    duration: "3-4 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "high",
-    status: "active",
-    applications_count: 8,
-    views_count: 89,
-    created_at: "2024-01-16T14:30:00Z",
-    client: {
-      id: "client-2",
-      name: "FitLife Inc",
-      rating: 4.6,
-      location: "New York, NY",
-    },
-  },
-  {
-    id: "browse-3",
-    client_id: "client-3",
-    title: "Content Writing for Tech Blog",
-    description:
-      "Write engaging articles about emerging technologies, AI, and software development. Need 10 articles, 1500+ words each.",
-    category: "Writing",
-    subcategory: "Content Writing",
-    skills_required: ["Technical Writing", "SEO", "Research", "Technology"],
-    budget_type: "fixed",
-    budget_min: 800,
-    budget_max: 1200,
-    currency: "USD",
-    duration: "4-5 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "normal",
-    status: "active",
-    applications_count: 15,
-    views_count: 203,
-    created_at: "2024-01-17T09:15:00Z",
-    client: {
-      id: "client-3",
-      name: "Digital Insights",
-      rating: 4.9,
-      location: "Austin, TX",
-    },
-  },
-  {
-    id: "browse-4",
-    client_id: "client-4",
-    title: "Python Data Analysis Script",
-    description:
-      "Create Python scripts for analyzing sales data and generating reports. Experience with pandas, matplotlib required.",
-    category: "Programming",
-    subcategory: "Data Science",
-    skills_required: ["Python", "Pandas", "Matplotlib", "Data Analysis"],
-    budget_type: "fixed",
-    budget_min: 500,
-    budget_max: 800,
-    currency: "USD",
-    duration: "2-3 weeks",
-    location: "Remote",
-    experience_level: "entry",
-    urgency: "normal",
-    status: "active",
-    applications_count: 6,
-    views_count: 67,
-    created_at: "2024-01-18T11:45:00Z",
-    client: {
-      id: "client-4",
-      name: "DataCorp Analytics",
-      rating: 4.7,
-      location: "Chicago, IL",
-    },
-  },
-  {
-    id: "browse-5",
-    client_id: "client-5",
-    title: "WordPress Website Customization",
-    description:
-      "Customize existing WordPress theme, add custom functionality, and optimize for speed. Need someone familiar with PHP and WordPress development.",
-    category: "Web Development",
-    subcategory: "WordPress",
-    skills_required: ["WordPress", "PHP", "CSS", "JavaScript"],
-    budget_type: "fixed",
-    budget_min: 1000,
-    budget_max: 1800,
-    currency: "USD",
-    duration: "3-4 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "normal",
-    status: "active",
-    applications_count: 9,
-    views_count: 124,
-    created_at: "2024-01-19T16:20:00Z",
-    client: {
-      id: "client-5",
-      name: "Small Biz Solutions",
-      rating: 4.5,
-      location: "Denver, CO",
-    },
-  },
-]
+import { supabase } from "@/lib/supabase"
 
 export async function GET(request: NextRequest) {
   try {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 400))
+    console.log("=== BROWSE TASKS API START ===")
 
     const { searchParams } = new URL(request.url)
-    const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "20")
-    const search = searchParams.get("search")
+
+    // Get filters from query params
     const category = searchParams.get("category")
-    const experience_level = searchParams.get("experience_level")
     const budget_min = searchParams.get("budget_min")
     const budget_max = searchParams.get("budget_max")
-    const sort_by = searchParams.get("sort_by")
+    const location = searchParams.get("location")
+    const search = searchParams.get("search")
+    const skills = searchParams.get("skills")
+    const page = Number.parseInt(searchParams.get("page") || "1")
+    const limit = Number.parseInt(searchParams.get("limit") || "20")
 
-    let filteredTasks = [...mockBrowseTasks]
+    // Build query for active tasks only
+    let query = supabase
+      .from("tasks")
+      .select(`
+        id,
+        title,
+        description,
+        budget_min,
+        budget_max,
+        budget_type,
+        status,
+        category,
+        skills_required,
+        created_at,
+        updated_at,
+        deadline,
+        urgency,
+        location,
+        currency,
+        views_count,
+        client_id,
+        users!tasks_client_id_fkey (
+          name,
+          rating,
+          completed_tasks,
+          is_verified
+        )
+      `)
+      .eq("status", "active")
+      .eq("visibility", "public")
+      .order("created_at", { ascending: false })
 
     // Apply filters
-    if (search) {
-      filteredTasks = filteredTasks.filter(
-        (task) =>
-          task.title.toLowerCase().includes(search.toLowerCase()) ||
-          task.description.toLowerCase().includes(search.toLowerCase()) ||
-          task.skills_required.some((skill) => skill.toLowerCase().includes(search.toLowerCase())),
-      )
-    }
-
-    if (category) {
-      filteredTasks = filteredTasks.filter((task) => task.category === category)
-    }
-
-    if (experience_level) {
-      filteredTasks = filteredTasks.filter((task) => task.experience_level === experience_level)
+    if (category && category !== "all") {
+      query = query.eq("category", category)
     }
 
     if (budget_min) {
-      filteredTasks = filteredTasks.filter((task) => task.budget_max >= Number.parseInt(budget_min))
+      query = query.gte("budget_min", Number.parseInt(budget_min))
     }
 
     if (budget_max) {
-      filteredTasks = filteredTasks.filter((task) => task.budget_min <= Number.parseInt(budget_max))
+      query = query.lte("budget_max", Number.parseInt(budget_max))
     }
 
-    // Apply sorting
-    if (sort_by) {
-      switch (sort_by) {
-        case "budget_high":
-          filteredTasks.sort((a, b) => b.budget_min + b.budget_max - (a.budget_min + a.budget_max))
-          break
-        case "budget_low":
-          filteredTasks.sort((a, b) => a.budget_min + a.budget_max - (b.budget_min + b.budget_max))
-          break
-        case "newest":
-          filteredTasks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          break
-        default:
-          break
-      }
+    if (location && location !== "all") {
+      query = query.eq("location", location)
     }
 
-    // Pagination
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedTasks = filteredTasks.slice(startIndex, endIndex)
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
+    }
+
+    if (skills) {
+      const skillsArray = skills.split(",").map((s) => s.trim())
+      query = query.overlaps("skills_required", skillsArray)
+    }
+
+    // Apply pagination
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+    query = query.range(from, to)
+
+    const { data: tasks, error: tasksError, count } = await query
+
+    if (tasksError) {
+      console.error("Tasks query error:", tasksError)
+      return NextResponse.json({ success: false, error: `Database error: ${tasksError.message}` }, { status: 500 })
+    }
+
+    console.log(`Found ${tasks?.length || 0} tasks`)
+
+    // Get application counts for each task
+    const tasksWithCounts = await Promise.all(
+      (tasks || []).map(async (task) => {
+        try {
+          const { count: appCount, error: countError } = await supabase
+            .from("applications")
+            .select("*", { count: "exact", head: true })
+            .eq("task_id", task.id)
+
+          if (countError) {
+            console.warn("Error getting application count for task", task.id, countError)
+          }
+
+          return {
+            ...task,
+            applications_count: appCount || 0,
+            skills_required: task.skills_required || [],
+            views_count: task.views_count || 0,
+            client: task.users || null,
+          }
+        } catch (err) {
+          console.warn("Error processing task", task.id, err)
+          return {
+            ...task,
+            applications_count: 0,
+            skills_required: task.skills_required || [],
+            views_count: task.views_count || 0,
+            client: task.users || null,
+          }
+        }
+      }),
+    )
+
+    console.log("=== BROWSE TASKS API SUCCESS ===")
 
     return NextResponse.json({
       success: true,
-      tasks: paginatedTasks,
-      total: filteredTasks.length,
-      has_more: endIndex < filteredTasks.length,
-      page,
-      limit,
+      tasks: tasksWithCounts,
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
     })
   } catch (error) {
-    console.error("Error fetching browse tasks:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch tasks" }, { status: 500 })
+    console.error("=== BROWSE TASKS API ERROR ===")
+    console.error("Unexpected error:", error)
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

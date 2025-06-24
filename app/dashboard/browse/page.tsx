@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Bookmark,
   Calendar,
@@ -21,9 +22,11 @@ import {
   Users,
   Briefcase,
   TrendingUp,
+  RefreshCw,
 } from "lucide-react"
 import Link from "next/link"
 import { formatCurrency, getStatusColor, generateTaskCode } from "@/lib/api-utils"
+import { toast } from "@/hooks/use-toast"
 
 const categories = [
   "All Categories",
@@ -41,178 +44,38 @@ const categories = [
 const experienceLevels = ["All Levels", "entry", "intermediate", "expert"]
 const budgetRanges = ["All Budgets", "Under $500", "$500 - $1,000", "$1,000 - $2,500", "$2,500 - $5,000", "Over $5,000"]
 
-// Static mock data
-const mockTasks = [
-  {
-    id: "1",
-    client_id: "client-1",
-    title: "E-commerce Website Development",
-    description:
-      "Build a modern e-commerce platform with React and Node.js. Need someone experienced with payment integration and responsive design.",
-    category: "Web Development",
-    subcategory: "Full Stack",
-    skills_required: ["React", "Node.js", "MongoDB", "Stripe"],
-    budget_type: "fixed" as const,
-    budget_min: 2500,
-    budget_max: 4000,
-    currency: "USD",
-    duration: "6-8 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "normal" as const,
-    status: "active",
-    applications_count: 12,
-    views_count: 156,
-    created_at: "2024-01-15T10:00:00Z",
-    client: {
-      id: "client-1",
-      name: "TechCorp Solutions",
-      rating: 4.8,
-      location: "San Francisco, CA",
-    },
-  },
-  {
-    id: "2",
-    client_id: "client-2",
-    title: "Mobile App UI/UX Design",
-    description:
-      "Design a modern mobile app interface for a fitness tracking application. Looking for creative designs with great user experience.",
-    category: "Design",
-    subcategory: "UI/UX Design",
-    skills_required: ["Figma", "Adobe XD", "Prototyping", "Mobile Design"],
-    budget_type: "fixed" as const,
-    budget_min: 1200,
-    budget_max: 2000,
-    currency: "USD",
-    duration: "3-4 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "high" as const,
-    status: "active",
-    applications_count: 8,
-    views_count: 89,
-    created_at: "2024-01-16T14:30:00Z",
-    client: {
-      id: "client-2",
-      name: "FitLife Inc",
-      rating: 4.6,
-      location: "New York, NY",
-    },
-  },
-  {
-    id: "3",
-    client_id: "client-3",
-    title: "Content Writing for Tech Blog",
-    description:
-      "Write engaging articles about emerging technologies, AI, and software development. Need 10 articles, 1500+ words each.",
-    category: "Writing",
-    subcategory: "Content Writing",
-    skills_required: ["Technical Writing", "SEO", "Research", "Technology"],
-    budget_type: "fixed" as const,
-    budget_min: 800,
-    budget_max: 1200,
-    currency: "USD",
-    duration: "4-5 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "normal" as const,
-    status: "active",
-    applications_count: 15,
-    views_count: 203,
-    created_at: "2024-01-17T09:15:00Z",
-    client: {
-      id: "client-3",
-      name: "Digital Insights",
-      rating: 4.9,
-      location: "Austin, TX",
-    },
-  },
-  {
-    id: "4",
-    client_id: "client-4",
-    title: "Python Data Analysis Script",
-    description:
-      "Create Python scripts for analyzing sales data and generating reports. Experience with pandas, matplotlib required.",
-    category: "Programming",
-    subcategory: "Data Science",
-    skills_required: ["Python", "Pandas", "Matplotlib", "Data Analysis"],
-    budget_type: "fixed" as const,
-    budget_min: 500,
-    budget_max: 800,
-    currency: "USD",
-    duration: "2-3 weeks",
-    location: "Remote",
-    experience_level: "entry",
-    urgency: "normal" as const,
-    status: "active",
-    applications_count: 6,
-    views_count: 67,
-    created_at: "2024-01-18T11:45:00Z",
-    client: {
-      id: "client-4",
-      name: "DataCorp Analytics",
-      rating: 4.7,
-      location: "Chicago, IL",
-    },
-  },
-  {
-    id: "5",
-    client_id: "client-5",
-    title: "WordPress Website Customization",
-    description:
-      "Customize existing WordPress theme, add custom functionality, and optimize for speed. Need someone familiar with PHP and WordPress development.",
-    category: "Web Development",
-    subcategory: "WordPress",
-    skills_required: ["WordPress", "PHP", "CSS", "JavaScript"],
-    budget_type: "fixed" as const,
-    budget_min: 1000,
-    budget_max: 1800,
-    currency: "USD",
-    duration: "3-4 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "normal" as const,
-    status: "active",
-    applications_count: 9,
-    views_count: 124,
-    created_at: "2024-01-19T16:20:00Z",
-    client: {
-      id: "client-5",
-      name: "Small Biz Solutions",
-      rating: 4.5,
-      location: "Denver, CO",
-    },
-  },
-  {
-    id: "6",
-    client_id: "client-6",
-    title: "Logo Design for Startup",
-    description: "Create a modern, memorable logo for a tech startup. Need multiple concepts and revisions included.",
-    category: "Design",
-    subcategory: "Logo Design",
-    skills_required: ["Logo Design", "Adobe Illustrator", "Branding"],
-    budget_type: "fixed" as const,
-    budget_min: 300,
-    budget_max: 600,
-    currency: "USD",
-    duration: "1-2 weeks",
-    location: "Remote",
-    experience_level: "intermediate",
-    urgency: "normal" as const,
-    status: "active",
-    applications_count: 22,
-    views_count: 89,
-    created_at: "2024-01-20T08:30:00Z",
-    client: {
-      id: "client-6",
-      name: "StartupCo",
-      rating: 4.3,
-      location: "Austin, TX",
-    },
-  },
-]
+interface Task {
+  id: string
+  client_id: string
+  title: string
+  description: string
+  category: string
+  subcategory: string | null
+  skills_required: string[]
+  budget_type: "fixed" | "hourly"
+  budget_min: number
+  budget_max: number
+  currency: string
+  duration: string
+  location: string
+  experience_level: string
+  urgency: "low" | "normal" | "high"
+  status: "draft" | "active" | "in_progress" | "completed" | "cancelled"
+  applications_count: number
+  views_count: number
+  created_at: string
+  client?: {
+    id: string
+    name: string
+    rating: number
+    location: string
+  }
+}
 
 export default function BrowseTasksPage() {
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
   const [selectedExperience, setSelectedExperience] = useState("All Levels")
@@ -220,21 +83,108 @@ export default function BrowseTasksPage() {
   const [sortBy, setSortBy] = useState("newest")
   const [viewMode, setViewMode] = useState("list")
   const [savedTasks, setSavedTasks] = useState<string[]>([])
+  const [debugInfo, setDebugInfo] = useState<any>(null)
 
-  // Filter tasks based on current filters
-  const filteredTasks = mockTasks.filter((task) => {
-    const matchesSearch =
-      !searchTerm ||
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.skills_required.some((skill) => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Fetch tasks from API - only real database data
+  const fetchTasks = async (showRefreshToast = false) => {
+    try {
+      if (showRefreshToast) setRefreshing(true)
 
-    const matchesCategory = selectedCategory === "All Categories" || task.category === selectedCategory
+      console.log("=== FRONTEND: Starting fetch ===")
 
-    const matchesExperience = selectedExperience === "All Levels" || task.experience_level === selectedExperience
+      // Build query parameters
+      const params = new URLSearchParams()
 
-    return matchesSearch && matchesCategory && matchesExperience
-  })
+      if (searchTerm) params.append("search", searchTerm)
+      if (selectedCategory !== "All Categories") params.append("category", selectedCategory)
+      if (selectedExperience !== "All Levels") params.append("experience_level", selectedExperience)
+      if (sortBy) params.append("sort_by", sortBy)
+
+      // Add budget filters
+      if (selectedBudget !== "All Budgets") {
+        switch (selectedBudget) {
+          case "Under $500":
+            params.append("budget_max", "500")
+            break
+          case "$500 - $1,000":
+            params.append("budget_min", "500")
+            params.append("budget_max", "1000")
+            break
+          case "$1,000 - $2,500":
+            params.append("budget_min", "1000")
+            params.append("budget_max", "2500")
+            break
+          case "$2,500 - $5,000":
+            params.append("budget_min", "2500")
+            params.append("budget_max", "5000")
+            break
+          case "Over $5,000":
+            params.append("budget_min", "5000")
+            break
+        }
+      }
+
+      const apiUrl = `/api/tasks/browse?${params.toString()}`
+      console.log("=== FRONTEND: API URL ===", apiUrl)
+
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      })
+
+      console.log("=== FRONTEND: Response status ===", response.status)
+      console.log("=== FRONTEND: Response headers ===", Object.fromEntries(response.headers.entries()))
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("=== FRONTEND: API Error ===", errorText)
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log("=== FRONTEND: Full API Response ===", data)
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to fetch tasks")
+      }
+
+      const fetchedTasks = data.tasks || []
+      console.log("=== FRONTEND: Tasks received ===", fetchedTasks.length)
+      console.log("=== FRONTEND: First task ===", fetchedTasks[0])
+      console.log("=== FRONTEND: Debug info ===", data.debug)
+
+      setTasks(fetchedTasks)
+      setDebugInfo(data.debug)
+
+      if (showRefreshToast) {
+        toast({
+          title: "Tasks Updated",
+          description: `Found ${fetchedTasks.length} tasks from ${data.debug?.source || "database"}`,
+        })
+      }
+    } catch (error) {
+      console.error("=== FRONTEND: Error fetching tasks ===", error)
+      toast({
+        title: "Database Error",
+        description: "Failed to fetch tasks from database. Check console for details.",
+        variant: "destructive",
+      })
+      setTasks([])
+      setDebugInfo({ source: "ERROR", error: error.message })
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  // Initial load and when filters change
+  useEffect(() => {
+    console.log("=== FRONTEND: useEffect triggered ===")
+    fetchTasks()
+  }, [sortBy, searchTerm, selectedCategory, selectedExperience, selectedBudget])
 
   const toggleSaveTask = (taskId: string) => {
     setSavedTasks((prev) => (prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId]))
@@ -253,21 +203,63 @@ export default function BrowseTasksPage() {
     }
   }
 
-  // Calculate stats from tasks
+  // Calculate stats from real tasks only
   const stats = {
-    totalTasks: filteredTasks.length,
+    totalTasks: tasks.length,
     avgBudget:
-      filteredTasks.length > 0
-        ? Math.round(
-            filteredTasks.reduce((sum, task) => sum + (task.budget_min + task.budget_max) / 2, 0) /
-              filteredTasks.length,
-          )
+      tasks.length > 0
+        ? Math.round(tasks.reduce((sum, task) => sum + (task.budget_min + task.budget_max) / 2, 0) / tasks.length)
         : 0,
     avgApplications:
-      filteredTasks.length > 0
-        ? Math.round(filteredTasks.reduce((sum, task) => sum + task.applications_count, 0) / filteredTasks.length)
+      tasks.length > 0 ? Math.round(tasks.reduce((sum, task) => sum + task.applications_count, 0) / tasks.length) : 0,
+    successRate:
+      tasks.length > 0
+        ? Math.round((tasks.filter((task) => task.applications_count > 0).length / tasks.length) * 100)
         : 0,
-    successRate: 78, // Static value
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Browse Tasks</h1>
+            <p className="text-muted-foreground">Loading tasks from database...</p>
+          </div>
+        </div>
+
+        {/* Loading Stats */}
+        <div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Loading Tasks */}
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -275,9 +267,20 @@ export default function BrowseTasksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Browse Tasks</h1>
-          <p className="text-muted-foreground">Find your next project and start earning</p>
+          <p className="text-muted-foreground">
+            Find your next project and start earning
+            {debugInfo && (
+              <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                Source: {debugInfo.source} | {debugInfo.timestamp}
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => fetchTasks(true)} disabled={refreshing}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh DB
+          </Button>
           <Button variant="outline" size="sm">
             <Filter className="mr-2 h-4 w-4" />
             Advanced Filters
@@ -289,6 +292,18 @@ export default function BrowseTasksPage() {
         </div>
       </div>
 
+      {/* Debug Info */}
+      {debugInfo && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-4">
+            <div className="text-sm">
+              <strong>Debug Info:</strong> Source: {debugInfo.source}, Time: {debugInfo.timestamp}
+              {debugInfo.error && <span className="text-red-600 ml-2">Error: {debugInfo.error}</span>}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -298,7 +313,7 @@ export default function BrowseTasksPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalTasks}</div>
-            <p className="text-xs text-muted-foreground">Active opportunities</p>
+            <p className="text-xs text-muted-foreground">From {debugInfo?.source || "database"}</p>
           </CardContent>
         </Card>
         <Card>
@@ -328,7 +343,9 @@ export default function BrowseTasksPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.successRate}%</div>
-            <p className="text-xs text-muted-foreground">your win rate</p>
+            <p className="text-xs text-muted-foreground">
+              {stats.successRate > 0 ? "tasks with applications" : "no applications yet"}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -407,7 +424,7 @@ export default function BrowseTasksPage() {
       {/* Results */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing {filteredTasks.length} of {mockTasks.length} tasks
+          Showing {tasks.length} tasks from {debugInfo?.source || "database"}
         </p>
         <Tabs value={viewMode} onValueChange={setViewMode}>
           <TabsList>
@@ -419,7 +436,7 @@ export default function BrowseTasksPage() {
 
       {/* Task List */}
       <div className={viewMode === "grid" ? "grid gap-6 md:grid-cols-2" : "space-y-4"}>
-        {filteredTasks.map((task) => (
+        {tasks.map((task) => (
           <Card key={task.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -524,12 +541,22 @@ export default function BrowseTasksPage() {
       </div>
 
       {/* No Results */}
-      {filteredTasks.length === 0 && (
+      {tasks.length === 0 && !loading && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="text-center">
               <h3 className="text-lg font-semibold">No tasks found</h3>
-              <p className="text-muted-foreground">Try adjusting your search criteria or filters</p>
+              <p className="text-muted-foreground">
+                {debugInfo?.source === "REAL_DATABASE"
+                  ? "No tasks in database match your filters"
+                  : "No tasks available"}
+              </p>
+              <div className="mt-4">
+                <Button variant="outline" onClick={() => fetchTasks(true)}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Refresh Database
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

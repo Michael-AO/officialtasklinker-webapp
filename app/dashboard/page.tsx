@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CalendarDays, Banknote, FileText, Users } from "lucide-react"
+import { CalendarDays, FileText, Users } from "lucide-react"
 import { ProfileCompletionWizard } from "@/components/profile-completion-wizard"
 import { SmartTaskMatching } from "@/components/smart-task-matching"
 import Link from "next/link"
@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { formatNairaCompact } from "@/lib/currency"
+import { NairaIcon } from "@/components/naira-icon"
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -115,7 +116,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Earnings</CardTitle>
-            <Banknote className="h-4 w-4 text-muted-foreground" />
+            <NairaIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{loading ? "..." : formatNairaCompact(stats?.totalEarnings || 0)}</div>

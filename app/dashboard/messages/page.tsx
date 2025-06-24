@@ -8,218 +8,290 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useAuth } from "@/contexts/auth-context"
+import { useNotifications } from "@/contexts/notification-context"
+import { toast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabaseClient"
 import {
   ActivityIcon as Attachment,
   MoreHorizontal,
   Paperclip,
-  Phone,
   Search,
   Send,
   Star,
-  Video,
   Users,
+  MessageCircle,
+  Clock,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card, CardContent } from "@/components/ui/card"
 
-// Mock data for conversations - in real app, this would come from Supabase
-const generateMockConversations = (highlightUser?: string) => [
-  {
-    id: "1",
-    participant: {
-      name: "TechCorp Solutions",
-      avatar: "/placeholder.svg?height=40&width=40",
-      role: "Client",
-      rating: 4.8,
-      online: true,
-    },
-    taskTitle: "E-commerce Website Development",
-    lastMessage: "Great! When can we schedule a call to discuss the requirements?",
-    lastMessageTime: "2024-01-18T10:30:00Z",
-    unreadCount: highlightUser === "TechCorp Solutions" ? 1 : 2,
-    messages: [
-      {
-        id: "1",
-        senderId: "client-1",
-        senderName: "TechCorp Solutions",
-        content: "Hi! I'm interested in your proposal for the e-commerce website.",
-        timestamp: "2024-01-18T09:00:00Z",
-        type: "text",
-      },
-      {
-        id: "2",
-        senderId: "me",
-        senderName: "You",
-        content: "Thank you for considering my proposal! I'd be happy to discuss the project details with you.",
-        timestamp: "2024-01-18T09:15:00Z",
-        type: "text",
-      },
-      {
-        id: "3",
-        senderId: "client-1",
-        senderName: "TechCorp Solutions",
-        content: "Great! When can we schedule a call to discuss the requirements?",
-        timestamp: "2024-01-18T10:30:00Z",
-        type: "text",
-      },
-    ],
-  },
-  {
-    id: "2",
-    participant: {
-      name: "FitLife Nigeria",
-      avatar: "/placeholder.svg?height=40&width=40",
-      role: "Client",
-      rating: 4.6,
-      online: false,
-    },
-    taskTitle: "Mobile App UI/UX Design",
-    lastMessage: "The wireframes look perfect! Let's proceed with the next phase.",
-    lastMessageTime: "2024-01-17T16:45:00Z",
-    unreadCount: 0,
-    messages: [
-      {
-        id: "1",
-        senderId: "client-2",
-        senderName: "FitLife Nigeria",
-        content: "I've reviewed your portfolio and I'm impressed with your design work.",
-        timestamp: "2024-01-17T14:00:00Z",
-        type: "text",
-      },
-      {
-        id: "2",
-        senderId: "me",
-        senderName: "You",
-        content: "Thank you! I've attached some initial wireframes for your review.",
-        timestamp: "2024-01-17T15:30:00Z",
-        type: "text",
-      },
-      {
-        id: "3",
-        senderId: "me",
-        senderName: "You",
-        content: "wireframes_v1.pdf",
-        timestamp: "2024-01-17T15:31:00Z",
-        type: "file",
-      },
-      {
-        id: "4",
-        senderId: "client-2",
-        senderName: "FitLife Nigeria",
-        content: "The wireframes look perfect! Let's proceed with the next phase.",
-        timestamp: "2024-01-17T16:45:00Z",
-        type: "text",
-      },
-    ],
-  },
-  {
-    id: "3",
-    participant: {
-      name: "Adebayo Ogundimu",
-      avatar: "/placeholder.svg?height=40&width=40",
-      role: "Freelancer",
-      rating: 4.9,
-      online: true,
-    },
-    taskTitle: "Content Writing Collaboration",
-    lastMessage: "I can help with the SEO optimization part of the project.",
-    lastMessageTime: "2024-01-16T11:20:00Z",
-    unreadCount: highlightUser === "Adebayo Ogundimu" ? 1 : 0,
-    messages: [
-      {
-        id: "1",
-        senderId: "freelancer-1",
-        senderName: "Adebayo Ogundimu",
-        content: "Hi! I saw your post about needing help with content writing.",
-        timestamp: "2024-01-16T10:00:00Z",
-        type: "text",
-      },
-      {
-        id: "2",
-        senderId: "me",
-        senderName: "You",
-        content: "Yes! I'm looking for someone to collaborate on SEO content.",
-        timestamp: "2024-01-16T10:30:00Z",
-        type: "text",
-      },
-      {
-        id: "3",
-        senderId: "freelancer-1",
-        senderName: "Adebayo Ogundimu",
-        content: "I can help with the SEO optimization part of the project.",
-        timestamp: "2024-01-16T11:20:00Z",
-        type: "text",
-      },
-    ],
-  },
-]
+interface Message {
+  id: string
+  sender_id: string
+  sender_name: string
+  content: string
+  timestamp: string
+  type: "text" | "file"
+  read: boolean
+}
+
+interface Conversation {
+  id: string
+  participant: {
+    id: string
+    name: string
+    avatar: string | null
+    role: string
+    rating: number
+    online: boolean
+  }
+  task_title: string
+  task_id: string
+  last_message: string
+  last_message_time: string
+  unread_count: number
+  messages: Message[]
+}
 
 export default function MessagesPage() {
   const searchParams = useSearchParams()
+  const { user } = useAuth()
+  const { addNotification } = useNotifications()
+
   const clientParam = searchParams.get("client")
   const freelancerParam = searchParams.get("freelancer")
+  const taskParam = searchParams.get("task")
   const highlightUser = clientParam || freelancerParam
 
-  const mockConversations = generateMockConversations(highlightUser)
-
-  // Find conversation to highlight or default to first
-  const initialConversation = highlightUser
-    ? mockConversations.find((conv) => conv.participant.name === highlightUser) || mockConversations[0]
-    : mockConversations[0]
-
-  const [selectedConversation, setSelectedConversation] = useState(initialConversation)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Fetch conversations on mount
+  useEffect(() => {
+    if (user) {
+      fetchConversations()
+    }
+  }, [user])
+
+  // Auto-select conversation based on URL params
+  useEffect(() => {
+    if (conversations.length > 0) {
+      if (highlightUser) {
+        const conversation = conversations.find((conv) => conv.participant.name === highlightUser)
+        if (conversation) {
+          setSelectedConversation(conversation)
+        }
+      } else if (taskParam) {
+        const conversation = conversations.find((conv) => conv.task_id === taskParam)
+        if (conversation) {
+          setSelectedConversation(conversation)
+        }
+      } else if (!selectedConversation) {
+        setSelectedConversation(conversations[0])
+      }
+    }
+  }, [conversations, highlightUser, taskParam])
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    scrollToBottom()
+  }, [selectedConversation?.messages])
+
+  const fetchConversations = async () => {
+    if (!user) return
+
+    try {
+      // Get conversations where user is participant
+      const { data: conversations, error } = await supabase
+        .from("conversations")
+        .select(`
+          id,
+          task_id,
+          client_id,
+          freelancer_id,
+          created_at,
+          updated_at,
+          tasks!inner(
+            id,
+            title
+          )
+        `)
+        .or(`client_id.eq.${user.id},freelancer_id.eq.${user.id}`)
+        .order("updated_at", { ascending: false })
+
+      if (error) {
+        console.error("Database error:", error)
+        throw error
+      }
+
+      // Format conversations for frontend
+      const formattedConversations = await Promise.all(
+        (conversations || []).map(async (conv: any) => {
+          // Determine the other participant
+          const isClient = conv.client_id === user.id
+          const otherUserId = isClient ? conv.freelancer_id : conv.client_id
+
+          // Get other user's profile
+          const { data: otherUser } = await supabase
+            .from("users")
+            .select("id, name, avatar_url, user_type, rating")
+            .eq("id", otherUserId)
+            .single()
+
+          // Get messages for this conversation
+          const { data: messages } = await supabase
+            .from("messages")
+            .select("*")
+            .eq("conversation_id", conv.id)
+            .order("created_at", { ascending: true })
+
+          // Get last message
+          const lastMessage = messages?.[messages.length - 1]
+
+          // Count unread messages
+          const unreadCount = messages?.filter((msg: any) => msg.sender_id !== user.id && !msg.is_read).length || 0
+
+          return {
+            id: conv.id,
+            participant: {
+              id: otherUser?.id || otherUserId,
+              name: otherUser?.name || "Unknown User",
+              avatar: otherUser?.avatar_url,
+              role: isClient ? "Freelancer" : "Client",
+              rating: otherUser?.rating || 0,
+              online: false,
+            },
+            task_title: conv.tasks?.title || "Unknown Task",
+            task_id: conv.task_id,
+            last_message: lastMessage?.content || "No messages yet",
+            last_message_time: lastMessage?.created_at || conv.created_at,
+            unread_count: unreadCount,
+            messages:
+              messages?.map((msg: any) => ({
+                id: msg.id,
+                sender_id: msg.sender_id,
+                sender_name: msg.sender_id === user.id ? "You" : otherUser?.name || "Unknown",
+                content: msg.content,
+                timestamp: msg.created_at,
+                type: "text",
+                read: msg.is_read,
+              })) || [],
+          }
+        }),
+      )
+
+      setConversations(formattedConversations)
+    } catch (error) {
+      console.error("Error fetching conversations:", error)
+      toast({
+        title: "Error loading messages",
+        description: "Please refresh the page to try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [selectedConversation.messages])
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation || sending) return
 
-  // Show notification if user came from applications page
-  useEffect(() => {
-    if (highlightUser) {
-      // Auto-focus on the highlighted conversation
-      const conversation = mockConversations.find((conv) => conv.participant.name === highlightUser)
-      if (conversation) {
-        setSelectedConversation(conversation)
+    setSending(true)
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: selectedConversation.id,
+          sender_id: user.id,
+          content: newMessage,
+          message_type: "text",
+          is_read: false,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Update conversation timestamp
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", selectedConversation.id)
+
+      // Create new message object
+      const newMessageObj = {
+        id: data.id,
+        sender_id: user.id,
+        sender_name: "You",
+        content: newMessage,
+        timestamp: data.created_at,
+        type: "text" as const,
+        read: false,
       }
-    }
-  }, [highlightUser])
 
-  const filteredConversations = mockConversations.filter(
+      // Update conversation with new message
+      const updatedConversation = {
+        ...selectedConversation,
+        messages: [...selectedConversation.messages, newMessageObj],
+        last_message: newMessage,
+        last_message_time: new Date().toISOString(),
+      }
+
+      setSelectedConversation(updatedConversation)
+
+      // Update conversations list
+      setConversations((prev) => prev.map((conv) => (conv.id === selectedConversation.id ? updatedConversation : conv)))
+
+      setNewMessage("")
+
+      // Add notification for recipient
+      addNotification({
+        title: "Message Sent",
+        message: `Your message has been sent to ${selectedConversation.participant.name}`,
+        type: "success",
+      })
+    } catch (error) {
+      console.error("Error sending message:", error)
+      toast({
+        title: "Failed to send message",
+        description: "Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const markAsRead = async (conversationId: string) => {
+    try {
+      await supabase
+        .from("messages")
+        .update({ is_read: true })
+        .eq("conversation_id", conversationId)
+        .neq("sender_id", user?.id)
+
+      // Update local state
+      setConversations((prev) => prev.map((conv) => (conv.id === conversationId ? { ...conv, unread_count: 0 } : conv)))
+    } catch (error) {
+      console.error("Error marking as read:", error)
+    }
+  }
+
+  const filteredConversations = conversations.filter(
     (conv) =>
       conv.participant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conv.taskTitle.toLowerCase().includes(searchTerm.toLowerCase()),
+      conv.task_title.toLowerCase().includes(searchTerm.toLowerCase()),
   )
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return
-
-    const message = {
-      id: Date.now().toString(),
-      senderId: "me",
-      senderName: "You",
-      content: newMessage,
-      timestamp: new Date().toISOString(),
-      type: "text" as const,
-    }
-
-    // Update the selected conversation
-    const updatedConversation = {
-      ...selectedConversation,
-      messages: [...selectedConversation.messages, message],
-      lastMessage: newMessage,
-      lastMessageTime: new Date().toISOString(),
-    }
-
-    setSelectedConversation(updatedConversation)
-    setNewMessage("")
-  }
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp)
@@ -233,20 +305,39 @@ export default function MessagesPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Messages</h1>
+            <div className="text-muted-foreground">Loading conversations...</div>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Loading your messages...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Messages</h1>
-          <p className="text-muted-foreground">
+          <div className="text-muted-foreground">
             Communicate with clients and freelancers
             {highlightUser && (
               <Badge variant="outline" className="ml-2">
                 Opened from {highlightUser}
               </Badge>
             )}
-          </p>
+          </div>
         </div>
       </div>
 
@@ -275,9 +366,14 @@ export default function MessagesPage() {
                       <div
                         key={conversation.id}
                         className={`p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${
-                          selectedConversation.id === conversation.id ? "bg-muted" : ""
+                          selectedConversation?.id === conversation.id ? "bg-muted" : ""
                         } ${conversation.participant.name === highlightUser ? "ring-2 ring-blue-500" : ""}`}
-                        onClick={() => setSelectedConversation(conversation)}
+                        onClick={() => {
+                          setSelectedConversation(conversation)
+                          if (conversation.unread_count > 0) {
+                            markAsRead(conversation.id)
+                          }
+                        }}
                       >
                         <div className="flex items-start gap-3">
                           <div className="relative">
@@ -304,20 +400,19 @@ export default function MessagesPage() {
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-1">
-                                {conversation.unreadCount > 0 && (
+                                {conversation.unread_count > 0 && (
                                   <Badge className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                                    {conversation.unreadCount}
+                                    {conversation.unread_count}
                                   </Badge>
                                 )}
                                 <span className="text-xs text-muted-foreground">
-                                  {formatTime(conversation.lastMessageTime)}
+                                  {formatTime(conversation.last_message_time)}
                                 </span>
                               </div>
                             </div>
 
-                            <p className="text-sm text-muted-foreground truncate mt-1">{conversation.taskTitle}</p>
-
-                            <p className="text-sm truncate mt-1">{conversation.lastMessage}</p>
+                            <div className="text-sm text-muted-foreground truncate mt-1">{conversation.task_title}</div>
+                            <div className="text-sm truncate mt-1">{conversation.last_message}</div>
                           </div>
                         </div>
                       </div>
@@ -326,7 +421,7 @@ export default function MessagesPage() {
                     <div className="text-center py-8 text-muted-foreground">
                       <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p className="font-medium">No conversations found</p>
-                      <p className="text-sm">Try adjusting your search</p>
+                      <div className="text-sm">Try adjusting your search</div>
                     </div>
                   )}
                 </div>
@@ -334,119 +429,137 @@ export default function MessagesPage() {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 flex flex-col">
-              {/* Chat Header */}
-              <div className="p-4 border-b bg-background">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={selectedConversation.participant.avatar || "/placeholder.svg"} />
-                        <AvatarFallback>
-                          {selectedConversation.participant.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      {selectedConversation.participant.online && (
-                        <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white" />
-                      )}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{selectedConversation.participant.name}</h3>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm">{selectedConversation.participant.rating}</span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{selectedConversation.taskTitle}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Phone className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Video className="h-4 w-4" />
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
-                        <DropdownMenuItem>View Task</DropdownMenuItem>
-                        <DropdownMenuItem>Archive Conversation</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">Block User</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {selectedConversation.messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.senderId === "me" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-lg p-3 ${
-                          message.senderId === "me" ? "bg-primary text-primary-foreground" : "bg-muted"
-                        }`}
-                      >
-                        {message.type === "file" ? (
-                          <div className="flex items-center gap-2">
-                            <Attachment className="h-4 w-4" />
-                            <span className="text-sm">{message.content}</span>
-                          </div>
-                        ) : (
-                          <p className="text-sm">{message.content}</p>
+            {selectedConversation ? (
+              <div className="flex-1 flex flex-col">
+                {/* Chat Header */}
+                <div className="p-4 border-b bg-background">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={selectedConversation.participant.avatar || "/placeholder.svg"} />
+                          <AvatarFallback>
+                            {selectedConversation.participant.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        {selectedConversation.participant.online && (
+                          <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white" />
                         )}
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-xs opacity-70">{formatTime(message.timestamp)}</span>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{selectedConversation.participant.name}</h3>
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm">{selectedConversation.participant.rating}</span>
+                          </div>
                         </div>
+                        <div className="text-sm text-muted-foreground">{selectedConversation.task_title}</div>
                       </div>
                     </div>
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
 
-              {/* Message Input */}
-              <div className="p-4 border-t bg-background">
-                <div className="flex items-end gap-2">
-                  <Button variant="outline" size="sm">
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <div className="flex-1">
-                    <Textarea
-                      placeholder="Type your message..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault()
-                          handleSendMessage()
-                        }
-                      }}
-                      className="min-h-[40px] max-h-[120px] resize-none"
-                    />
+                    <div className="flex items-center gap-2">
+                      {/* Disabled call and video buttons */}
+                      <Button variant="outline" size="sm" disabled className="opacity-50">
+                        <Clock className="h-4 w-4" />
+                        <span className="sr-only">Call (Coming Soon)</span>
+                      </Button>
+                      <Button variant="outline" size="sm" disabled className="opacity-50">
+                        <Clock className="h-4 w-4" />
+                        <span className="sr-only">Video (Coming Soon)</span>
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>View Profile</DropdownMenuItem>
+                          <DropdownMenuItem>View Task</DropdownMenuItem>
+                          <DropdownMenuItem>Archive Conversation</DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600">Block User</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                  <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                    <Send className="h-4 w-4" />
-                  </Button>
+                </div>
+
+                {/* Messages */}
+                <ScrollArea className="flex-1 p-4">
+                  <div className="space-y-4">
+                    {selectedConversation.messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.sender_id === user?.id ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[70%] rounded-lg p-3 ${
+                            message.sender_id === user?.id ? "bg-primary text-primary-foreground" : "bg-muted"
+                          }`}
+                        >
+                          {message.type === "file" ? (
+                            <div className="flex items-center gap-2">
+                              <Attachment className="h-4 w-4" />
+                              <span className="text-sm">{message.content}</span>
+                            </div>
+                          ) : (
+                            <div className="text-sm">{message.content}</div>
+                          )}
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs opacity-70">{formatTime(message.timestamp)}</span>
+                            {message.sender_id === user?.id && (
+                              <span className="text-xs opacity-70">{message.read ? "Read" : "Sent"}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </ScrollArea>
+
+                {/* Message Input */}
+                <div className="p-4 border-t bg-background">
+                  <div className="flex items-end gap-2">
+                    <Button variant="outline" size="sm" disabled className="opacity-50">
+                      <Paperclip className="h-4 w-4" />
+                      <span className="sr-only">Attach File (Coming Soon)</span>
+                    </Button>
+                    <div className="flex-1">
+                      <Textarea
+                        placeholder="Type your message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault()
+                            handleSendMessage()
+                          }
+                        }}
+                        className="min-h-[40px] max-h-[120px] resize-none"
+                        disabled={sending}
+                      />
+                    </div>
+                    <Button onClick={handleSendMessage} disabled={!newMessage.trim() || sending}>
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No conversation selected</h3>
+                  <div>Choose a conversation from the list to start messaging</div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

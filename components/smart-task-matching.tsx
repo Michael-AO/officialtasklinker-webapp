@@ -1,22 +1,25 @@
 "use client"
 
 import Link from "next/link"
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
-import { Sparkles, Clock, DollarSign, MapPin, Star, Target, Zap } from "lucide-react"
+import { Sparkles, Clock, MapPin, Star, Target, Zap } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { NairaIcon } from "@/components/naira-icon"
 
 interface SmartMatch {
   id: string
   title: string
   description: string
   budget: string
+  budget_min: number
+  budget_max: number
   client: string
+  client_id: string
   clientRating: number
   postedDate: string
   matchScore: number
@@ -24,6 +27,10 @@ interface SmartMatch {
   urgency: "low" | "medium" | "high"
   skills: string[]
   location: string
+  applications_count: number
+  views_count: number
+  category: string
+  deadline: string | null
 }
 
 export function SmartTaskMatching() {
@@ -31,65 +38,46 @@ export function SmartTaskMatching() {
   const router = useRouter()
   const [matches, setMatches] = useState<SmartMatch[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Simulate AI matching algorithm
-    const generateMatches = () => {
-      const mockMatches: SmartMatch[] = [
-        {
-          id: "task-1",
-          title: "React Dashboard Development",
-          description:
-            "Need an experienced React developer to build a modern analytics dashboard with real-time data visualization.",
-          budget: "$2,500 - $4,000",
-          client: "TechStartup Inc.",
-          clientRating: 4.8,
-          postedDate: "2 hours ago",
-          matchScore: 95,
-          matchReasons: ["Perfect skill match", "Budget fits your rate", "Client has great reviews"],
-          urgency: "high",
-          skills: ["React", "TypeScript", "D3.js"],
-          location: "Remote",
-        },
-        {
-          id: "task-2",
-          title: "E-commerce Website Redesign",
-          description: "Looking for a full-stack developer to redesign our e-commerce platform with modern UI/UX.",
-          budget: "$1,800 - $3,200",
-          client: "Fashion Boutique",
-          clientRating: 4.6,
-          postedDate: "5 hours ago",
-          matchScore: 88,
-          matchReasons: ["Skills match 90%", "Similar past projects", "Preferred location"],
-          urgency: "medium",
-          skills: ["React", "Node.js", "MongoDB"],
-          location: "Remote",
-        },
-        {
-          id: "task-3",
-          title: "Mobile App API Integration",
-          description: "Need help integrating payment APIs and user authentication for our mobile application.",
-          budget: "$800 - $1,500",
-          client: "Mobile Solutions Co.",
-          clientRating: 4.9,
-          postedDate: "1 day ago",
-          matchScore: 82,
-          matchReasons: ["API experience", "Quick turnaround needed", "High-rated client"],
-          urgency: "high",
-          skills: ["Node.js", "REST APIs", "Authentication"],
-          location: "Remote",
-        },
-      ]
+    const fetchSmartMatches = async () => {
+      if (!user?.id) {
+        setIsLoading(false)
+        return
+      }
 
-      // Filter based on user skills
-      const userSkills = user?.skills || []
-      const filteredMatches = mockMatches.filter((match) => match.skills.some((skill) => userSkills.includes(skill)))
+      try {
+        setIsLoading(true)
+        setError(null)
 
-      setMatches(filteredMatches.length > 0 ? filteredMatches : mockMatches)
-      setIsLoading(false)
+        const response = await fetch("/api/tasks/smart-matches", {
+          headers: {
+            "user-id": user.id.toString(),
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch matches: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        if (data.success) {
+          setMatches(data.matches || [])
+        } else {
+          throw new Error(data.error || "Failed to fetch matches")
+        }
+      } catch (error) {
+        console.error("Error fetching smart matches:", error)
+        setError(error instanceof Error ? error.message : "Failed to fetch matches")
+        setMatches([]) // Show empty state on error
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    generateMatches()
+    fetchSmartMatches()
   }, [user])
 
   const handleViewDetails = (taskId: string) => {
@@ -120,6 +108,35 @@ export function SmartTaskMatching() {
     return "text-gray-600"
   }
 
+  const formatBudget = (min: number, max: number) => {
+    const formatAmount = (amount: number) => {
+      if (amount >= 1000000) {
+        return `₦${(amount / 1000000).toFixed(1)}M`
+      } else if (amount >= 1000) {
+        return `₦${(amount / 1000).toFixed(0)}K`
+      } else {
+        return `₦${amount.toLocaleString()}`
+      }
+    }
+
+    if (min === max) {
+      return formatAmount(min)
+    }
+    return `${formatAmount(min)} - ${formatAmount(max)}`
+  }
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+
+    if (diffInHours < 1) return "Just now"
+    if (diffInHours < 24) return `${diffInHours} hours ago`
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) return `${diffInDays} days ago`
+    return date.toLocaleDateString()
+  }
+
   if (isLoading) {
     return (
       <Card>
@@ -137,6 +154,25 @@ export function SmartTaskMatching() {
                 <div className="h-3 bg-gray-200 rounded w-1/2"></div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-red-500" />
+            Smart Matches
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
           </div>
         </CardContent>
       </Card>
@@ -171,8 +207,8 @@ export function SmartTaskMatching() {
                     <h3 className="font-semibold text-lg">{match.title}</h3>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4" />
-                        {match.budget}
+                        <NairaIcon className="h-4 w-4" />
+                        {formatBudget(match.budget_min, match.budget_max)}
                       </div>
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
@@ -180,7 +216,7 @@ export function SmartTaskMatching() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        {match.postedDate}
+                        {formatTimeAgo(match.postedDate)}
                       </div>
                     </div>
                   </div>
@@ -193,11 +229,20 @@ export function SmartTaskMatching() {
                 </div>
 
                 {/* Description */}
-                <p className="text-muted-foreground text-sm">{match.description}</p>
+                <p className="text-muted-foreground text-sm line-clamp-2">{match.description}</p>
+
+                {/* Match Reasons */}
+                <div className="flex flex-wrap gap-1">
+                  {match.matchReasons.slice(0, 3).map((reason, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {reason}
+                    </Badge>
+                  ))}
+                </div>
 
                 {/* Skills */}
                 <div className="flex flex-wrap gap-2">
-                  {match.skills.map((skill) => (
+                  {match.skills.slice(0, 4).map((skill) => (
                     <Badge
                       key={skill}
                       variant={user?.skills?.includes(skill) ? "default" : "outline"}
@@ -207,6 +252,11 @@ export function SmartTaskMatching() {
                       {user?.skills?.includes(skill) && <Zap className="h-3 w-3 ml-1" />}
                     </Badge>
                   ))}
+                  {match.skills.length > 4 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{match.skills.length - 4} more
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Client Info & Actions */}
@@ -225,10 +275,11 @@ export function SmartTaskMatching() {
                       <p className="text-sm font-medium">{match.client}</p>
                       <div className="flex items-center gap-1">
                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs text-muted-foreground">{match.clientRating}</span>
+                        <span className="text-xs text-muted-foreground">{match.clientRating.toFixed(1)}</span>
                       </div>
                     </div>
                     <Badge className={getUrgencyColor(match.urgency)}>{match.urgency} priority</Badge>
+                    <div className="text-xs text-muted-foreground">{match.applications_count} applications</div>
                   </div>
 
                   <div className="flex gap-2">
@@ -251,7 +302,7 @@ export function SmartTaskMatching() {
 
         <div className="pt-4 border-t">
           <Button variant="outline" className="w-full" asChild>
-            <Link href="/dashboard/browse">View All Matches</Link>
+            <Link href="/dashboard/browse">View All Matches ({matches.length})</Link>
           </Button>
         </div>
 
@@ -260,7 +311,9 @@ export function SmartTaskMatching() {
             <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No matches yet</h3>
             <p className="text-gray-600 mb-4">Complete your profile to get personalized task recommendations</p>
-            <Button>Complete Profile</Button>
+            <Button asChild>
+              <Link href="/dashboard/profile/edit">Complete Profile</Link>
+            </Button>
           </div>
         )}
       </CardContent>
