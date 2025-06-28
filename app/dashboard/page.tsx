@@ -95,7 +95,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{loading ? "..." : stats?.activeTasks || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.activeTasks > 0 ? "Tasks in progress" : "No active tasks"}
+              {(stats?.activeTasks || 0) > 0 ? "Tasks in progress" : "No active tasks"}
             </p>
           </CardContent>
         </Card>
@@ -108,7 +108,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{loading ? "..." : stats?.pendingApplications || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.pendingApplications > 0 ? "Pending review" : "No pending applications"}
+              {(stats?.pendingApplications || 0) > 0 ? "Pending review" : "No pending applications"}
             </p>
           </CardContent>
         </Card>
@@ -121,7 +121,9 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{loading ? "..." : formatNairaCompact(stats?.totalEarnings || 0)}</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.completedTasks > 0 ? `From ${stats.completedTasks} completed tasks` : "Complete tasks to earn"}
+              {(stats?.completedTasks || 0) > 0
+                ? `From ${stats?.completedTasks} completed tasks`
+                : "Complete tasks to earn"}
             </p>
           </CardContent>
         </Card>
@@ -134,11 +136,11 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{loading ? "..." : Math.round(stats?.completionRate || 0)}%</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.completionRate >= 90
+              {(stats?.completionRate || 0) >= 90
                 ? "Excellent rating"
-                : stats?.completionRate >= 70
+                : (stats?.completionRate || 0) >= 70
                   ? "Good rating"
-                  : stats?.completionRate > 0
+                  : (stats?.completionRate || 0) > 0
                     ? "Keep improving"
                     : "No rating yet"}
             </p>
@@ -175,7 +177,7 @@ export default function DashboardPage() {
                         <AvatarFallback>
                           {application.freelancer?.name
                             ?.split(" ")
-                            .map((n) => n[0])
+                            .map((n: string) => n[0])
                             .join("") || "U"}
                         </AvatarFallback>
                       </Avatar>
@@ -229,7 +231,7 @@ export default function DashboardPage() {
                   <AvatarFallback>
                     {selectedApplication.freelancer?.name
                       ?.split(" ")
-                      .map((n) => n[0])
+                      .map((n: string) => n[0])
                       .join("") || "U"}
                   </AvatarFallback>
                 </Avatar>

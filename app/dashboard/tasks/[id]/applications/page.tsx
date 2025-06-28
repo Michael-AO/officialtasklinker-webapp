@@ -92,7 +92,7 @@ export default function TaskApplicationsPage() {
         const response = await fetch(`/api/tasks/${taskId}/applications`, {
           headers: {
             "user-id": user.id,
-            Authorization: `Bearer ${user.access_token || ""}`,
+            Authorization: `Bearer ${(user as any).access_token || ""}`,
             "Content-Type": "application/json",
           },
         })
@@ -506,10 +506,6 @@ export default function TaskApplicationsPage() {
                           <ThumbsUp className="mr-2 h-4 w-4" />
                           Accept
                         </Button>
-                        <Button size="sm" variant="outline" disabled className="opacity-50 cursor-not-allowed">
-                          Setup Escrow
-                          <span className="ml-1 text-xs">(Soon)</span>
-                        </Button>
                       </>
                     )}
 
@@ -527,17 +523,6 @@ export default function TaskApplicationsPage() {
                           Reject
                         </Button>
                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setCurrentApplicationId(application.id)
-                            setInterviewDialogOpen(true)
-                          }}
-                        >
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          Interview
-                        </Button>
-                        <Button
                           size="sm"
                           onClick={() => {
                             setCurrentApplicationId(application.id)
@@ -546,10 +531,6 @@ export default function TaskApplicationsPage() {
                         >
                           <ThumbsUp className="mr-2 h-4 w-4" />
                           Accept
-                        </Button>
-                        <Button size="sm" variant="outline" disabled className="opacity-50 cursor-not-allowed">
-                          Setup Escrow
-                          <span className="ml-1 text-xs">(Soon)</span>
                         </Button>
                       </>
                     )}
@@ -584,7 +565,7 @@ export default function TaskApplicationsPage() {
         )}
       </div>
 
-      {/* Dialog components remain the same... */}
+      {/* Dialog components */}
       <Dialog open={interviewDialogOpen} onOpenChange={setInterviewDialogOpen}>
         <DialogContent>
           <DialogHeader>

@@ -4,7 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/contexts/auth-context"
 import { Toaster } from "@/components/ui/toaster"
-import { DataComparisonDebug } from "@/components/data-comparison-debug"
+// import { DataComparisonDebug } from "@/components/data-comparison-debug"
 
 // Add the missing ThemeProvider import
 import { ThemeProvider } from "@/components/theme-provider"
@@ -29,7 +29,7 @@ export default function RootLayout({
             {children}
             <Toaster />
             {/* Add debug component - remove in production */}
-            <DataComparisonDebug />
+            {/* <DataComparisonDebug /> */}
           </AuthProvider>
         </ThemeProvider>
       </body>

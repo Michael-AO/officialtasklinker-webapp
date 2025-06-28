@@ -56,7 +56,7 @@ export default function ApplicationsPage() {
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
       app.task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user?.user_type === "client"
+      (user?.userType === "client"
         ? app.freelancer?.name.toLowerCase().includes(searchTerm.toLowerCase())
         : app.task.client.name.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchesStatus = statusFilter === "all" || app.status === statusFilter
@@ -135,10 +135,10 @@ export default function ApplicationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">
-            {user?.user_type === "client" ? "Applications Received" : "My Applications"}
+            {user?.userType === "client" ? "Applications Received" : "My Applications"}
           </h1>
           <p className="text-muted-foreground">
-            {user?.user_type === "client"
+            {user?.userType === "client"
               ? "Manage applications from freelancers"
               : "Track your job applications and their status"}
             {!isUsingRealData && (
@@ -149,9 +149,9 @@ export default function ApplicationsPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href={user?.user_type === "client" ? "/dashboard/tasks/create" : "/dashboard/browse"}>
+          <Link href={user?.userType === "client" ? "/dashboard/tasks/create" : "/dashboard/browse"}>
             <Search className="mr-2 h-4 w-4" />
-            {user?.user_type === "client" ? "Post New Task" : "Find More Jobs"}
+            {user?.userType === "client" ? "Post New Task" : "Find More Jobs"}
           </Link>
         </Button>
       </div>
@@ -213,7 +213,7 @@ export default function ApplicationsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder={`Search ${user?.user_type === "client" ? "by freelancer or task" : "applications"}...`}
+                  placeholder={`Search ${user?.userType === "client" ? "by freelancer or task" : "applications"}...`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -271,15 +271,15 @@ export default function ApplicationsPage() {
                   <p className="text-muted-foreground mb-4">
                     {searchTerm || statusFilter !== "all" || categoryFilter !== "all"
                       ? "Try adjusting your filters"
-                      : user?.user_type === "client"
+                      : user?.userType === "client"
                         ? "Applications will appear here when freelancers apply to your tasks"
                         : "Start applying to jobs to see them here"}
                   </p>
                   {!searchTerm && statusFilter === "all" && categoryFilter === "all" && (
                     <Button asChild>
-                      <Link href={user?.user_type === "client" ? "/dashboard/tasks/create" : "/dashboard/browse"}>
+                      <Link href={user?.userType === "client" ? "/dashboard/tasks/create" : "/dashboard/browse"}>
                         <Search className="mr-2 h-4 w-4" />
-                        {user?.user_type === "client" ? "Post Your First Task" : "Browse Jobs"}
+                        {user?.userType === "client" ? "Post Your First Task" : "Browse Jobs"}
                       </Link>
                     </Button>
                   )}
@@ -305,13 +305,13 @@ export default function ApplicationsPage() {
                           <Avatar className="h-6 w-6">
                             <AvatarImage
                               src={
-                                user?.user_type === "client"
+                                user?.userType === "client"
                                   ? application.freelancer?.avatar_url
                                   : application.task.client.avatar_url
                               }
                             />
                             <AvatarFallback>
-                              {user?.user_type === "client"
+                              {user?.userType === "client"
                                 ? application.freelancer?.name
                                     .split(" ")
                                     .map((n) => n[0])
@@ -323,26 +323,26 @@ export default function ApplicationsPage() {
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm text-muted-foreground">
-                            {user?.user_type === "client"
+                            {user?.userType === "client"
                               ? `Freelancer: ${application.freelancer?.name}`
                               : `Client: ${application.task.client.name}`}
                           </span>
                           <div className="flex items-center gap-1">
                             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                             <span className="text-xs">
-                              {user?.user_type === "client"
+                              {user?.userType === "client"
                                 ? application.freelancer?.rating
                                 : application.task.client.rating}
                             </span>
                           </div>
-                          {(user?.user_type === "client"
+                          {(user?.userType === "client"
                             ? application.freelancer?.is_verified
                             : application.task.client.is_verified) && (
                             <CheckCircle2 className="h-4 w-4 text-blue-600" />
                           )}
                         </div>
 
-                        {user?.user_type === "client" && application.freelancer?.skills && (
+                        {user?.userType === "client" && application.freelancer?.skills && (
                           <div className="flex flex-wrap gap-2">
                             {application.freelancer.skills.slice(0, 4).map((skill) => (
                               <Badge key={skill} variant="secondary" className="text-xs">
@@ -400,12 +400,12 @@ export default function ApplicationsPage() {
                           </Button>
                           <Button variant="outline" size="sm" disabled className="opacity-50 cursor-not-allowed">
                             <MessageSquare className="mr-2 h-4 w-4" />
-                            Message {user?.user_type === "client" ? "Freelancer" : "Client"}
+                            Message {user?.userType === "client" ? "Freelancer" : "Client"}
                           </Button>
                         </div>
 
                         <div className="flex gap-2">
-                          {application.status === "pending" && user?.user_type === "freelancer" && (
+                          {application.status === "pending" && user?.userType === "freelancer" && (
                             <Button variant="ghost" size="sm" onClick={() => handleWithdrawApplication(application.id)}>
                               Withdraw
                             </Button>
@@ -417,7 +417,7 @@ export default function ApplicationsPage() {
                             </Button>
                           )}
 
-                          {user?.user_type === "client" && application.status === "pending" && (
+                          {user?.userType === "client" && application.status === "pending" && (
                             <Button size="sm" asChild>
                               <Link href={`/dashboard/applications/${application.id}`}>Review</Link>
                             </Button>

@@ -26,14 +26,22 @@ export default function ResetPasswordPage() {
 
   const router = useRouter()
   const searchParams = useSearchParams()
-  const email = searchParams.get("email") || ""
 
-  // Redirect if no email parameter
+  // Safe email extraction with fallback
+  const [email, setEmail] = useState("")
+
+  // Handle client-side initialization
   useEffect(() => {
-    if (!email) {
-      router.push("/forgot-password")
+    if (typeof window !== "undefined") {
+      const emailParam = searchParams.get("email") || ""
+      setEmail(emailParam)
+
+      // Redirect if no email parameter
+      if (!emailParam) {
+        router.push("/forgot-password")
+      }
     }
-  }, [email, router])
+  }, [searchParams, router])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}

@@ -96,7 +96,7 @@ export default function MessagesPage() {
         setSelectedConversation(conversations[0])
       }
     }
-  }, [conversations, highlightUser, taskParam])
+  }, [conversations, highlightUser, taskParam, selectedConversation])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -179,7 +179,7 @@ export default function MessagesPage() {
                 sender_name: msg.sender_id === user.id ? "You" : otherUser?.name || "Unknown",
                 content: msg.content,
                 timestamp: msg.created_at,
-                type: "text",
+                type: "text" as const,
                 read: msg.is_read,
               })) || [],
           }
@@ -204,7 +204,7 @@ export default function MessagesPage() {
   }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || sending) return
+    if (!newMessage.trim() || !selectedConversation || sending || !user) return
 
     setSending(true)
     try {
