@@ -4,6 +4,7 @@ import { DashboardHeader } from "@/components/dashboard-header"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { EscrowProvider } from "@/contexts/escrow-context"
+import { NotificationContainer } from "@/components/ui/notification"
 
 export default function DashboardLayout({
   children,
@@ -21,6 +22,7 @@ export default function DashboardLayout({
               <div className="flex-1 space-y-4 p-6 pt-6">{children}</div>
             </div> 
           </SidebarInset>
+          <NotificationContainer />
         </NotificationProvider>
       </EscrowProvider>
     </SidebarProvider>

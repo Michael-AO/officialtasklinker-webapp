@@ -258,8 +258,7 @@ export class DashboardService {
           created_at,
           updated_at,
           response_date,
-          feedback,
-          freelancer:users!applications_freelancer_id_fkey (
+          freelancer:users (
             id,
             name,
             email,
@@ -278,7 +277,7 @@ export class DashboardService {
             budget_max,
             currency,
             client_id,
-            client:users!tasks_client_id_fkey (
+            client:users (
               id,
               name,
               email,
@@ -313,7 +312,6 @@ export class DashboardService {
         status: app.status,
         applied_date: app.created_at,
         response_date: app.response_date,
-        feedback: app.feedback,
         created_at: app.created_at,
         updated_at: app.updated_at,
         freelancer: app.freelancer ? {

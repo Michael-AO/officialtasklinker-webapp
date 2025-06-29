@@ -3,6 +3,9 @@ import { createServerClient } from "@/lib/supabase"
 
 export async function GET(request: NextRequest) {
   try {
+    // Create server-side client with service role key
+    const supabase = createServerClient()
+
     // Get the current user
     const {
       data: { user },
@@ -14,9 +17,6 @@ export async function GET(request: NextRequest) {
     }
 
     console.log("🔍 Fetching portfolio for user:", user.id)
-
-    // Create server-side client with service role key
-    const supabase = createServerClient()
 
     // Get portfolio items from database
     const { data: portfolio, error: portfolioError } = await supabase
@@ -55,6 +55,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Create server-side client with service role key
+    const supabase = createServerClient()
+
     // Get the current user
     const {
       data: { user },
@@ -80,9 +83,6 @@ export async function POST(request: NextRequest) {
         error: "Title and description are required" 
       }, { status: 400 })
     }
-
-    // Create server-side client with service role key
-    const supabase = createServerClient()
 
     // Create portfolio item
     const { data: newItem, error: createError } = await supabase

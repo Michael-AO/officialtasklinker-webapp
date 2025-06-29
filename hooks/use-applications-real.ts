@@ -292,22 +292,20 @@ export function useApplicationsReal() {
   const [error, setError] = useState<string | null>(null)
   const [isUsingRealData, setIsUsingRealData] = useState(false)
 
+  console.log("🔍 useApplicationsReal hook - user:", user?.id, "loading:", loading)
+
   const fetchRealApplications = async () => {
     if (!user?.id) return []
 
     try {
       console.log("🔍 Fetching applications for user:", user.id)
 
-      // Convert user ID to UUID format if needed
-      let userId = user.id
-      if (userId.length < 36) {
-        const paddedId = userId.padStart(8, "0")
-        userId = `${paddedId}-0000-4000-8000-000000000000`
-      }
+      // Use the user ID directly - it's already a proper UUID
+      const userId = user.id
 
       console.log("🔍 Using user ID:", userId)
 
-      // First, get applications where user is the freelancer
+      // First, get applications where user is the freelancer (sent applications)
       const { data: sentApplications, error: sentError } = await supabase
         .from("applications")
         .select(`
@@ -318,15 +316,51 @@ export function useApplicationsReal() {
           budget_type,
           estimated_duration,
           cover_letter,
+          attachments,
           status,
           created_at,
           updated_at,
-          response_date
+          response_date,
+          task:tasks!inner (
+            id,
+            title,
+            description,
+            category,
+            budget_min,
+            budget_max,
+            currency,
+            client_id
+          )
         `)
         .eq("freelancer_id", userId)
         .order("created_at", { ascending: false })
 
-      // Then, get applications where user is the task owner
+      if (sentError) {
+        console.error("❌ Error fetching sent applications:", sentError)
+        throw sentError
+      }
+
+      console.log("📤 Sent applications found:", sentApplications?.length || 0)
+      console.log("📤 Raw sent applications data:", sentApplications)
+
+      // Get client information for sent applications
+      const clientIds = sentApplications?.map(app => (app.task as any)?.client_id).filter(Boolean) || []
+      let clientsData: any[] = []
+      
+      if (clientIds.length > 0) {
+        const { data: clients, error: clientsError } = await supabase
+          .from("users")
+          .select("id, name, email, avatar_url, rating, is_verified")
+          .in("id", clientIds)
+        
+        if (clientsError) {
+          console.error("❌ Error fetching clients:", clientsError)
+        } else {
+          clientsData = clients || []
+        }
+      }
+
+      // Then, get applications where user is the task owner (received applications)
       const { data: receivedApplications, error: receivedError } = await supabase
         .from("applications")
         .select(`
@@ -337,94 +371,47 @@ export function useApplicationsReal() {
           budget_type,
           estimated_duration,
           cover_letter,
+          attachments,
           status,
           created_at,
           updated_at,
-          response_date
+          response_date,
+          freelancer:users (
+            id,
+            name,
+            email,
+            avatar_url,
+            rating,
+            completed_tasks,
+            skills,
+            is_verified
+          ),
+          task:tasks!inner (
+            id,
+            title,
+            description,
+            category,
+            budget_min,
+            budget_max,
+            currency,
+            client_id
+          )
         `)
         .eq("task.client_id", userId)
         .order("created_at", { ascending: false })
 
-      if (sentError || receivedError) {
-        console.error("❌ Database error:", sentError || receivedError)
-        throw sentError || receivedError
+      if (receivedError) {
+        console.error("❌ Error fetching received applications:", receivedError)
+        throw receivedError
       }
 
-      // Combine the results
-      const data = [...(sentApplications || []), ...(receivedApplications || [])]
-      // Sort by created_at descending
-      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      console.log("📥 Received applications found:", receivedApplications?.length || 0)
+      console.log("📥 Raw received applications data:", receivedApplications)
 
-      console.log("✅ Fetched applications:", data?.length || 0)
-
-      // Fetch related data for all applications
-      const taskIds = [...new Set(data.map(app => app.task_id))]
-      const userIds = [...new Set(data.map(app => app.freelancer_id))]
-
-      // Fetch tasks data
-      const { data: tasksData, error: tasksError } = await supabase
-        .from("tasks")
-        .select(`
-          id,
-          title,
-          description,
-          category,
-          budget_min,
-          budget_max,
-          currency,
-          client_id
-        `)
-        .in("id", taskIds)
-
-      if (tasksError) {
-        console.error("❌ Error fetching tasks:", tasksError)
-        throw tasksError
-      }
-
-      // Fetch users data
-      const { data: usersData, error: usersError } = await supabase
-        .from("users")
-        .select(`
-          id,
-          name,
-          email,
-          avatar_url,
-          rating,
-          completed_tasks,
-          skills,
-          is_verified
-        `)
-        .in("id", userIds)
-
-      if (usersError) {
-        console.error("❌ Error fetching users:", usersError)
-        throw usersError
-      }
-
-      // Create lookup maps
-      const tasksMap = new Map(tasksData?.map(task => [task.id, task]) || [])
-      const usersMap = new Map(usersData?.map(user => [user.id, user]) || [])
-
-      // Transform the data to match our interface
-      const transformedData = (data || []).map((app: any) => {
-        const task = tasksMap.get(app.task_id)
-        const freelancer = usersMap.get(app.freelancer_id)
-        const client = task ? usersMap.get(task.client_id) : null
-        
-        // Ensure freelancer is always set for sent applications
-        let finalFreelancer = freelancer;
-        if (!finalFreelancer && app.freelancer_id === user.id) {
-          finalFreelancer = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            avatar_url: user.avatar,
-            rating: user.rating || 0,
-            completed_tasks: user.completedTasks || 0,
-            skills: user.skills || [],
-            is_verified: user.isVerified || false,
-          };
-        }
+      // Transform sent applications
+      const transformedSentApplications = (sentApplications || []).map((app: any) => {
+        // Find the client data for this application
+        const clientData = clientsData.find(client => client.id === app.task?.client_id)
         
         return {
           id: app.id,
@@ -440,21 +427,21 @@ export function useApplicationsReal() {
           response_date: app.response_date,
           created_at: app.created_at,
           updated_at: app.updated_at,
-          task: task ? {
-            id: task.id,
-            title: task.title,
-            description: task.description,
-            category: task.category,
-            budget_min: task.budget_min,
-            budget_max: task.budget_max,
-            currency: task.currency,
-            client: client ? {
-              id: client.id,
-              name: client.name,
-              email: client.email,
-              avatar_url: client.avatar_url,
-              rating: client.rating || 0,
-              is_verified: client.is_verified || false,
+          task: app.task ? {
+            id: app.task.id,
+            title: app.task.title,
+            description: app.task.description,
+            category: app.task.category,
+            budget_min: app.task.budget_min,
+            budget_max: app.task.budget_max,
+            currency: app.task.currency,
+            client: clientData ? {
+              id: clientData.id,
+              name: clientData.name,
+              email: clientData.email,
+              avatar_url: clientData.avatar_url,
+              rating: clientData.rating || 0,
+              is_verified: clientData.is_verified || false,
             } : {
               id: "unknown",
               name: "Unknown Client",
@@ -480,21 +467,98 @@ export function useApplicationsReal() {
               is_verified: false,
             },
           },
-          freelancer: finalFreelancer || {
+          freelancer: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            avatar_url: user.avatar,
+            rating: user.rating || 0,
+            completed_tasks: user.completedTasks || 0,
+            skills: user.skills || [],
+            is_verified: user.isVerified || false,
+          },
+        }
+      })
+
+      // Transform received applications
+      const transformedReceivedApplications = (receivedApplications || []).map((app: any) => ({
+        id: app.id,
+        task_id: app.task_id,
+        freelancer_id: app.freelancer_id,
+        proposed_budget: app.proposed_budget,
+        budget_type: app.budget_type || "fixed",
+        estimated_duration: app.estimated_duration || "",
+        cover_letter: app.cover_letter,
+        attachments: app.attachments || [],
+        status: app.status,
+        applied_date: app.created_at,
+        response_date: app.response_date,
+        created_at: app.created_at,
+        updated_at: app.updated_at,
+        task: app.task ? {
+          id: app.task.id,
+          title: app.task.title,
+          description: app.task.description,
+          category: app.task.category,
+          budget_min: app.task.budget_min,
+          budget_max: app.task.budget_max,
+          currency: app.task.currency,
+          client: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            avatar_url: user.avatar,
+            rating: user.rating || 0,
+            is_verified: user.isVerified || false,
+          },
+        } : {
+          id: "unknown",
+          title: "Unknown Task",
+          description: "Task details not available",
+          category: "Unknown",
+          budget_min: 0,
+          budget_max: 0,
+          currency: "NGN",
+          client: {
             id: "unknown",
-            name: "Unknown Freelancer",
+            name: "Unknown Client",
             email: "unknown@example.com",
             avatar_url: undefined,
             rating: 0,
-            completed_tasks: 0,
-            skills: [],
             is_verified: false,
           },
-        };
-      })
+        },
+        freelancer: app.freelancer ? {
+          id: app.freelancer.id,
+          name: app.freelancer.name,
+          email: app.freelancer.email,
+          avatar_url: app.freelancer.avatar_url,
+          rating: app.freelancer.rating || 0,
+          completed_tasks: app.freelancer.completed_tasks || 0,
+          skills: app.freelancer.skills || [],
+          is_verified: app.freelancer.is_verified || false,
+        } : {
+          id: "unknown",
+          name: "Unknown Freelancer",
+          email: "unknown@example.com",
+          avatar_url: undefined,
+          rating: 0,
+          completed_tasks: 0,
+          skills: [],
+          is_verified: false,
+        },
+      }))
+
+      // Combine and sort the results
+      const combinedData = [...transformedSentApplications, ...transformedReceivedApplications]
+      combinedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+      console.log("✅ Fetched applications:", combinedData.length)
+      console.log("✅ Sent applications:", transformedSentApplications.length)
+      console.log("✅ Received applications:", transformedReceivedApplications.length)
 
       setIsUsingRealData(true)
-      return transformedData
+      return combinedData
     } catch (error) {
       console.error("❌ Error fetching applications:", error)
       setIsUsingRealData(false)
@@ -504,15 +568,23 @@ export function useApplicationsReal() {
   }
 
   const fetchApplications = useCallback(async () => {
-    if (!user) return
+    console.log("🔍 fetchApplications called with user:", user?.id)
+    
+    if (!user) {
+      console.log("❌ No user available, skipping fetch")
+      return
+    }
 
     setLoading(true)
     setError(null)
 
     try {
+      console.log("🔍 Calling fetchRealApplications...")
       const data = await fetchRealApplications()
+      console.log("✅ fetchRealApplications returned:", data.length, "applications")
       setApplications(data)
     } catch (err) {
+      console.error("❌ Error in fetchApplications:", err)
       setError(err instanceof Error ? err.message : "Failed to fetch applications")
       // Don't fallback to mock data - just show empty state
       setApplications([])
@@ -584,6 +656,7 @@ export function useApplicationsReal() {
   }
 
   useEffect(() => {
+    console.log("🔍 useEffect triggered, user:", user?.id)
     fetchApplications()
   }, [fetchApplications])
 

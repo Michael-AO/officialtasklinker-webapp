@@ -24,6 +24,7 @@ import {
   Briefcase,
   XCircle,
   AlertCircle,
+  RefreshCw,
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { useApplicationsReal } from "@/hooks/use-applications-real"
@@ -47,7 +48,7 @@ const statusIcons = {
 
 export default function ApplicationsPage() {
   const { user } = useAuth()
-  const { applications, loading, error, stats, isUsingRealData, withdrawApplication } = useApplicationsReal()
+  const { applications, loading, error, stats, isUsingRealData, withdrawApplication, refetch } = useApplicationsReal()
 
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -62,8 +63,45 @@ export default function ApplicationsPage() {
     applicationsCount: applications.length,
     sentApplicationsCount: sentApplications.length,
     firstApplication: applications[0],
-    userType: user?.userType
+    userType: user?.userType,
+    isUsingRealData,
+    loading,
+    error
   })
+
+  // Test auth context
+  useEffect(() => {
+    console.log("🔍 Auth context test - user:", user)
+    if (user) {
+      console.log("✅ User found in auth context:", user.id, user.name, user.userType)
+    } else {
+      console.log("❌ No user in auth context")
+    }
+  }, [user])
+
+  // Manual trigger when user becomes available
+  useEffect(() => {
+    console.log("🔄 useEffect triggered - user:", user?.id, "applications:", applications.length)
+    if (user?.id && applications.length === 0) {
+      console.log("🔄 User available but no applications, triggering fetch")
+      refetch()
+    } else if (!user?.id) {
+      console.log("❌ No user available in useEffect")
+      // Fallback: try to fetch after a delay in case auth is still initializing
+      const timer = setTimeout(() => {
+        console.log("⏰ Fallback: trying to fetch applications after delay")
+        refetch()
+      }, 2000)
+      return () => clearTimeout(timer)
+    } else if (applications.length > 0) {
+      console.log("✅ User and applications available")
+    }
+  }, [user?.id, applications.length, refetch])
+
+  const handleRefresh = () => {
+    console.log("🔄 Manual refresh triggered")
+    refetch()
+  }
 
   const filteredApplications = sentApplications.filter((app) => {
     const matchesSearch = app.task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,6 +168,10 @@ export default function ApplicationsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={handleRefresh} variant="outline" disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <Button asChild variant="outline">
             <Link href="/dashboard/browse">
               <Search className="mr-2 h-4 w-4" />

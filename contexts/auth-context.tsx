@@ -144,10 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     console.log("📁 No portfolio items found or API error")
                   }
                 } else {
-                  console.warn("⚠️ Portfolio API error:", portfolioResponse.status)
+                  console.warn("⚠️ Portfolio API error:", portfolioResponse.status, portfolioResponse.statusText)
+                  // Don't fail the entire auth initialization for portfolio errors
                 }
               } catch (portfolioError) {
                 console.warn("⚠️ Portfolio load error on sign in:", portfolioError)
+                // Don't fail the entire auth initialization for portfolio errors
               }
             }, 200)
           } else {
