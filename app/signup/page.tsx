@@ -80,9 +80,9 @@ export default function SignupPage() {
             last_name: formData.lastName,
             user_type: formData.userType,
           },
-          // Note: Supabase will still send a confirmation email by default
-          // This is configured in your Supabase project settings
-          // To disable this, go to Authentication > Settings > Email Templates and disable "Confirm signup"
+          // Note: To completely disable Supabase's automatic email confirmation,
+          // you need to configure this in your Supabase project settings:
+          // Go to Authentication > Settings > Email Templates and disable "Confirm signup"
         },
       })
 
