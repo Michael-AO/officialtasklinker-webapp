@@ -3,11 +3,19 @@ import { supabase } from "@/lib/supabase"
 
 // Helper function to convert simple IDs to UUID format
 function convertToUUID(id: string): string {
+  // Remove any non-numeric characters
+  const cleanId = id.replace(/\D/g, '')
+  
+  if (!cleanId) {
+    throw new Error("Invalid user ID - must contain numbers")
+  }
+  
   if (id.length === 36 && id.includes("-")) {
     return id // Already a UUID
   }
+  
   // Convert simple ID like "1" to UUID format
-  const paddedId = id.padStart(8, "0")
+  const paddedId = cleanId.padStart(8, "0")
   return `${paddedId}-0000-4000-8000-000000000000`
 }
 
@@ -23,7 +31,17 @@ export async function GET(request: NextRequest) {
       const { searchParams } = new URL(request.url)
       const rawUserId = searchParams.get("user_id")
       if (rawUserId) {
-        userId = convertToUUID(rawUserId)
+        try {
+          userId = convertToUUID(rawUserId)
+        } catch (error) {
+          return NextResponse.json({ 
+            success: false, 
+            error: "Invalid user ID format",
+            message: "User ID must be a number (e.g., 1, 2, 3)",
+            example: "https://www.tasklinkers.com/api/debug-user?user_id=1",
+            provided: rawUserId
+          })
+        }
       }
     }
 
@@ -32,7 +50,8 @@ export async function GET(request: NextRequest) {
         success: false, 
         error: "No user ID provided",
         message: "Add user-id header or user_id query parameter to see user data",
-        example: "https://www.tasklinkers.com/api/debug-user?user_id=1"
+        example: "https://www.tasklinkers.com/api/debug-user?user_id=1",
+        instructions: "Try user_id=1, user_id=2, user_id=3, etc. until you find your user"
       })
     }
 
@@ -50,7 +69,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ 
         success: false, 
         error: `User not found: ${userError.message}`,
-        userId: userId
+        userId: userId,
+        suggestion: "Try a different user_id (1, 2, 3, etc.)"
       })
     }
 
