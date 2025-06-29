@@ -4,17 +4,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Shield, FileText, Scale, Eye, Clock, Mail } from "lucide-react"
+import { Shield, FileText, Scale, Eye, Clock, Mail, ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 export default function LegalPage() {
+  const router = useRouter()
+
   return (
     <div className="container mx-auto py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-2">
-            <Scale className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl font-bold">Legal Information</h1>
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <div className="flex items-center gap-2">
+              <Scale className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold">Legal Information</h1>
+            </div>
+            <div className="w-16"></div> {/* Spacer for centering */}
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Our commitment to transparency and your rights. Please read these documents carefully to understand how we

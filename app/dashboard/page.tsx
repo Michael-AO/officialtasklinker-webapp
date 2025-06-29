@@ -224,13 +224,6 @@ export default function DashboardPage() {
               <div className="text-center py-8 text-muted-foreground">
                 <p className="font-medium">No recent applications</p>
                 <p className="text-sm">Applications will appear here when freelancers apply to your tasks</p>
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs">
-                  <p className="font-medium mb-1">Debug Info:</p>
-                  <p>User ID: {user?.id}</p>
-                  <p>User Type: {user?.userType}</p>
-                  <p>Applications Count: {applications.length}</p>
-                  <p>Loading State: {loading ? "Yes" : "No"}</p>
-                </div>
               </div>
             )}
           </CardContent>

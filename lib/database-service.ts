@@ -19,13 +19,10 @@ export class DatabaseService {
         .single()
 
       if (existingUser && !fetchError) {
-        console.log("✅ Found existing user profile:", existingUser)
         return existingUser
       }
 
       // If user doesn't exist, create from auth data
-      console.log("🔄 Creating user profile from auth data...")
-
       const newUserData: Tables["users"]["Insert"] = {
         id: authUser.id,
         email: authUser.email,
@@ -54,8 +51,6 @@ export class DatabaseService {
         console.error("❌ Error creating user profile:", createError)
         throw createError
       }
-
-      console.log("✅ Created new user profile:", newUser)
 
       // Also create default settings
       await this.createDefaultSettings(newUser.id)
@@ -95,8 +90,6 @@ export class DatabaseService {
         data_sharing: false,
         analytics_tracking: true,
       })
-
-      console.log("✅ Created default settings for user:", userId)
     } catch (error) {
       console.error("❌ Error creating default settings:", error)
     }
@@ -113,7 +106,6 @@ export class UserProfileService {
       } = await supabase.auth.getUser()
 
       if (!authUser) {
-        console.log("❌ No authenticated user found")
         return null
       }
 
@@ -240,16 +232,12 @@ export class DashboardService {
 
   static async getRecentApplications(userId: string): Promise<any[]> {
     try {
-      console.log("🔍 Getting recent applications for user:", userId)
-
       // Convert user ID to UUID format if needed
       let formattedUserId = userId
       if (userId.length < 36) {
         const paddedId = userId.padStart(8, "0")
         formattedUserId = `${paddedId}-0000-4000-8000-000000000000`
       }
-
-      console.log("🔍 Using formatted user ID:", formattedUserId)
 
       const { data, error } = await supabase
         .from("applications")
@@ -297,9 +285,6 @@ export class DashboardService {
         throw error
       }
 
-      console.log("✅ Found applications:", data?.length || 0)
-      console.log("📊 Applications data:", data)
-
       // Transform the data to match expected format
       const transformedData = (data || []).map((app: any) => ({
         id: app.id,
@@ -336,8 +321,6 @@ export class DashboardService {
           currency: app.task.currency,
         } : null,
       }))
-
-      console.log("🔄 Transformed applications:", transformedData)
 
       return transformedData
     } catch (error) {
