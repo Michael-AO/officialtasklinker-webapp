@@ -39,6 +39,7 @@ const categories = [
   "Data Science",
   "DevOps",
   "AI/ML",
+  "Medicine and Health",
 ]
 
 const experienceLevels = ["All Levels", "entry", "intermediate", "expert"]

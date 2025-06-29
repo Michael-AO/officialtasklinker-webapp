@@ -60,6 +60,7 @@ export default function NewTaskPage() {
     "Video Editing",
     "Translation",
     "Virtual Assistant",
+    "Medicine and Health",
     "Other",
   ]
 

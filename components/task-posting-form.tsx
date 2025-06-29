@@ -63,6 +63,7 @@ export function TaskPostingForm() {
     Writing: ["Content Writing", "Copywriting", "Technical Writing", "Blog Writing", "SEO Writing"],
     Marketing: ["Digital Marketing", "Social Media", "SEO", "PPC", "Email Marketing"],
     "Data Analysis": ["Data Science", "Business Intelligence", "Excel", "Python", "SQL"],
+    "Medicine and Health": ["Medical Writing", "Health Content", "Research", "Documentation", "Consultation"],
   }
 
   const totalSteps = 4
