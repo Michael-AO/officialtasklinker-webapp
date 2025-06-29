@@ -166,76 +166,58 @@ export default function VerifyEmailPage() {
       // 2. Delete used OTP
       await supabase.from("email_otps").delete().eq("email", email).eq("otp", verificationCode)
 
-      // 3. Get user data from Supabase auth
-      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser()
+      // 3. Call Supabase's verifyOtp
+      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+        email: email,
+        token: verificationCode,
+        type: 'signup'
+      })
 
-      if (userError || !authUser) {
-        throw new Error("User not found. Please try logging in again.")
+      if (verifyError) {
+        throw new Error("Failed to verify OTP with Supabase")
       }
 
-      console.log("✅ OTP verified successfully, user:", authUser)
+      // 4. Get user from users table using email
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .single()
 
-      // 4. Create user record in the users table
-      if (authUser) {
-        const fullName = `${authUser.user_metadata?.first_name || ""} ${authUser.user_metadata?.last_name || ""}`.trim()
-        
-        console.log("🔍 Creating user record with name:", fullName)
-        
-        const { error: userCreateError } = await supabase
-          .from("users")
-          .upsert({
-            id: authUser.id,
-            email: authUser.email!,
-            name: fullName || authUser.email!.split("@")[0],
-            user_type: (authUser.user_metadata?.user_type as "freelancer" | "client") || "freelancer",
-            avatar_url: authUser.user_metadata?.avatar_url || null,
-            is_verified: true,
-            phone: authUser.user_metadata?.phone || null,
-            bio: null,
-            location: null,
-            hourly_rate: null,
-            skills: [],
-            rating: 0,
-            completed_tasks: 0,
-            total_earned: 0,
-            join_date: authUser.created_at || new Date().toISOString(),
-            last_active: new Date().toISOString(),
-            is_active: true,
-            created_at: authUser.created_at || new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-
-        if (userCreateError) {
-          console.error("❌ Error creating user record:", userCreateError)
-          // Don't fail the verification if user record creation fails
-          console.warn("User record creation failed, but verification continues")
-        } else {
-          console.log("✅ User record created successfully")
-        }
-
-        // Create user object for auth context
-        const userData = {
-          id: authUser.id,
-          email: authUser.email!,
-          name: fullName || authUser.email!.split("@")[0],
-          userType: (authUser.user_metadata?.user_type as "freelancer" | "client") || "freelancer",
-          avatar: authUser.user_metadata?.avatar_url || undefined,
-          isVerified: true,
-          joinDate: new Date().toISOString(),
-          completedTasks: 0,
-          rating: 0,
-          skills: [],
-          bio: "",
-          location: undefined,
-          hourlyRate: undefined,
-          portfolio: [],
-        }
-
-        // Update auth context with verified user
-        await updateProfile(userData)
+      if (userError || !userData) {
+        throw new Error("User not found. Please try signing up again.")
       }
 
-      // 5. Show success and redirect
+      // 5. Mark user as verified in your users table
+      await supabase
+        .from("users")
+        .update({
+          is_verified: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", userData.id)
+
+      // 6. Update auth context
+      const fullName = `${userData.first_name || ""} ${userData.last_name || ""}`.trim()
+      const userDataForContext = {
+        id: userData.id,
+        email: userData.email,
+        name: fullName || userData.email.split("@")[0],
+        userType: userData.user_type || "freelancer",
+        avatar: userData.avatar_url || undefined,
+        isVerified: true,
+        joinDate: userData.created_at || new Date().toISOString(),
+        completedTasks: userData.completed_tasks || 0,
+        rating: userData.rating || 0,
+        skills: userData.skills || [],
+        bio: userData.bio || "",
+        location: userData.location || undefined,
+        hourlyRate: userData.hourly_rate || undefined,
+        portfolio: [],
+      }
+      await updateProfile(userDataForContext)
+
+      // 7. Show success and redirect
       setIsVerified(true)
       setTimeout(() => {
         router.push("/dashboard")
