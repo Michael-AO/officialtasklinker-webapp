@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { createServerClient } from "@/lib/supabase"
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +14,9 @@ export async function GET(request: NextRequest) {
     }
 
     console.log("🔍 Fetching portfolio for user:", user.id)
+
+    // Create server-side client with service role key
+    const supabase = createServerClient()
 
     // Get portfolio items from database
     const { data: portfolio, error: portfolioError } = await supabase
@@ -66,14 +69,20 @@ export async function POST(request: NextRequest) {
 
     // Get the portfolio data from request body
     const portfolioData = await request.json()
+    
+    console.log("📝 Portfolio data received:", portfolioData)
 
     // Validate required fields
     if (!portfolioData.title || !portfolioData.description) {
+      console.error("❌ Missing required fields:", { title: !!portfolioData.title, description: !!portfolioData.description })
       return NextResponse.json({ 
         success: false, 
         error: "Title and description are required" 
       }, { status: 400 })
     }
+
+    // Create server-side client with service role key
+    const supabase = createServerClient()
 
     // Create portfolio item
     const { data: newItem, error: createError } = await supabase
@@ -95,6 +104,12 @@ export async function POST(request: NextRequest) {
 
     if (createError) {
       console.error("❌ Portfolio creation error:", createError)
+      console.error("❌ Portfolio creation error details:", {
+        message: createError.message,
+        code: createError.code,
+        details: createError.details,
+        hint: createError.hint
+      })
       return NextResponse.json(
         { success: false, error: "Failed to create portfolio item", details: createError },
         { status: 500 },
@@ -110,6 +125,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("❌ Portfolio API error:", error)
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace")
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
