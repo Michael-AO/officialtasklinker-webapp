@@ -83,6 +83,11 @@ export default function DashboardPage() {
     }
   }
 
+  const handleRefreshApplications = () => {
+    // Force a page refresh to get latest data
+    window.location.reload()
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats Cards - Using real data with original layout */}
@@ -93,9 +98,9 @@ export default function DashboardPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? "..." : stats?.activeTasks || 0}</div>
+            <div className="text-2xl font-bold">{loading ? "..." : (stats as any)?.activeTasks || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {(stats?.activeTasks || 0) > 0 ? "Tasks in progress" : "No active tasks"}
+              {((stats as any)?.activeTasks || 0) > 0 ? "Tasks in progress" : "No active tasks"}
             </p>
           </CardContent>
         </Card>
@@ -106,9 +111,9 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? "..." : stats?.pendingApplications || 0}</div>
+            <div className="text-2xl font-bold">{loading ? "..." : (stats as any)?.pendingApplications || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {(stats?.pendingApplications || 0) > 0 ? "Pending review" : "No pending applications"}
+              {((stats as any)?.pendingApplications || 0) > 0 ? "Pending review" : "No pending applications"}
             </p>
           </CardContent>
         </Card>
@@ -119,10 +124,10 @@ export default function DashboardPage() {
             <NairaIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? "..." : formatNairaCompact(stats?.totalEarnings || 0)}</div>
+            <div className="text-2xl font-bold">{loading ? "..." : formatNairaCompact((stats as any)?.totalEarnings || 0)}</div>
             <p className="text-xs text-muted-foreground">
-              {(stats?.completedTasks || 0) > 0
-                ? `From ${stats?.completedTasks} completed tasks`
+              {((stats as any)?.completedTasks || 0) > 0
+                ? `From ${(stats as any)?.completedTasks} completed tasks`
                 : "Complete tasks to earn"}
             </p>
           </CardContent>
@@ -134,13 +139,13 @@ export default function DashboardPage() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? "..." : Math.round(stats?.completionRate || 0)}%</div>
+            <div className="text-2xl font-bold">{loading ? "..." : Math.round((stats as any)?.completionRate || 0)}%</div>
             <p className="text-xs text-muted-foreground">
-              {(stats?.completionRate || 0) >= 90
+              {((stats as any)?.completionRate || 0) >= 90
                 ? "Excellent rating"
-                : (stats?.completionRate || 0) >= 70
+                : ((stats as any)?.completionRate || 0) >= 70
                   ? "Good rating"
-                  : (stats?.completionRate || 0) > 0
+                  : ((stats as any)?.completionRate || 0) > 0
                     ? "Keep improving"
                     : "No rating yet"}
             </p>
@@ -159,8 +164,20 @@ export default function DashboardPage() {
         {/* Recent Applications - Using real data */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Applications</CardTitle>
-            <CardDescription>People who applied to your tasks</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Recent Applications</CardTitle>
+                <CardDescription>People who applied to your tasks</CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRefreshApplications}
+                disabled={loading}
+              >
+                {loading ? "Loading..." : "Refresh"}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {loading ? (
@@ -169,7 +186,7 @@ export default function DashboardPage() {
               </div>
             ) : applications.length > 0 ? (
               <>
-                {applications.slice(0, 3).map((application) => (
+                {applications.slice(0, 3).map((application: any) => (
                   <div key={application.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
@@ -207,6 +224,13 @@ export default function DashboardPage() {
               <div className="text-center py-8 text-muted-foreground">
                 <p className="font-medium">No recent applications</p>
                 <p className="text-sm">Applications will appear here when freelancers apply to your tasks</p>
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs">
+                  <p className="font-medium mb-1">Debug Info:</p>
+                  <p>User ID: {user?.id}</p>
+                  <p>User Type: {user?.userType}</p>
+                  <p>Applications Count: {applications.length}</p>
+                  <p>Loading State: {loading ? "Yes" : "No"}</p>
+                </div>
               </div>
             )}
           </CardContent>

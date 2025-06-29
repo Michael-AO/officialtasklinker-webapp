@@ -240,23 +240,106 @@ export class DashboardService {
 
   static async getRecentApplications(userId: string): Promise<any[]> {
     try {
+      console.log("🔍 Getting recent applications for user:", userId)
+
+      // Convert user ID to UUID format if needed
+      let formattedUserId = userId
+      if (userId.length < 36) {
+        const paddedId = userId.padStart(8, "0")
+        formattedUserId = `${paddedId}-0000-4000-8000-000000000000`
+      }
+
+      console.log("🔍 Using formatted user ID:", formattedUserId)
+
       const { data, error } = await supabase
         .from("applications")
         .select(`
-          *,
-          freelancer:users!freelancer_id(name, avatar_url, rating),
-          task:tasks!task_id(title)
+          id,
+          task_id,
+          freelancer_id,
+          proposed_budget,
+          budget_type,
+          estimated_duration,
+          cover_letter,
+          attachments,
+          status,
+          created_at,
+          updated_at,
+          response_date,
+          feedback,
+          freelancer:users!applications_freelancer_id_fkey (
+            id,
+            name,
+            email,
+            avatar_url,
+            rating,
+            completed_tasks,
+            skills,
+            is_verified
+          ),
+          task:tasks!inner (
+            id,
+            title,
+            description,
+            category,
+            budget_min,
+            budget_max,
+            currency,
+            client_id
+          )
         `)
-        .eq("task.client_id", userId)
-        .eq("status", "pending")
-        .order("applied_date", { ascending: false })
+        .eq("task.client_id", formattedUserId)
+        .order("created_at", { ascending: false })
         .limit(5)
 
-      if (error && error.code !== "42P01") {
+      if (error) {
+        console.error("❌ Database error in getRecentApplications:", error)
         throw error
       }
 
-      return data || []
+      console.log("✅ Found applications:", data?.length || 0)
+      console.log("📊 Applications data:", data)
+
+      // Transform the data to match expected format
+      const transformedData = (data || []).map((app: any) => ({
+        id: app.id,
+        task_id: app.task_id,
+        freelancer_id: app.freelancer_id,
+        proposed_budget: app.proposed_budget,
+        budget_type: app.budget_type || "fixed",
+        estimated_duration: app.estimated_duration || "",
+        cover_letter: app.cover_letter,
+        attachments: app.attachments || [],
+        status: app.status,
+        applied_date: app.created_at,
+        response_date: app.response_date,
+        feedback: app.feedback,
+        created_at: app.created_at,
+        updated_at: app.updated_at,
+        freelancer: app.freelancer ? {
+          id: app.freelancer.id,
+          name: app.freelancer.name,
+          email: app.freelancer.email,
+          avatar_url: app.freelancer.avatar_url,
+          rating: app.freelancer.rating || 0,
+          completed_tasks: app.freelancer.completed_tasks || 0,
+          skills: app.freelancer.skills || [],
+          is_verified: app.freelancer.is_verified || false,
+        } : null,
+        task: app.task ? {
+          id: app.task.id,
+          title: app.task.title,
+          description: app.task.description,
+          category: app.task.category,
+          budget_min: app.task.budget_min,
+          budget_max: app.task.budget_max,
+          currency: app.task.currency,
+        } : null,
+      }))
+
+      console.log("🔄 Transformed applications:", transformedData)
+
+      return transformedData
     } catch (error) {
       console.error("❌ Error getting recent applications:", error)
       return []
