@@ -16,6 +16,7 @@ import { ArrowLeft, Calendar, MapPin, Star, Clock, FileText, Send, Loader2 } fro
 import { NairaIcon } from "@/components/naira-icon"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
+import { useApplicationsReal } from "@/hooks/use-applications-real"
 
 interface TaskApplicationPageProps {
   params: Promise<{
@@ -69,6 +70,8 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
     estimatedDuration: "",
     questions: {} as Record<string, string>,
   })
+
+  const { applications } = useApplicationsReal();
 
   // Fetch task data
   useEffect(() => {
@@ -224,6 +227,11 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`
     return `${Math.ceil(diffDays / 30)} months ago`
   }
+
+  // Check if the user has already applied to this task
+  const hasApplied = applications.some(
+    (app) => app.task_id === taskId && app.freelancer_id === user?.id
+  );
 
   if (isLoading) {
     return (
@@ -419,12 +427,14 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
                   <Button type="button" variant="outline" onClick={() => router.back()}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isSubmitting}>
+                  <Button type="submit" disabled={isSubmitting || hasApplied}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Submitting...
                       </>
+                    ) : hasApplied ? (
+                      <>Already Applied</>
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />
@@ -434,6 +444,9 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
                   </Button>
                 </div>
               </form>
+              {hasApplied && (
+                <p className="text-green-600 mt-2">You have already applied to this task.</p>
+              )}
             </CardContent>
           </Card>
         </div>
