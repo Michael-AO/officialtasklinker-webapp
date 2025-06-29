@@ -1,7 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 
+export async function OPTIONS() {
+  const response = new NextResponse(null, { status: 200 })
+  response.headers.set('Access-Control-Allow-Origin', '*')
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  return response
+}
+
 export async function GET(request: NextRequest) {
+  // Add CORS headers
+  const response = NextResponse.next()
+  response.headers.set('Access-Control-Allow-Origin', '*')
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
   try {
     console.log("API: Starting tasks fetch...")
     
@@ -147,7 +161,7 @@ export async function GET(request: NextRequest) {
       dateRange: "Last 30 days",
     })
 
-    return NextResponse.json({
+    const jsonResponse = NextResponse.json({
       success: true,
       tasks: transformedTasks,
       pagination: {
@@ -159,11 +173,25 @@ export async function GET(request: NextRequest) {
         hasPrev: page > 1,
       },
     })
+
+    // Add CORS headers to response
+    jsonResponse.headers.set('Access-Control-Allow-Origin', '*')
+    jsonResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    jsonResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+    return jsonResponse
   } catch (error) {
     console.error("API: Tasks fetch error:", error)
-    return NextResponse.json({ 
+    const errorResponse = NextResponse.json({ 
       success: false, 
       error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}` 
     }, { status: 500 })
+
+    // Add CORS headers to error response
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*')
+    errorResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+    return errorResponse
   }
 }
