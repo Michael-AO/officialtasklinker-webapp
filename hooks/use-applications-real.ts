@@ -313,7 +313,10 @@ export function useApplicationsReal() {
       console.log("🔍 Using user ID:", userId)
 
       // Fetch applications where user is either the freelancer (sent) or the task owner (received)
-      const { data, error } = await supabase
+      // Use separate queries to avoid the problematic .or() syntax
+      
+      // First, get applications where user is the freelancer
+      const { data: sentApplications, error: sentError } = await supabase
         .from("applications")
         .select(`
           id,
@@ -358,13 +361,67 @@ export function useApplicationsReal() {
             is_verified
           )
         `)
-        .or(`freelancer_id.eq.${userId},task.client_id.eq.${userId}`)
+        .eq("freelancer_id", userId)
         .order("created_at", { ascending: false })
 
-      if (error) {
-        console.error("❌ Database error:", error)
-        throw error
+      // Then, get applications where user is the task owner
+      const { data: receivedApplications, error: receivedError } = await supabase
+        .from("applications")
+        .select(`
+          id,
+          task_id,
+          freelancer_id,
+          proposed_budget,
+          budget_type,
+          estimated_duration,
+          cover_letter,
+          attachments,
+          status,
+          created_at,
+          updated_at,
+          response_date,
+          feedback,
+          task:tasks!inner (
+            id,
+            title,
+            description,
+            category,
+            budget_min,
+            budget_max,
+            currency,
+            client_id,
+            client:users!tasks_client_id_fkey (
+              id,
+              name,
+              email,
+              avatar_url,
+              rating,
+              is_verified
+            )
+          ),
+          freelancer:users!applications_freelancer_id_fkey (
+            id,
+            name,
+            email,
+            avatar_url,
+            rating,
+            completed_tasks,
+            skills,
+            is_verified
+          )
+        `)
+        .eq("task.client_id", userId)
+        .order("created_at", { ascending: false })
+
+      if (sentError || receivedError) {
+        console.error("❌ Database error:", sentError || receivedError)
+        throw sentError || receivedError
       }
+
+      // Combine the results
+      const data = [...(sentApplications || []), ...(receivedApplications || [])]
+      // Sort by created_at descending
+      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
       console.log("✅ Fetched applications:", data?.length || 0)
 
