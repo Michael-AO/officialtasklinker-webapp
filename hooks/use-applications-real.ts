@@ -424,49 +424,56 @@ export function useApplicationsReal() {
       console.log("✅ Fetched applications:", data?.length || 0)
 
       // Transform the data to match our interface
-      const transformedData = (data || []).map((app: any) => ({
-        id: app.id,
-        task_id: app.task_id,
-        freelancer_id: app.freelancer_id,
-        proposed_budget: app.proposed_budget,
-        budget_type: app.budget_type || "fixed",
-        estimated_duration: app.estimated_duration || "",
-        cover_letter: app.cover_letter,
-        attachments: app.attachments || [],
-        status: app.status,
-        applied_date: app.created_at,
-        response_date: app.response_date,
-        feedback: app.feedback,
-        created_at: app.created_at,
-        updated_at: app.updated_at,
-        task: {
-          id: app.task?.id,
-          title: app.task?.title,
-          description: app.task?.description,
-          category: app.task?.category,
-          budget_min: app.task?.budget_min,
-          budget_max: app.task?.budget_max,
-          currency: app.task?.currency,
-          client: {
-            id: app.task?.client?.id,
-            name: app.task?.client?.name,
-            email: app.task?.client?.email,
-            avatar_url: app.task?.client?.avatar_url,
-            rating: app.task?.client?.rating || 0,
-            is_verified: app.task?.client?.is_verified || false,
+      const transformedData = (data || []).map((app: any) => {
+        // Ensure freelancer is always set for sent applications
+        let freelancer = app.freelancer;
+        if (!freelancer && app.freelancer_id === user.id) {
+          freelancer = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            avatar_url: user.avatar,
+            rating: user.rating || 0,
+            completed_tasks: user.completedTasks || 0,
+            skills: user.skills || [],
+            is_verified: user.isVerified || false,
+          };
+        }
+        return {
+          id: app.id,
+          task_id: app.task_id,
+          freelancer_id: app.freelancer_id,
+          proposed_budget: app.proposed_budget,
+          budget_type: app.budget_type || "fixed",
+          estimated_duration: app.estimated_duration || "",
+          cover_letter: app.cover_letter,
+          attachments: app.attachments || [],
+          status: app.status,
+          applied_date: app.created_at,
+          response_date: app.response_date,
+          feedback: app.feedback,
+          created_at: app.created_at,
+          updated_at: app.updated_at,
+          task: {
+            id: app.task?.id,
+            title: app.task?.title,
+            description: app.task?.description,
+            category: app.task?.category,
+            budget_min: app.task?.budget_min,
+            budget_max: app.task?.budget_max,
+            currency: app.task?.currency,
+            client: {
+              id: app.task?.client?.id,
+              name: app.task?.client?.name,
+              email: app.task?.client?.email,
+              avatar_url: app.task?.client?.avatar_url,
+              rating: app.task?.client?.rating || 0,
+              is_verified: app.task?.client?.is_verified || false,
+            },
           },
-        },
-        freelancer: app.freelancer ? {
-          id: app.freelancer.id,
-          name: app.freelancer.name,
-          email: app.freelancer.email,
-          avatar_url: app.freelancer.avatar_url,
-          rating: app.freelancer.rating || 0,
-          completed_tasks: app.freelancer.completed_tasks || 0,
-          skills: app.freelancer.skills || [],
-          is_verified: app.freelancer.is_verified || false,
-        } : undefined,
-      }))
+          freelancer,
+        };
+      })
 
       setIsUsingRealData(true)
       return transformedData

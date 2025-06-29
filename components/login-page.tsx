@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Zap } from "lucide-react"
@@ -23,14 +23,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const { login, user } = useAuth()
+  const { login } = useAuth()
   const router = useRouter()
-
-  useEffect(() => {
-    if (user) {
-      router.replace("/dashboard")
-    }
-  }, [user, router])
 
   const isFormValid = email.trim() !== "" && password.trim() !== ""
 
@@ -134,6 +128,7 @@ export default function LoginPage() {
       }
 
       await login(user)
+      router.push("/dashboard")
     } catch (err) {
       console.error("Login error:", err)
       setError(err instanceof Error ? err.message : "Invalid email or password. Please try again.")
