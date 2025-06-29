@@ -92,11 +92,49 @@ export default function SignupPage() {
       }
       console.log("User created successfully:", authData)
 
-      // 2. Generate OTP for our custom verification
+      // 2. Create user record in the users table
+      if (authData.user) {
+        console.log("Creating user record in users table...")
+        const fullName = `${formData.firstName} ${formData.lastName}`.trim()
+        
+        const { error: userCreateError } = await supabase.from("users").insert({
+          id: authData.user.id,
+          email: authData.user.email!,
+          name: fullName || authData.user.email!.split("@")[0],
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          user_type: formData.userType,
+          avatar_url: null,
+          is_verified: false,
+          phone: null,
+          bio: null,
+          location: null,
+          hourly_rate: null,
+          skills: [],
+          rating: 0,
+          completed_tasks: 0,
+          total_earned: 0,
+          join_date: authData.user.created_at || new Date().toISOString(),
+          last_active: new Date().toISOString(),
+          is_active: true,
+          created_at: authData.user.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+        if (userCreateError) {
+          console.error("❌ Error creating user record:", userCreateError)
+          // Don't fail the entire signup if user record creation fails
+          console.warn("User record creation failed, but auth user was created. User ID:", authData.user.id)
+        } else {
+          console.log("✅ User record created successfully")
+        }
+      }
+
+      // 3. Generate OTP for our custom verification
       const otp = Math.floor(100000 + Math.random() * 900000).toString()
       console.log("Generated OTP:", otp) // For development testing
 
-      // 3. Store OTP in database
+      // 4. Store OTP in database
       console.log("Storing OTP in database...")
       const { error: otpError } = await supabase.from("email_otps").insert({
         email: formData.email,
@@ -110,7 +148,7 @@ export default function SignupPage() {
       }
       console.log("OTP stored successfully")
 
-      // 4. Send custom OTP email via Brevo API
+      // 5. Send custom OTP email via Brevo API
       console.log("Sending custom OTP email...")
       const emailResponse = await fetch("/api/send-otp", {
         method: "POST",
@@ -135,7 +173,7 @@ export default function SignupPage() {
         console.log("Custom email sent successfully!")
       }
 
-      // 5. Show success message and redirect
+      // 6. Show success message and redirect
       setOtpSent(true)
       console.log("Redirecting to verify-email page...")
 
