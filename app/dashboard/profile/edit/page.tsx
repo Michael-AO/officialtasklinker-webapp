@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +19,8 @@ export default function EditProfilePage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [newSkill, setNewSkill] = useState("")
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [profileImagePreview, setProfileImagePreview] = useState<string>("")
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -28,6 +30,8 @@ export default function EditProfilePage() {
     hourlyRate: "45",
     skills: user?.skills || [],
   })
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +44,7 @@ export default function EditProfilePage() {
         skills: formData.skills,
         location: formData.location,
         hourlyRate: Number.parseInt(formData.hourlyRate),
+        avatar: profileImagePreview || user?.avatar,
       })
 
       router.push("/dashboard/profile")
@@ -48,6 +53,27 @@ export default function EditProfilePage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file size (max 5MB for profile images)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Profile image must be smaller than 5MB.")
+      return
+    }
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if (!allowedTypes.includes(file.type)) {
+      alert("Please choose a JPG, PNG, GIF, or WebP image.")
+      return
+    }
+
+    setProfileImage(file)
+    setProfileImagePreview(URL.createObjectURL(file))
   }
 
   const addSkill = () => {
@@ -91,7 +117,7 @@ export default function EditProfilePage() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                  <AvatarImage src={profileImagePreview || user.avatar || "/placeholder.svg"} alt={user.name} />
                   <AvatarFallback className="text-lg">
                     {user.name
                       .split(" ")
@@ -104,15 +130,27 @@ export default function EditProfilePage() {
                   size="sm"
                   variant="outline"
                   className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                  onClick={() => fileInputRef.current?.click()}
                 >
                   <Camera className="h-4 w-4" />
                 </Button>
               </div>
               <div className="space-y-2">
-                <Button type="button" variant="outline">
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   Upload New Photo
                 </Button>
-                <p className="text-sm text-muted-foreground">JPG, PNG or GIF. Max size 2MB.</p>
+                <p className="text-sm text-muted-foreground">JPG, PNG, GIF or WebP. Max size 5MB.</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageUpload}
+                  className="hidden"
+                />
               </div>
             </div>
           </CardContent>

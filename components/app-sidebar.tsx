@@ -14,9 +14,12 @@ import {
   Banknote,
   Shield,
   Scale,
+  UserCheck,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
+import { useState, useEffect } from "react"
 
 import {
   Sidebar,
@@ -93,6 +96,8 @@ const disabledItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { user } = useAuth()
+  const [profileCompletion, setProfileCompletion] = useState(0)
 
   const isActive = (url: string) => {
     if (url === "/dashboard") {
@@ -100,6 +105,25 @@ export function AppSidebar() {
     }
     return pathname.startsWith(url)
   }
+
+  // Calculate profile completion percentage
+  useEffect(() => {
+    if (user) {
+      let completed = 0
+      const total = 5 // Total sections to complete
+
+      if (user.bio && user.bio.trim()) completed++
+      if (user.skills && user.skills.length > 0) completed++
+      if (user.location && user.location.trim()) completed++
+      if (user.hourlyRate && user.hourlyRate > 0) completed++
+      if (user.portfolio && user.portfolio.length > 0) completed++
+      if (user.avatar) completed++ // Include profile picture
+
+      setProfileCompletion(Math.round((completed / total) * 100))
+    }
+  }, [user])
+
+  const isProfileIncomplete = profileCompletion < 100
 
   return (
     <Sidebar className="bg-black border-r border-gray-800">
@@ -171,6 +195,22 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
+              {/* Show "Complete your profile" link only when profile is incomplete */}
+              {isProfileIncomplete && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/dashboard/profile/edit")}
+                    className="text-yellow-300 hover:text-yellow-200 hover:bg-yellow-900/20 data-[active=true]:bg-yellow-900/30 data-[active=true]:text-yellow-200"
+                  >
+                    <Link href="/dashboard/profile/edit">
+                      <UserCheck className="h-4 w-4" />
+                      <span>Complete Profile ({profileCompletion}%)</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

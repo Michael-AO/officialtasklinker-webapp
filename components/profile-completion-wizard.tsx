@@ -12,11 +12,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Upload, X, FileText, ImageIcon, File, ExternalLink, Plus, Trash2, Eye, Shield } from "lucide-react"
+import { Upload, X, FileText, ImageIcon, File, ExternalLink, Plus, Trash2, Eye, Shield, Camera, CheckCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface PortfolioItem {
   id: string
@@ -44,6 +45,9 @@ export function ProfileCompletionWizard() {
   const [showPreview, setShowPreview] = useState(false)
   const [previewItem, setPreviewItem] = useState<PortfolioItem | null>(null)
   const [showVerification, setShowVerification] = useState(false)
+  const [isDismissed, setIsDismissed] = useState(false)
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [profileImagePreview, setProfileImagePreview] = useState<string>("")
 
   const [formData, setFormData] = useState({
     bio: user?.bio || "",
@@ -65,6 +69,7 @@ export function ProfileCompletionWizard() {
   )
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const profileImageInputRef = useRef<HTMLInputElement>(null)
 
   const addSkill = () => {
     if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
@@ -88,6 +93,7 @@ export function ProfileCompletionWizard() {
     if (!files) return
 
     Array.from(files).forEach((file) => {
+      // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         toast({
           title: "File too large",
@@ -97,6 +103,7 @@ export function ProfileCompletionWizard() {
         return
       }
 
+      // Validate file type
       const allowedTypes = [
         "image/jpeg",
         "image/png",
@@ -105,6 +112,7 @@ export function ProfileCompletionWizard() {
         "application/pdf",
         "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain",
       ]
 
       if (!allowedTypes.includes(file.type)) {
@@ -116,34 +124,53 @@ export function ProfileCompletionWizard() {
         return
       }
 
+      // Create portfolio item with file
       const newItem: PortfolioItem = {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
         title: file.name.split(".")[0],
         description: "",
-        file,
+        fileUrl: URL.createObjectURL(file),
         fileName: file.name,
         fileType: file.type,
+        file: file,
       }
 
       setPortfolioItems((prev) => [...prev, newItem])
     })
 
+    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
   }
 
-  const updatePortfolioItem = (id: string, updates: Partial<PortfolioItem>) => {
-    setPortfolioItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)))
-  }
+  const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
 
-  const removePortfolioItem = (id: string) => {
-    setPortfolioItems((prev) => prev.filter((item) => item.id !== id))
-  }
+    // Validate file size (max 5MB for profile images)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Profile image must be smaller than 5MB.",
+        variant: "destructive",
+      })
+      return
+    }
 
-  const previewFile = (item: PortfolioItem) => {
-    setPreviewItem(item)
-    setShowPreview(true)
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please choose a JPG, PNG, GIF, or WebP image.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setProfileImage(file)
+    setProfileImagePreview(URL.createObjectURL(file))
   }
 
   const getFileIcon = (fileType?: string) => {
@@ -166,14 +193,17 @@ export function ProfileCompletionWizard() {
   const completionStatus = calculateCompletionStatus()
 
   const calculateOverallProgress = () => {
-    const totalSections = 4 // Reduced from 5 since verification is disabled
+    const totalSections = 5 // Include profile picture now
     const completedSections = Object.values(completionStatus).filter(
       (status, index) => index < 4 && status, // Only count first 4 sections, skip verification
     ).length
-    return Math.round((completedSections / totalSections) * 100)
+    const hasProfilePicture = !!(profileImage || user?.avatar)
+    const totalCompleted = completedSections + (hasProfilePicture ? 1 : 0)
+    return Math.round((totalCompleted / totalSections) * 100)
   }
 
   const overallProgress = calculateOverallProgress()
+  const isProfileComplete = overallProgress === 100
 
   const handleSave = async () => {
     setIsLoading(true)
@@ -194,6 +224,7 @@ export function ProfileCompletionWizard() {
         location: formData.location,
         hourlyRate: formData.hourlyRate ? Number(formData.hourlyRate) : undefined,
         portfolio: portfolioForProfile,
+        avatar: profileImagePreview || user?.avatar,
       })
 
       toast({
@@ -210,6 +241,41 @@ export function ProfileCompletionWizard() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleClose = () => {
+    setIsDismissed(true)
+  }
+
+  // If profile is complete and dismissed, don't show anything
+  if (isProfileComplete && isDismissed) {
+    return null
+  }
+
+  // If profile is complete, show congratulations message
+  if (isProfileComplete) {
+    return (
+      <Card className="border-green-200 bg-green-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-green-100">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <CardTitle className="text-green-800">Congratulations! Profile is Complete</CardTitle>
+                <CardDescription className="text-green-700">
+                  Your profile is 100% complete and ready to attract clients
+                </CardDescription>
+              </div>
+            </div>
+            <Button variant="outline" onClick={handleClose} size="sm">
+              Close
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+    )
   }
 
   return (
@@ -232,6 +298,50 @@ export function ProfileCompletionWizard() {
 
         {isExpanded && (
           <CardContent className="space-y-6">
+            {/* Profile Picture Section */}
+            <section className="space-y-4">
+              <h3 className="text-xl font-semibold">Profile Picture</h3>
+              <p className="text-muted-foreground">Add a professional photo to build trust with clients</p>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage 
+                      src={profileImagePreview || user?.avatar || "/placeholder.svg"} 
+                      alt={user?.name || "Profile"} 
+                    />
+                    <AvatarFallback className="text-lg">
+                      {user?.name?.split(" ").map((n) => n[0]).join("") || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                    onClick={() => profileImageInputRef.current?.click()}
+                  >
+                    <Camera className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => profileImageInputRef.current?.click()}
+                  >
+                    Upload Photo
+                  </Button>
+                  <p className="text-sm text-muted-foreground">JPG, PNG, GIF or WebP. Max size 5MB.</p>
+                </div>
+                <input
+                  ref={profileImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageUpload}
+                  className="hidden"
+                />
+              </div>
+            </section>
+
             {/* Bio Section */}
             <section className="space-y-4">
               <h3 className="text-xl font-semibold">Professional Bio</h3>
@@ -295,11 +405,11 @@ export function ProfileCompletionWizard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="hourlyRate">Hourly Rate (USD)</Label>
+                  <Label htmlFor="hourlyRate">Hourly Rate (₦)</Label>
                   <Input
                     id="hourlyRate"
                     type="number"
-                    placeholder="50"
+                    placeholder="5000"
                     value={formData.hourlyRate}
                     onChange={(e) => setFormData((prev) => ({ ...prev, hourlyRate: e.target.value }))}
                   />
@@ -328,39 +438,55 @@ export function ProfileCompletionWizard() {
               </div>
 
               {portfolioItems.length > 0 && (
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Uploaded Items</h4>
                   {portfolioItems.map((item) => (
                     <div key={item.id} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
                           {getFileIcon(item.fileType)}
-                          <span className="font-medium">{item.fileName || item.title}</span>
+                          <div>
+                            <h5 className="font-medium">{item.title}</h5>
+                            <p className="text-sm text-muted-foreground">{item.fileName}</p>
+                          </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button type="button" variant="ghost" size="sm" onClick={() => previewFile(item)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setPreviewItem(item)
+                              setShowPreview(true)
+                            }}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => removePortfolioItem(item.id)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPortfolioItems((prev) => prev.filter((i) => i.id !== item.id))}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input
-                          placeholder="Project title..."
-                          value={item.title}
-                          onChange={(e) => updatePortfolioItem(item.id, { title: e.target.value })}
-                        />
-                        <Input
-                          placeholder="Project URL (optional)"
-                          value={item.url || ""}
-                          onChange={(e) => updatePortfolioItem(item.id, { url: e.target.value })}
-                        />
-                      </div>
+                      <Input
+                        placeholder="Add a title for this work sample..."
+                        value={item.title}
+                        onChange={(e) =>
+                          setPortfolioItems((prev) =>
+                            prev.map((i) => (i.id === item.id ? { ...i, title: e.target.value } : i)),
+                          )
+                        }
+                      />
                       <Textarea
-                        placeholder="Describe this project..."
+                        placeholder="Describe this work sample..."
                         value={item.description}
-                        onChange={(e) => updatePortfolioItem(item.id, { description: e.target.value })}
+                        onChange={(e) =>
+                          setPortfolioItems((prev) =>
+                            prev.map((i) => (i.id === item.id ? { ...i, description: e.target.value } : i)),
+                          )
+                        }
                         rows={2}
                       />
                     </div>
@@ -423,50 +549,32 @@ export function ProfileCompletionWizard() {
 
       {/* File Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{previewItem?.title}</DialogTitle>
             <DialogDescription>{previewItem?.description}</DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-auto">
-            {previewItem?.file && previewItem.fileType?.startsWith("image/") && (
-              <div className="flex justify-center">
-                <img
-                  src={URL.createObjectURL(previewItem.file) || "/placeholder.svg"}
-                  alt={previewItem.title}
-                  className="max-w-full max-h-96 object-contain rounded-lg"
-                />
-              </div>
-            )}
-            {previewItem?.fileUrl && (
-              <div className="flex justify-center">
-                <img
-                  src={previewItem.fileUrl || "/placeholder.svg"}
-                  alt={previewItem.title}
-                  className="max-w-full max-h-96 object-contain rounded-lg"
-                />
-              </div>
-            )}
-            {previewItem?.file && !previewItem.fileType?.startsWith("image/") && (
-              <div className="text-center py-8">
-                <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-lg font-medium">{previewItem.fileName}</p>
-                <p className="text-sm text-muted-foreground">
-                  {previewItem.fileType} • {(previewItem.file.size / 1024 / 1024).toFixed(1)}MB
-                </p>
+          <div className="space-y-4">
+            {previewItem?.fileType?.startsWith("image/") ? (
+              <img
+                src={previewItem.fileUrl || "/placeholder.svg"}
+                alt={previewItem.title}
+                className="w-full h-64 object-cover rounded-lg"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-64 border rounded-lg">
+                <div className="text-center">
+                  {getFileIcon(previewItem?.fileType)}
+                  <p className="mt-2 font-medium">{previewItem?.fileName}</p>
+                  <p className="text-sm text-muted-foreground">Preview not available</p>
+                </div>
               </div>
             )}
           </div>
           <DialogFooter>
-            {previewItem?.url && (
-              <Button variant="outline" asChild>
-                <a href={previewItem.url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  View Project
-                </a>
-              </Button>
-            )}
-            <Button onClick={() => setShowPreview(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setShowPreview(false)}>
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

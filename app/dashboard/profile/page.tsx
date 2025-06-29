@@ -280,8 +280,15 @@ export default function ProfilePage() {
                   <AvatarImage src={profile.avatar_url || "/placeholder.svg"} alt={profile.name} />
                   <AvatarFallback className="text-lg">{getInitials(profile.name)}</AvatarFallback>
                 </Avatar>
-                <Button size="sm" variant="outline" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0">
-                  <Camera className="h-4 w-4" />
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                  asChild
+                >
+                  <Link href="/dashboard/profile/edit">
+                    <Camera className="h-4 w-4" />
+                  </Link>
                 </Button>
               </div>
               <div className="mt-4 text-center md:text-left">
