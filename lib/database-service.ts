@@ -255,7 +255,7 @@ export class DashboardService {
           updated_at,
           response_date,
           feedback,
-          freelancer:users!applications_freelancer_id_fkey (
+          freelancer:users (
             id,
             name,
             email,
@@ -274,7 +274,7 @@ export class DashboardService {
             budget_max,
             currency,
             client_id,
-            client:users!tasks_client_id_fkey (
+            client:users (
               id,
               name,
               email,

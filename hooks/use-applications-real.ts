@@ -334,7 +334,7 @@ export function useApplicationsReal() {
             budget_max,
             currency,
             client_id,
-            client:users!tasks_client_id_fkey (
+            client:users (
               id,
               name,
               email,
@@ -343,7 +343,7 @@ export function useApplicationsReal() {
               is_verified
             )
           ),
-          freelancer:users!applications_freelancer_id_fkey (
+          freelancer:users (
             id,
             name,
             email,
@@ -381,7 +381,7 @@ export function useApplicationsReal() {
             budget_max,
             currency,
             client_id,
-            client:users!tasks_client_id_fkey (
+            client:users (
               id,
               name,
               email,
@@ -390,7 +390,7 @@ export function useApplicationsReal() {
               is_verified
             )
           ),
-          freelancer:users!applications_freelancer_id_fkey (
+          freelancer:users (
             id,
             name,
             email,

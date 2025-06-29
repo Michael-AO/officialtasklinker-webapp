@@ -20,11 +20,11 @@ export async function GET(request: NextRequest) {
           title,
           client_id
         ),
-        freelancer:users!applications_freelancer_id_fkey (
+        freelancer:users (
           id,
           name
         ),
-        client:users!tasks_client_id_fkey (
+        client:users (
           id,
           name
         )
