@@ -224,7 +224,7 @@ export default function MyTasksPage() {
             Refresh
           </Button>
           <Button asChild>
-            <Link href="/dashboard/tasks/create">
+            <Link href="/dashboard/tasks/new">
               <Plus className="mr-2 h-4 w-4" />
               Post New Task
             </Link>
@@ -458,7 +458,7 @@ export default function MyTasksPage() {
                   : "You haven't posted any tasks yet"}
               </p>
               <Button asChild>
-                <Link href="/dashboard/tasks/create">
+                <Link href="/dashboard/tasks/new">
                   <Plus className="mr-2 h-4 w-4" />
                   Post Your First Task
                 </Link>
