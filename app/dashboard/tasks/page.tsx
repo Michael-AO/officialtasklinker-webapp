@@ -392,7 +392,11 @@ export default function MyTasksPage() {
                     <DropdownMenuItem asChild>
                       <Link href={`/dashboard/tasks/${task.id}/applications`}>View Applications</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                    {task.applications_count === 0 && (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/tasks/${task.id}/edit`}>Edit Task</Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem className="text-red-600">Delete Task</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

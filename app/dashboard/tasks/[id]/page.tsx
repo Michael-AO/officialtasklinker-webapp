@@ -529,12 +529,14 @@ export default function TaskDetailPage() {
                     Preview Task
                   </Link>
                 </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link href={`/dashboard/tasks/${taskId}/edit`}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Edit Task
-                  </Link>
-                </Button>
+                {task.applications_count === 0 && (
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link href={`/dashboard/tasks/${taskId}/edit`}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Edit Task
+                    </Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>
