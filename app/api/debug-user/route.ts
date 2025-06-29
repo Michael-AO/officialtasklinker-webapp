@@ -57,9 +57,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`Debugging user ID: ${userId}`)
 
-    // Get user profile
+    // Get user profile from users table (not profiles)
     const { data: user, error: userError } = await supabase
-      .from("profiles")
+      .from("users")
       .select("*")
       .eq("id", userId)
       .single()
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
       user: {
         id: user.id,
         email: user.email,
-        full_name: user.full_name,
+        name: user.name,
         user_type: user.user_type,
         created_at: user.created_at
       },
