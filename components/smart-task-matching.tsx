@@ -103,7 +103,7 @@ export function SmartTaskMatching() {
 
   const getMatchScoreColor = (score: number) => {
     if (score >= 90) return "text-green-600"
-    if (score >= 80) return "text-blue-600"
+    if (score >= 80) return "text-green-600"
     if (score >= 70) return "text-yellow-600"
     return "text-gray-600"
   }
@@ -178,7 +178,7 @@ export function SmartTaskMatching() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
+              <Sparkles className="h-5 w-5 text-green-600" />
               Smart Matches for You
             </CardTitle>
             <CardDescription>AI-powered task recommendations based on your skills and preferences</CardDescription>
@@ -191,7 +191,7 @@ export function SmartTaskMatching() {
       </CardHeader>
       <CardContent className="space-y-4">
         {matches.slice(0, 2).map((match) => (
-          <Card key={match.id} className="border-l-4 border-l-blue-500">
+          <Card key={match.id} className="border-l-4 border-l-green-500">
             <CardContent className="pt-4">
               <div className="space-y-3">
                 {/* Header */}
@@ -271,7 +271,6 @@ export function SmartTaskMatching() {
                         <span className="text-xs text-muted-foreground">{match.clientRating.toFixed(1)}</span>
                       </div>
                     </div>
-                    <Badge className={getUrgencyColor(match.urgency)}>{match.urgency} priority</Badge>
                     <div className="text-xs text-muted-foreground">{match.applications_count} applications</div>
                   </div>
 
@@ -281,7 +280,7 @@ export function SmartTaskMatching() {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-black hover:bg-gray-800"
                       onClick={() => handleApplyNow(match.id)}
                     >
                       Apply Now
