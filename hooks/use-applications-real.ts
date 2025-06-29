@@ -660,9 +660,9 @@ export function useApplicationsReal() {
     fetchApplications()
   }, [fetchApplications])
 
-  // Calculate stats - only count applications that belong to the current user
+  // Calculate stats - only count applications that belong to the current user as freelancer
   const userApplications = applications.filter(app => 
-    app.freelancer?.id === user?.id || app.task?.client?.id === user?.id
+    app.freelancer?.id === user?.id
   )
   
   console.log("🔍 User applications filtering:", {
