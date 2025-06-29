@@ -690,6 +690,17 @@ export function useApplicationsReal() {
         : 0,
   }
 
+  console.log("📊 Stats calculation:", {
+    total: stats.total,
+    pending: stats.pending,
+    accepted: stats.accepted,
+    rejected: stats.rejected,
+    interviewing: stats.interviewing,
+    withdrawn: stats.withdrawn,
+    successRate: stats.successRate,
+    totalCalculated: stats.pending + stats.accepted + stats.rejected + stats.interviewing + stats.withdrawn
+  })
+
   return {
     applications: userApplications, // Return only user's applications
     loading,

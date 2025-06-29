@@ -47,7 +47,7 @@ const statusIcons = {
 }
 
 export default function ApplicationsPage() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const { applications, loading, error, stats, isUsingRealData, withdrawApplication, refetch } = useApplicationsReal()
 
   const [searchTerm, setSearchTerm] = useState("")
@@ -63,31 +63,36 @@ export default function ApplicationsPage() {
     isUsingRealData,
     loading,
     error,
-    stats
+    stats,
+    authLoading
   })
 
   // Test auth context
   useEffect(() => {
-    console.log("🔍 Auth context test - user:", user)
+    console.log("🔍 Auth context test - user:", user, "authLoading:", authLoading)
     if (user) {
       console.log("✅ User found in auth context:", user.id, user.name, user.userType)
+    } else if (!authLoading) {
+      console.log("❌ No user in auth context and auth is not loading")
     } else {
-      console.log("❌ No user in auth context")
+      console.log("⏳ Auth context is still loading...")
     }
-  }, [user])
+  }, [user, authLoading])
 
   // Manual trigger when user becomes available
   useEffect(() => {
-    console.log("🔄 useEffect triggered - user:", user?.id, "applications:", applications.length)
-    if (user?.id && applications.length === 0) {
+    console.log("🔄 useEffect triggered - user:", user?.id, "applications:", applications.length, "authLoading:", authLoading)
+    if (user?.id && applications.length === 0 && !authLoading) {
       console.log("🔄 User available but no applications, triggering fetch")
       refetch()
-    } else if (!user?.id) {
-      console.log("❌ No user available in useEffect")
+    } else if (!user?.id && !authLoading) {
+      console.log("❌ No user available in useEffect and auth is not loading")
     } else if (applications.length > 0) {
       console.log("✅ User and applications available")
+    } else if (authLoading) {
+      console.log("⏳ Waiting for auth to load...")
     }
-  }, [user?.id, applications.length, refetch])
+  }, [user?.id, applications.length, refetch, authLoading])
 
   const handleRefresh = () => {
     console.log("🔄 Manual refresh triggered")
@@ -123,13 +128,13 @@ export default function ApplicationsPage() {
     }
   }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <Clock className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Loading applications...</p>
+            <p>{authLoading ? "Loading user data..." : "Loading applications..."}</p>
           </div>
         </div>
       </div>
