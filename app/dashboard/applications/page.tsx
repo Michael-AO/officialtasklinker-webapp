@@ -54,19 +54,16 @@ export default function ApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
 
-  // Only show applications the user has sent (applied to)
-  const sentApplications = applications.filter(app => app.freelancer?.id === user?.id)
-  
   // Debug logging
   console.log("🔍 Applications Page Debug:", {
     userId: user?.id,
     applicationsCount: applications.length,
-    sentApplicationsCount: sentApplications.length,
     firstApplication: applications[0],
     userType: user?.userType,
     isUsingRealData,
     loading,
-    error
+    error,
+    stats
   })
 
   // Test auth context
@@ -87,12 +84,6 @@ export default function ApplicationsPage() {
       refetch()
     } else if (!user?.id) {
       console.log("❌ No user available in useEffect")
-      // Fallback: try to fetch after a delay in case auth is still initializing
-      const timer = setTimeout(() => {
-        console.log("⏰ Fallback: trying to fetch applications after delay")
-        refetch()
-      }, 2000)
-      return () => clearTimeout(timer)
     } else if (applications.length > 0) {
       console.log("✅ User and applications available")
     }
@@ -103,7 +94,7 @@ export default function ApplicationsPage() {
     refetch()
   }
 
-  const filteredApplications = sentApplications.filter((app) => {
+  const filteredApplications = applications.filter((app) => {
     const matchesSearch = app.task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.task.client.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || app.status === statusFilter

@@ -660,30 +660,38 @@ export function useApplicationsReal() {
     fetchApplications()
   }, [fetchApplications])
 
-  // Calculate stats
+  // Calculate stats - only count applications that belong to the current user
+  const userApplications = applications.filter(app => 
+    app.freelancer?.id === user?.id || app.task?.client?.id === user?.id
+  )
+  
+  console.log("🔍 User applications filtering:", {
+    totalApplications: applications.length,
+    userApplicationsCount: userApplications.length,
+    userId: user?.id,
+    userApplications: userApplications.map(app => ({
+      id: app.id,
+      freelancerId: app.freelancer?.id,
+      clientId: app.task?.client?.id,
+      status: app.status
+    }))
+  })
+  
   const stats = {
-    total: applications.length,
-    pending: applications.filter((app) => app.status === "pending").length,
-    accepted: applications.filter((app) => app.status === "accepted").length,
-    rejected: applications.filter((app) => app.status === "rejected").length,
-    interviewing: applications.filter((app) => app.status === "interviewing").length,
-    withdrawn: applications.filter((app) => app.status === "withdrawn").length,
+    total: userApplications.length,
+    pending: userApplications.filter((app) => app.status === "pending").length,
+    accepted: userApplications.filter((app) => app.status === "accepted").length,
+    rejected: userApplications.filter((app) => app.status === "rejected").length,
+    interviewing: userApplications.filter((app) => app.status === "interviewing").length,
+    withdrawn: userApplications.filter((app) => app.status === "withdrawn").length,
     successRate:
-      applications.length > 0
-        ? Math.round((applications.filter((app) => app.status === "accepted").length / applications.length) * 100)
+      userApplications.length > 0
+        ? Math.round((userApplications.filter((app) => app.status === "accepted").length / userApplications.length) * 100)
         : 0,
   }
 
-  useEffect(() => {
-    // Poll every 10 seconds for new data
-    const interval = setInterval(() => {
-      fetchApplications();
-    }, 10000); // 10 seconds
-    return () => clearInterval(interval);
-  }, [fetchApplications]);
-
   return {
-    applications,
+    applications: userApplications, // Return only user's applications
     loading,
     error,
     stats,
