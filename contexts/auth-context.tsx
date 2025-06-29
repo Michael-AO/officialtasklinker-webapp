@@ -69,69 +69,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (session?.user) {
             console.log("👤 User found in session:", session.user.id)
             
-            // User is authenticated, get their profile
-            const profile = await UserProfileService.getProfile(session.user.id)
-            
-            if (profile) {
-              console.log("✅ User profile loaded successfully")
-              
-              // Create user data first without portfolio
-              const userData: User = {
-                id: profile.id,
-                email: profile.email,
-                name: profile.name,
-                userType: profile.user_type as "freelancer" | "client",
-                avatar: profile.avatar_url || undefined,
-                isVerified: profile.is_verified,
-                joinDate: profile.join_date,
-                completedTasks: profile.completed_tasks,
-                rating: profile.rating,
-                skills: profile.skills || [],
-                bio: profile.bio || "",
-                location: profile.location || undefined,
-                hourlyRate: profile.hourly_rate || undefined,
-                portfolio: [], // Start with empty portfolio
-              }
-              
-              // Set user immediately to prevent loading state
-              setUser(userData)
-              
-              // Load portfolio data asynchronously (non-blocking) with its own timeout
-              setTimeout(async () => {
-                try {
-                  console.log("📁 Loading portfolio data...")
-                  const { data: portfolio, error: portfolioError } = await supabase
-                    .from("portfolio_items")
-                    .select("*")
-                    .eq("user_id", session.user.id)
-                    .order("is_featured", { ascending: false })
-                    .order("created_at", { ascending: false })
-
-                  if (!portfolioError && portfolio) {
-                    const portfolioData = portfolio.map((item: any) => ({
-                      id: item.id,
-                      title: item.title,
-                      description: item.description,
-                      image: item.image_url || item.file_url || "/placeholder.svg",
-                      url: item.project_url,
-                    }))
-                    console.log("📁 Portfolio loaded:", portfolioData.length, "items")
-                    
-                    // Update user with portfolio data
-                    setUser(prevUser => prevUser ? {
-                      ...prevUser,
-                      portfolio: portfolioData
-                    } : null)
-                  } else if (portfolioError && portfolioError.code !== "42P01") {
-                    console.warn("⚠️ Portfolio load warning:", portfolioError.message)
-                  }
-                } catch (portfolioError) {
-                  console.warn("⚠️ Portfolio load error:", portfolioError)
-                }
-              }, 100) // Small delay to ensure user is set first
-            } else {
-              console.log("⚠️ No profile found for user, but session exists")
+            // Set basic user data immediately from session
+            const basicUserData: User = {
+              id: session.user.id,
+              email: session.user.email || "",
+              name: session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+              userType: (session.user.user_metadata?.user_type as "freelancer" | "client") || "client",
+              avatar: session.user.user_metadata?.avatar_url || undefined,
+              isVerified: session.user.email_confirmed_at ? true : false,
+              joinDate: session.user.created_at || new Date().toISOString(),
+              completedTasks: 0,
+              rating: 0,
+              skills: [],
+              bio: "",
+              portfolio: [],
             }
+            
+            // Set user immediately to prevent loading state
+            setUser(basicUserData)
+            
+            // Load full profile data asynchronously (non-blocking)
+            setTimeout(async () => {
+              try {
+                console.log("📋 Loading full profile data...")
+                const profile = await UserProfileService.getProfile(session.user.id)
+                
+                if (profile) {
+                  console.log("✅ Full profile loaded successfully")
+                  
+                  // Update user with full profile data
+                  setUser(prevUser => prevUser ? {
+                    ...prevUser,
+                    name: profile.name,
+                    avatar: profile.avatar_url || prevUser.avatar,
+                    isVerified: profile.is_verified,
+                    joinDate: profile.join_date,
+                    completedTasks: profile.completed_tasks,
+                    rating: profile.rating,
+                    skills: profile.skills || [],
+                    bio: profile.bio || "",
+                    location: profile.location || undefined,
+                    hourlyRate: profile.hourly_rate || undefined,
+                  } : null)
+                } else {
+                  console.log("⚠️ No profile found in database, using session data")
+                }
+              } catch (profileError) {
+                console.warn("⚠️ Profile load error:", profileError)
+                // Keep using session data if profile loading fails
+              }
+            }, 100) // Small delay to ensure basic user is set first
+            
+            // Load portfolio data asynchronously (non-blocking) with its own timeout
+            setTimeout(async () => {
+              try {
+                console.log("📁 Loading portfolio data...")
+                const { data: portfolio, error: portfolioError } = await supabase
+                  .from("portfolio_items")
+                  .select("*")
+                  .eq("user_id", session.user.id)
+                  .order("is_featured", { ascending: false })
+                  .order("created_at", { ascending: false })
+
+                if (!portfolioError && portfolio) {
+                  const portfolioData = portfolio.map((item: any) => ({
+                    id: item.id,
+                    title: item.title,
+                    description: item.description,
+                    image: item.image_url || item.file_url || "/placeholder.svg",
+                    url: item.project_url,
+                  }))
+                  console.log("📁 Portfolio loaded:", portfolioData.length, "items")
+                  
+                  // Update user with portfolio data
+                  setUser(prevUser => prevUser ? {
+                    ...prevUser,
+                    portfolio: portfolioData
+                  } : null)
+                } else if (portfolioError && portfolioError.code !== "42P01") {
+                  console.warn("⚠️ Portfolio load warning:", portfolioError.message)
+                }
+              } catch (portfolioError) {
+                console.warn("⚠️ Portfolio load error:", portfolioError)
+              }
+            }, 200) // Slightly longer delay for portfolio
           } else {
             console.log("ℹ️ No active session found")
           }
@@ -186,32 +207,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("🔄 Auth state changed:", event, session?.user?.id)
         
         if (event === 'SIGNED_IN' && session?.user) {
-          // User signed in, get their profile
-          const profile = await UserProfileService.getProfile(session.user.id)
+          // User signed in, set basic data immediately
+          const basicUserData: User = {
+            id: session.user.id,
+            email: session.user.email || "",
+            name: session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+            userType: (session.user.user_metadata?.user_type as "freelancer" | "client") || "client",
+            avatar: session.user.user_metadata?.avatar_url || undefined,
+            isVerified: session.user.email_confirmed_at ? true : false,
+            joinDate: session.user.created_at || new Date().toISOString(),
+            completedTasks: 0,
+            rating: 0,
+            skills: [],
+            bio: "",
+            portfolio: [],
+          }
           
-          if (profile) {
-            // Create user data first without portfolio
-            const userData: User = {
-              id: profile.id,
-              email: profile.email,
-              name: profile.name,
-              userType: profile.user_type as "freelancer" | "client",
-              avatar: profile.avatar_url || undefined,
-              isVerified: profile.is_verified,
-              joinDate: profile.join_date,
-              completedTasks: profile.completed_tasks,
-              rating: profile.rating,
-              skills: profile.skills || [],
-              bio: profile.bio || "",
-              location: profile.location || undefined,
-              hourlyRate: profile.hourly_rate || undefined,
-              portfolio: [], // Start with empty portfolio
+          // Set user immediately
+          setUser(basicUserData)
+          
+          // Load full profile data asynchronously (non-blocking)
+          setTimeout(async () => {
+            try {
+              console.log("📋 Loading full profile data on sign in...")
+              const profile = await UserProfileService.getProfile(session.user.id)
+              
+              if (profile) {
+                console.log("✅ Full profile loaded on sign in")
+                
+                // Update user with full profile data
+                setUser(prevUser => prevUser ? {
+                  ...prevUser,
+                  name: profile.name,
+                  avatar: profile.avatar_url || prevUser.avatar,
+                  isVerified: profile.is_verified,
+                  joinDate: profile.join_date,
+                  completedTasks: profile.completed_tasks,
+                  rating: profile.rating,
+                  skills: profile.skills || [],
+                  bio: profile.bio || "",
+                  location: profile.location || undefined,
+                  hourlyRate: profile.hourly_rate || undefined,
+                } : null)
+              }
+            } catch (profileError) {
+              console.warn("⚠️ Profile load error on sign in:", profileError)
             }
-            
-            // Set user immediately
-            setUser(userData)
-            
-            // Load portfolio data asynchronously (non-blocking)
+          }, 100)
+          
+          // Load portfolio data asynchronously (non-blocking)
+          setTimeout(async () => {
             try {
               const { data: portfolio, error: portfolioError } = await supabase
                 .from("portfolio_items")
@@ -239,7 +284,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch (portfolioError) {
               console.warn("⚠️ Portfolio load error on sign in:", portfolioError)
             }
-          }
+          }, 200)
         } else if (event === 'SIGNED_OUT') {
           // User signed out
           console.log("👋 User signed out")
