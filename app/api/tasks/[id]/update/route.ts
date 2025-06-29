@@ -17,23 +17,21 @@ export async function PUT(
 
     // Validate required fields
     if (!taskData.title || !taskData.description || !taskData.category) {
-      return NextResponse.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: "Title, description, and category are required" }, { status: 400 })
     }
 
     // Validate budget
     if (!taskData.budget_min || !taskData.budget_max) {
       return NextResponse.json(
-        { success: false, error: "Budget range is required" },
+        { success: false, error: "Budget amount is required" },
         { status: 400 }
       )
     }
 
-    if (Number(taskData.budget_min) > Number(taskData.budget_max)) {
+    // For fixed price, min and max should be the same
+    if (Number(taskData.budget_min) !== Number(taskData.budget_max)) {
       return NextResponse.json(
-        { success: false, error: "Minimum budget cannot be greater than maximum budget" },
+        { success: false, error: "For fixed price tasks, budget min and max must be the same" },
         { status: 400 }
       )
     }

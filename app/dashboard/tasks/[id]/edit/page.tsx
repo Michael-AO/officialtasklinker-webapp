@@ -72,8 +72,7 @@ export default function EditTaskPage() {
     category: "",
     budget: {
       type: "fixed" as "fixed" | "hourly",
-      min: "",
-      max: "",
+      amount: "",
       currency: "NGN",
     },
     duration: "",
@@ -145,8 +144,7 @@ export default function EditTaskPage() {
           category: task.category || "",
           budget: {
             type: task.budget_type || "fixed",
-            min: task.budget_min?.toString() || "",
-            max: task.budget_max?.toString() || "",
+            amount: task.budget_min?.toString() || "",
             currency: task.currency || "NGN",
           },
           duration: task.duration || "",
@@ -209,8 +207,8 @@ export default function EditTaskPage() {
         description: taskData.description,
         category: taskData.category,
         budget_type: taskData.budget.type,
-        budget_min: Number.parseFloat(taskData.budget.min),
-        budget_max: Number.parseFloat(taskData.budget.max),
+        budget_min: Number.parseFloat(taskData.budget.amount),
+        budget_max: Number.parseFloat(taskData.budget.amount),
         currency: taskData.budget.currency,
         duration: taskData.duration,
         location: taskData.location,
@@ -336,7 +334,7 @@ export default function EditTaskPage() {
       case 1:
         return taskData.title.trim() && taskData.description.trim() && taskData.category
       case 2:
-        return taskData.budget.min && taskData.budget.max && taskData.duration
+        return taskData.budget.amount && taskData.duration
       case 3:
         return true
       case 4:
@@ -384,7 +382,7 @@ export default function EditTaskPage() {
               <div className="flex justify-between">
                 <span>Budget Range:</span>
                 <span className="font-medium">
-                  ₦{taskData.budget.min} - ₦{taskData.budget.max}
+                  ₦{taskData.budget.amount}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -608,29 +606,16 @@ export default function EditTaskPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="budget-min">Minimum Budget (₦) *</Label>
-                  <Input
-                    id="budget-min"
-                    type="number"
-                    value={taskData.budget.min}
-                    onChange={(e) => setTaskData((prev) => ({ ...prev, budget: { ...prev.budget, min: e.target.value } }))}
-                    placeholder="0"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="budget-max">Maximum Budget (₦) *</Label>
-                  <Input
-                    id="budget-max"
-                    type="number"
-                    value={taskData.budget.max}
-                    onChange={(e) => setTaskData((prev) => ({ ...prev, budget: { ...prev.budget, max: e.target.value } }))}
-                    placeholder="0"
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="budget-amount">Fixed Price (₦) *</Label>
+                <Input
+                  id="budget-amount"
+                  type="number"
+                  value={taskData.budget.amount}
+                  onChange={(e) => setTaskData((prev) => ({ ...prev, budget: { ...prev.budget, amount: e.target.value } }))}
+                  placeholder="0"
+                  required
+                />
               </div>
 
               <div className="space-y-2">
@@ -840,7 +825,7 @@ export default function EditTaskPage() {
                       <span className="font-medium">Type:</span> {taskData.budget.type}
                     </div>
                     <div>
-                      <span className="font-medium">Range:</span> ₦{taskData.budget.min} - ₦{taskData.budget.max}
+                      <span className="font-medium">Amount:</span> ₦{taskData.budget.amount}
                     </div>
                     <div>
                       <span className="font-medium">Currency:</span> {taskData.budget.currency}

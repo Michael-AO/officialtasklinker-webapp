@@ -31,8 +31,7 @@ export default function NewTaskPage() {
     category: "",
     budget: {
       type: "fixed" as "fixed" | "hourly",
-      min: "",
-      max: "",
+      amount: "",
       currency: "NGN",
     },
     duration: "",
@@ -137,8 +136,7 @@ export default function NewTaskPage() {
         description: taskData.description,
         category: taskData.category,
         budget_type: taskData.budget.type,
-        budget_min: Number.parseFloat(taskData.budget.min),
-        budget_max: Number.parseFloat(taskData.budget.max),
+        budget_amount: taskData.budget.amount,
         currency: taskData.budget.currency,
         duration: taskData.duration,
         location: taskData.location,
@@ -267,7 +265,7 @@ export default function NewTaskPage() {
       case 1:
         return taskData.title.trim() && taskData.description.trim() && taskData.category
       case 2:
-        return taskData.budget.min && taskData.budget.max && taskData.duration
+        return taskData.budget.amount && taskData.duration
       case 3:
         return true
       case 4:
@@ -319,7 +317,7 @@ export default function NewTaskPage() {
               <div className="flex justify-between">
                 <span>Budget Range:</span>
                 <span className="font-medium">
-                  ₦{taskData.budget.min} - ₦{taskData.budget.max}
+                  ₦{taskData.budget.amount}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -557,43 +555,23 @@ export default function NewTaskPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="minBudget">
-                    {taskData.budget.type === "fixed" ? "Minimum Budget" : "Minimum Hourly Rate"} (₦)
-                  </Label>
-                  <Input
-                    id="minBudget"
-                    type="number"
-                    value={taskData.budget.min}
-                    onChange={(e) =>
-                      setTaskData((prev) => ({
-                        ...prev,
-                        budget: { ...prev.budget, min: e.target.value },
-                      }))
-                    }
-                    placeholder="50000"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maxBudget">
-                    {taskData.budget.type === "fixed" ? "Maximum Budget" : "Maximum Hourly Rate"} (₦)
-                  </Label>
-                  <Input
-                    id="maxBudget"
-                    type="number"
-                    value={taskData.budget.max}
-                    onChange={(e) =>
-                      setTaskData((prev) => ({
-                        ...prev,
-                        budget: { ...prev.budget, max: e.target.value },
-                      }))
-                    }
-                    placeholder="100000"
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">
+                  {taskData.budget.type === "fixed" ? "Fixed Price" : "Hourly Rate"} (₦)
+                </Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  value={taskData.budget.amount}
+                  onChange={(e) =>
+                    setTaskData((prev) => ({
+                      ...prev,
+                      budget: { ...prev.budget, amount: e.target.value },
+                    }))
+                  }
+                  placeholder="50000"
+                  required
+                />
               </div>
 
               <div className="space-y-2">
@@ -747,7 +725,7 @@ export default function NewTaskPage() {
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Budget Range</Label>
                   <p className="font-medium">
-                    ₦{taskData.budget.min} - ₦{taskData.budget.max}
+                    ₦{taskData.budget.amount}
                   </p>
                 </div>
                 <div>

@@ -151,10 +151,7 @@ export default function MyTasksPage() {
     inProgressTasks: tasks.filter((task) => task.status === "in_progress").length,
     completedTasks: tasks.filter((task) => task.status === "completed").length,
     totalApplications: tasks.reduce((sum, task) => sum + task.applications_count, 0),
-    avgBudget:
-      tasks.length > 0
-        ? Math.round(tasks.reduce((sum, task) => sum + (task.budget_min + task.budget_max) / 2, 0) / tasks.length)
-        : 0,
+    totalBudget: tasks.reduce((sum, task) => sum + task.budget_max, 0),
   }
 
   if (!user) {
@@ -266,12 +263,12 @@ export default function MyTasksPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Budget</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
             <NairaIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNaira(stats.avgBudget)}</div>
-            <p className="text-xs text-muted-foreground">Per task</p>
+            <div className="text-2xl font-bold">{formatNaira(stats.totalBudget)}</div>
+            <p className="text-xs text-muted-foreground">Total budget</p>
           </CardContent>
         </Card>
       </div>
@@ -361,7 +358,7 @@ export default function MyTasksPage() {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <NairaIcon className="h-4 w-4" />
-                      {formatNaira(task.budget_min)} - {formatNaira(task.budget_max)}
+                      {formatNaira(task.budget_max)}
                     </div>
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />

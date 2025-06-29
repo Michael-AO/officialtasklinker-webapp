@@ -166,14 +166,13 @@ export default function BrowseTasksPage() {
         })
       }
     } catch (error) {
-      console.error("=== FRONTEND: Error fetching tasks ===", error)
+      console.error("Error fetching tasks:", error)
       toast({
-        title: "Database Error",
-        description: "Failed to fetch tasks from database. Check console for details.",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to fetch tasks. Please try again.",
         variant: "destructive",
       })
       setTasks([])
-      setDebugInfo({ source: "ERROR", error: error.message })
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -203,19 +202,12 @@ export default function BrowseTasksPage() {
     }
   }
 
-  // Calculate stats from real tasks only
+  // Calculate stats
   const stats = {
     totalTasks: tasks.length,
-    avgBudget:
-      tasks.length > 0
-        ? Math.round(tasks.reduce((sum, task) => sum + (task.budget_min + task.budget_max) / 2, 0) / tasks.length)
-        : 0,
-    avgApplications:
-      tasks.length > 0 ? Math.round(tasks.reduce((sum, task) => sum + task.applications_count, 0) / tasks.length) : 0,
-    successRate:
-      tasks.length > 0
-        ? Math.round((tasks.filter((task) => task.applications_count > 0).length / tasks.length) * 100)
-        : 0,
+    totalBudget: tasks.reduce((sum, task) => sum + task.budget_max, 0),
+    avgBudget: tasks.length > 0 ? Math.round(tasks.reduce((sum, task) => sum + task.budget_max, 0) / tasks.length) : 0,
+    totalApplications: tasks.reduce((sum, task) => sum + task.applications_count, 0),
   }
 
   if (loading) {
@@ -332,20 +324,18 @@ export default function BrowseTasksPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.avgApplications}</div>
-            <p className="text-xs text-muted-foreground">avg applications</p>
+            <div className="text-2xl font-bold">{stats.totalApplications}</div>
+            <p className="text-xs text-muted-foreground">total applications</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.successRate}%</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.successRate > 0 ? "tasks with applications" : "no applications yet"}
-            </p>
+            <div className="text-2xl font-bold">{formatCurrency(stats.totalBudget)}</div>
+            <p className="text-xs text-muted-foreground">total budget</p>
           </CardContent>
         </Card>
       </div>
@@ -454,7 +444,7 @@ export default function BrowseTasksPage() {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <DollarSign className="h-4 w-4" />
-                      {formatCurrency(task.budget_min)} - {formatCurrency(task.budget_max)}
+                      {formatCurrency(task.budget_max)}
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />

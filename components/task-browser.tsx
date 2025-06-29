@@ -22,6 +22,7 @@ import {
   Briefcase,
   TrendingUp,
   RefreshCw,
+  DollarSign,
 } from "lucide-react"
 import Link from "next/link"
 import { formatCurrency, getStatusColor, generateTaskCode } from "@/lib/api-utils"
@@ -486,8 +487,8 @@ export default function BrowseTasksPage() {
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <NairaIcon className="h-4 w-4" />
-                      {formatCurrency(task.budget_min)} - {formatCurrency(task.budget_max)}
+                      <DollarSign className="h-4 w-4" />
+                      {formatCurrency(task.budget_max)}
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />

@@ -37,8 +37,7 @@ export async function POST(request: NextRequest) {
       description,
       category,
       budget_type,
-      budget_min,
-      budget_max,
+      budget_amount,
       currency = "NGN",
       duration,
       location = "Remote",
@@ -50,18 +49,18 @@ export async function POST(request: NextRequest) {
       experience_level = "intermediate",
     } = taskFields
 
-    // Validation
-    if (!title?.trim()) {
-      return NextResponse.json({ success: false, error: "Title is required" }, { status: 400 })
+    // Validate required fields
+    if (!userId) {
+      return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 })
     }
-    if (!description?.trim()) {
-      return NextResponse.json({ success: false, error: "Description is required" }, { status: 400 })
+    if (!title || !description) {
+      return NextResponse.json({ success: false, error: "Title and description are required" }, { status: 400 })
     }
     if (!category) {
       return NextResponse.json({ success: false, error: "Category is required" }, { status: 400 })
     }
-    if (!budget_min || !budget_max) {
-      return NextResponse.json({ success: false, error: "Budget range is required" }, { status: 400 })
+    if (!budget_amount) {
+      return NextResponse.json({ success: false, error: "Budget amount is required" }, { status: 400 })
     }
     if (!duration) {
       return NextResponse.json({ success: false, error: "Duration is required" }, { status: 400 })
@@ -122,8 +121,8 @@ export async function POST(request: NextRequest) {
       description: description.trim(),
       category,
       budget_type,
-      budget_min: Number(budget_min),
-      budget_max: Number(budget_max),
+      budget_min: Number(budget_amount),
+      budget_max: Number(budget_amount),
       currency,
       duration,
       location,

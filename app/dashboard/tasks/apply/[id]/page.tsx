@@ -351,13 +351,11 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
                           proposedAmount: e.target.value,
                         }))
                       }
-                      placeholder={`${task.budget_min} - ${task.budget_max}`}
-                      min={task.budget_min}
-                      max={task.budget_max}
+                      placeholder={`Fixed price: ₦${task.budget_max.toLocaleString()}`}
                       required
                     />
                     <p className="text-xs text-muted-foreground">
-                      Budget range: ₦{task.budget_min.toLocaleString()} - ₦{task.budget_max.toLocaleString()}
+                      Fixed price: ₦{task.budget_max.toLocaleString()} | You can propose any amount
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -499,9 +497,9 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
                 <span className="font-medium">{task.views_count || 0}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Average bid:</span>
+                <span className="text-sm text-muted-foreground">Fixed price:</span>
                 <span className="font-medium">
-                  ₦{Math.round((task.budget_min + task.budget_max) / 2).toLocaleString()}
+                  ₦{task.budget_max.toLocaleString()}
                 </span>
               </div>
             </CardContent>
@@ -518,7 +516,7 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
               </div>
               <div className="flex items-start gap-2">
                 <DollarSign className="h-4 w-4 text-green-600 mt-0.5" />
-                <span>Bid competitively within the budget range</span>
+                <span>Propose a competitive price based on the fixed budget</span>
               </div>
               <div className="flex items-start gap-2">
                 <Clock className="h-4 w-4 text-purple-600 mt-0.5" />
