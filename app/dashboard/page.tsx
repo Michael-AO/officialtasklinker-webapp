@@ -32,11 +32,13 @@ export default function DashboardPage() {
   const [isAccepting, setIsAccepting] = useState(false)
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    // Only redirect if we're not loading and there's definitely no user
+    if (!isLoading && user === null) {
       router.push("/login")
     }
   }, [user, isLoading, router])
 
+  // Show loading state while authentication is being determined
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -45,6 +47,7 @@ export default function DashboardPage() {
     )
   }
 
+  // Show loading state if no user (this will only show briefly before redirect)
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">

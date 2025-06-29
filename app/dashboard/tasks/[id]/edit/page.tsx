@@ -411,7 +411,7 @@ export default function EditTaskPage() {
     )
   }
 
-  // Show loading state while checking authentication
+  // Show loading state while authentication is being determined
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">

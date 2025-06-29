@@ -47,20 +47,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Initialize auth state from Supabase session
     const initializeAuth = async () => {
       try {
+        console.log("🔄 Initializing auth state...")
+        
         // Get current session
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
-          console.error("Error getting session:", error)
+          console.error("❌ Error getting session:", error)
           setIsLoading(false)
           return
         }
 
+        console.log("📋 Session check result:", session ? "Session found" : "No session")
+
         if (session?.user) {
+          console.log("👤 User found in session:", session.user.id)
+          
           // User is authenticated, get their profile
           const profile = await UserProfileService.getProfile(session.user.id)
           
           if (profile) {
+            console.log("✅ User profile loaded successfully")
             const userData: User = {
               id: profile.id,
               email: profile.email,
@@ -78,11 +85,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               portfolio: [],
             }
             setUser(userData)
+          } else {
+            console.log("⚠️ No profile found for user, but session exists")
           }
+        } else {
+          console.log("ℹ️ No active session found")
         }
       } catch (error) {
-        console.error("Error initializing auth:", error)
+        console.error("❌ Error initializing auth:", error)
       } finally {
+        console.log("✅ Auth initialization complete")
         setIsLoading(false)
       }
     }
@@ -92,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.id)
+        console.log("🔄 Auth state changed:", event, session?.user?.id)
         
         if (event === 'SIGNED_IN' && session?.user) {
           // User signed in, get their profile
@@ -119,7 +131,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } else if (event === 'SIGNED_OUT') {
           // User signed out
+          console.log("👋 User signed out")
           setUser(null)
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log("🔄 Token refreshed")
+          // Optionally refresh user data here if needed
         }
       }
     )

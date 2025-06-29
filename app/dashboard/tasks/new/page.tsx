@@ -63,7 +63,7 @@ export default function NewTaskPage() {
     "Other",
   ]
 
-  // Show loading state while checking authentication
+  // Show loading state while authentication is being determined
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
