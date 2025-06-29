@@ -49,77 +49,99 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log("🔄 Initializing auth state...")
         
-        // Get current session
-        const { data: { session }, error } = await supabase.auth.getSession()
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Auth initialization timeout")), 10000) // 10 second timeout
+        })
         
-        if (error) {
-          console.error("❌ Error getting session:", error)
-          setIsLoading(false)
-          return
-        }
-
-        console.log("📋 Session check result:", session ? "Session found" : "No session")
-
-        if (session?.user) {
-          console.log("👤 User found in session:", session.user.id)
+        const authPromise = (async () => {
+          // Get current session
+          const { data: { session }, error } = await supabase.auth.getSession()
           
-          // User is authenticated, get their profile
-          const profile = await UserProfileService.getProfile(session.user.id)
-          
-          if (profile) {
-            console.log("✅ User profile loaded successfully")
-            
-            // Load portfolio data
-            let portfolioData: any[] = []
-            try {
-              const { data: portfolio, error: portfolioError } = await supabase
-                .from("portfolio_items")
-                .select("*")
-                .eq("user_id", session.user.id)
-                .order("is_featured", { ascending: false })
-                .order("created_at", { ascending: false })
-
-              if (!portfolioError && portfolio) {
-                portfolioData = portfolio.map((item: any) => ({
-                  id: item.id,
-                  title: item.title,
-                  description: item.description,
-                  image: item.image_url || item.file_url || "/placeholder.svg",
-                  url: item.project_url,
-                }))
-                console.log("📁 Portfolio loaded:", portfolioData.length, "items")
-              } else if (portfolioError && portfolioError.code !== "42P01") {
-                console.warn("⚠️ Portfolio load warning:", portfolioError.message)
-              }
-            } catch (portfolioError) {
-              console.warn("⚠️ Portfolio load error:", portfolioError)
-            }
-            
-            const userData: User = {
-              id: profile.id,
-              email: profile.email,
-              name: profile.name,
-              userType: profile.user_type as "freelancer" | "client",
-              avatar: profile.avatar_url || undefined,
-              isVerified: profile.is_verified,
-              joinDate: profile.join_date,
-              completedTasks: profile.completed_tasks,
-              rating: profile.rating,
-              skills: profile.skills || [],
-              bio: profile.bio || "",
-              location: profile.location || undefined,
-              hourlyRate: profile.hourly_rate || undefined,
-              portfolio: portfolioData,
-            }
-            setUser(userData)
-          } else {
-            console.log("⚠️ No profile found for user, but session exists")
+          if (error) {
+            console.error("❌ Error getting session:", error)
+            setIsLoading(false)
+            return
           }
-        } else {
-          console.log("ℹ️ No active session found")
-        }
+
+          console.log("📋 Session check result:", session ? "Session found" : "No session")
+
+          if (session?.user) {
+            console.log("👤 User found in session:", session.user.id)
+            
+            // User is authenticated, get their profile
+            const profile = await UserProfileService.getProfile(session.user.id)
+            
+            if (profile) {
+              console.log("✅ User profile loaded successfully")
+              
+              // Create user data first without portfolio
+              const userData: User = {
+                id: profile.id,
+                email: profile.email,
+                name: profile.name,
+                userType: profile.user_type as "freelancer" | "client",
+                avatar: profile.avatar_url || undefined,
+                isVerified: profile.is_verified,
+                joinDate: profile.join_date,
+                completedTasks: profile.completed_tasks,
+                rating: profile.rating,
+                skills: profile.skills || [],
+                bio: profile.bio || "",
+                location: profile.location || undefined,
+                hourlyRate: profile.hourly_rate || undefined,
+                portfolio: [], // Start with empty portfolio
+              }
+              
+              // Set user immediately to prevent loading state
+              setUser(userData)
+              
+              // Load portfolio data asynchronously (non-blocking)
+              try {
+                console.log("📁 Loading portfolio data...")
+                const { data: portfolio, error: portfolioError } = await supabase
+                  .from("portfolio_items")
+                  .select("*")
+                  .eq("user_id", session.user.id)
+                  .order("is_featured", { ascending: false })
+                  .order("created_at", { ascending: false })
+
+                if (!portfolioError && portfolio) {
+                  const portfolioData = portfolio.map((item: any) => ({
+                    id: item.id,
+                    title: item.title,
+                    description: item.description,
+                    image: item.image_url || item.file_url || "/placeholder.svg",
+                    url: item.project_url,
+                  }))
+                  console.log("📁 Portfolio loaded:", portfolioData.length, "items")
+                  
+                  // Update user with portfolio data
+                  setUser(prevUser => prevUser ? {
+                    ...prevUser,
+                    portfolio: portfolioData
+                  } : null)
+                } else if (portfolioError && portfolioError.code !== "42P01") {
+                  console.warn("⚠️ Portfolio load warning:", portfolioError.message)
+                }
+              } catch (portfolioError) {
+                console.warn("⚠️ Portfolio load error:", portfolioError)
+              }
+            } else {
+              console.log("⚠️ No profile found for user, but session exists")
+            }
+          } else {
+            console.log("ℹ️ No active session found")
+          }
+        })()
+        
+        // Race between auth initialization and timeout
+        await Promise.race([authPromise, timeoutPromise])
+        
       } catch (error) {
         console.error("❌ Error initializing auth:", error)
+        // Set loading to false even if there's an error
+        setIsLoading(false)
       } finally {
         console.log("✅ Auth initialization complete")
         setIsLoading(false)
@@ -138,30 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const profile = await UserProfileService.getProfile(session.user.id)
           
           if (profile) {
-            // Load portfolio data
-            let portfolioData: any[] = []
-            try {
-              const { data: portfolio, error: portfolioError } = await supabase
-                .from("portfolio_items")
-                .select("*")
-                .eq("user_id", session.user.id)
-                .order("is_featured", { ascending: false })
-                .order("created_at", { ascending: false })
-
-              if (!portfolioError && portfolio) {
-                portfolioData = portfolio.map((item: any) => ({
-                  id: item.id,
-                  title: item.title,
-                  description: item.description,
-                  image: item.image_url || item.file_url || "/placeholder.svg",
-                  url: item.project_url,
-                }))
-                console.log("📁 Portfolio loaded on sign in:", portfolioData.length, "items")
-              }
-            } catch (portfolioError) {
-              console.warn("⚠️ Portfolio load error on sign in:", portfolioError)
-            }
-            
+            // Create user data first without portfolio
             const userData: User = {
               id: profile.id,
               email: profile.email,
@@ -176,9 +175,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               bio: profile.bio || "",
               location: profile.location || undefined,
               hourlyRate: profile.hourly_rate || undefined,
-              portfolio: portfolioData,
+              portfolio: [], // Start with empty portfolio
             }
+            
+            // Set user immediately
             setUser(userData)
+            
+            // Load portfolio data asynchronously (non-blocking)
+            try {
+              const { data: portfolio, error: portfolioError } = await supabase
+                .from("portfolio_items")
+                .select("*")
+                .eq("user_id", session.user.id)
+                .order("is_featured", { ascending: false })
+                .order("created_at", { ascending: false })
+
+              if (!portfolioError && portfolio) {
+                const portfolioData = portfolio.map((item: any) => ({
+                  id: item.id,
+                  title: item.title,
+                  description: item.description,
+                  image: item.image_url || item.file_url || "/placeholder.svg",
+                  url: item.project_url,
+                }))
+                console.log("📁 Portfolio loaded on sign in:", portfolioData.length, "items")
+                
+                // Update user with portfolio data
+                setUser(prevUser => prevUser ? {
+                  ...prevUser,
+                  portfolio: portfolioData
+                } : null)
+              }
+            } catch (portfolioError) {
+              console.warn("⚠️ Portfolio load error on sign in:", portfolioError)
+            }
           }
         } else if (event === 'SIGNED_OUT') {
           // User signed out
