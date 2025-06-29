@@ -39,7 +39,7 @@ interface CompletionStatus {
 }
 
 export function ProfileCompletionWizard() {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, refreshPortfolio } = useAuth()
   const [isExpanded, setIsExpanded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
@@ -282,6 +282,8 @@ export function ProfileCompletionWizard() {
         hourlyRate: formData.hourlyRate ? Number(formData.hourlyRate) : undefined,
         avatar: avatarUrl,
       })
+
+      await refreshPortfolio()
 
       toast({
         title: "Profile Updated!",

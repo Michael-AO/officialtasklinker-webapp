@@ -34,6 +34,7 @@ interface AuthContextType {
   logout: () => void
   signOut: () => void
   updateProfile: (updates: Partial<User>) => Promise<void>
+  refreshPortfolio: () => Promise<void>
   isLoading: boolean
 }
 
@@ -108,32 +109,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               console.warn("⚠️ Profile load error:", profileError)
             })
             
-            // Load portfolio in background
-            (async () => {
+            // Load portfolio data asynchronously (non-blocking)
+            setTimeout(async () => {
               try {
-                const { data: portfolio, error: portfolioError } = await supabase
-                  .from("portfolio_items")
-                  .select("*")
-                  .eq("user_id", session.user.id)
-                  .order("is_featured", { ascending: false })
-                  .order("created_at", { ascending: false })
-                if (!portfolioError && portfolio) {
-                  const portfolioData = portfolio.map((item: any) => ({
-                    id: item.id,
-                    title: item.title,
-                    description: item.description,
-                    image: item.image_url || item.file_url || "/placeholder.svg",
-                    url: item.project_url,
-                  }))
-                  setUser(prevUser => prevUser ? {
-                    ...prevUser,
-                    portfolio: portfolioData
-                  } : null)
+                console.log("📁 Loading portfolio data on sign in...")
+                
+                // Use the API endpoint instead of direct Supabase call
+                const portfolioResponse = await fetch("/api/user/portfolio", {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                })
+
+                if (portfolioResponse.ok) {
+                  const portfolioResult = await portfolioResponse.json()
+                  
+                  if (portfolioResult.success && portfolioResult.data) {
+                    const portfolioData = portfolioResult.data.map((item: any) => ({
+                      id: item.id,
+                      title: item.title,
+                      description: item.description,
+                      image: item.image_url || item.file_url || "/placeholder.svg",
+                      url: item.project_url,
+                    }))
+                    console.log("📁 Portfolio loaded on sign in:", portfolioData.length, "items")
+                    
+                    // Update user with portfolio data
+                    setUser(prevUser => prevUser ? {
+                      ...prevUser,
+                      portfolio: portfolioData
+                    } : null)
+                  } else {
+                    console.log("📁 No portfolio items found or API error")
+                  }
+                } else {
+                  console.warn("⚠️ Portfolio API error:", portfolioResponse.status)
                 }
               } catch (portfolioError) {
-                console.warn("⚠️ Portfolio load error:", portfolioError)
+                console.warn("⚠️ Portfolio load error on sign in:", portfolioError)
               }
-            })()
+            }, 200)
           } else {
             console.log("ℹ️ No active session found")
           }
@@ -239,28 +255,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Load portfolio data asynchronously (non-blocking)
           setTimeout(async () => {
             try {
-              const { data: portfolio, error: portfolioError } = await supabase
-                .from("portfolio_items")
-                .select("*")
-                .eq("user_id", session.user.id)
-                .order("is_featured", { ascending: false })
-                .order("created_at", { ascending: false })
+              console.log("📁 Loading portfolio data on sign in...")
+              
+              // Use the API endpoint instead of direct Supabase call
+              const portfolioResponse = await fetch("/api/user/portfolio", {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              })
 
-              if (!portfolioError && portfolio) {
-                const portfolioData = portfolio.map((item: any) => ({
-                  id: item.id,
-                  title: item.title,
-                  description: item.description,
-                  image: item.image_url || item.file_url || "/placeholder.svg",
-                  url: item.project_url,
-                }))
-                console.log("📁 Portfolio loaded on sign in:", portfolioData.length, "items")
+              if (portfolioResponse.ok) {
+                const portfolioResult = await portfolioResponse.json()
                 
-                // Update user with portfolio data
-                setUser(prevUser => prevUser ? {
-                  ...prevUser,
-                  portfolio: portfolioData
-                } : null)
+                if (portfolioResult.success && portfolioResult.data) {
+                  const portfolioData = portfolioResult.data.map((item: any) => ({
+                    id: item.id,
+                    title: item.title,
+                    description: item.description,
+                    image: item.image_url || item.file_url || "/placeholder.svg",
+                    url: item.project_url,
+                  }))
+                  console.log("📁 Portfolio loaded on sign in:", portfolioData.length, "items")
+                  
+                  // Update user with portfolio data
+                  setUser(prevUser => prevUser ? {
+                    ...prevUser,
+                    portfolio: portfolioData
+                  } : null)
+                } else {
+                  console.log("📁 No portfolio items found or API error")
+                }
+              } else {
+                console.warn("⚠️ Portfolio API error:", portfolioResponse.status)
               }
             } catch (portfolioError) {
               console.warn("⚠️ Portfolio load error on sign in:", portfolioError)
@@ -350,8 +377,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const refreshPortfolio = async () => {
+    if (!user) return
+
+    try {
+      console.log("🔄 Refreshing portfolio...")
+
+      // Use the API endpoint instead of direct Supabase call
+      const portfolioResponse = await fetch("/api/user/portfolio", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (portfolioResponse.ok) {
+        const portfolioResult = await portfolioResponse.json()
+        
+        if (portfolioResult.success && portfolioResult.data) {
+          const portfolioData = portfolioResult.data.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            image: item.image_url || item.file_url || "/placeholder.svg",
+            url: item.project_url,
+          }))
+          console.log("📁 Portfolio refreshed:", portfolioData.length, "items")
+          
+          // Update user with portfolio data
+          setUser(prevUser => prevUser ? {
+            ...prevUser,
+            portfolio: portfolioData
+          } : null)
+        } else {
+          console.log("📁 No portfolio items found or API error")
+        }
+      } else {
+        console.warn("⚠️ Portfolio API error:", portfolioResponse.status)
+      }
+    } catch (error) {
+      console.warn("⚠️ Portfolio refresh error:", error)
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, signOut, updateProfile, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, signOut, updateProfile, refreshPortfolio, isLoading }}>
       {children}
     </AuthContext.Provider>
   )
