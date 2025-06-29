@@ -24,7 +24,7 @@ import {
 import { formatNairaCompact } from "@/lib/currency"
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
   const router = useRouter()
   const { stats, applications, loading } = useRealDashboardData()
   const [selectedApplication, setSelectedApplication] = useState<any>(null)
@@ -32,10 +32,18 @@ export default function DashboardPage() {
   const [isAccepting, setIsAccepting] = useState(false)
 
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && !user) {
       router.push("/login")
     }
-  }, [user, router])
+  }, [user, isLoading, router])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+      </div>
+    )
+  }
 
   if (!user) {
     return (

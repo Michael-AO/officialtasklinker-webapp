@@ -2,6 +2,8 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
+import { UserProfileService } from "@/lib/database-service"
 
 export interface User {
   id: string
@@ -42,34 +44,99 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check for stored user data on mount
-    try {
-      const storedUser = localStorage.getItem("tasklinkers_user")
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser)
-        setUser(parsedUser)
+    // Initialize auth state from Supabase session
+    const initializeAuth = async () => {
+      try {
+        // Get current session
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error("Error getting session:", error)
+          setIsLoading(false)
+          return
+        }
+
+        if (session?.user) {
+          // User is authenticated, get their profile
+          const profile = await UserProfileService.getProfile(session.user.id)
+          
+          if (profile) {
+            const userData: User = {
+              id: profile.id,
+              email: profile.email,
+              name: profile.name,
+              userType: profile.user_type as "freelancer" | "client",
+              avatar: profile.avatar_url || undefined,
+              isVerified: profile.is_verified,
+              joinDate: profile.join_date,
+              completedTasks: profile.completed_tasks,
+              rating: profile.rating,
+              skills: profile.skills || [],
+              bio: profile.bio || "",
+              location: profile.location || undefined,
+              hourlyRate: profile.hourly_rate || undefined,
+              portfolio: [],
+            }
+            setUser(userData)
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error)
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("Error loading user from localStorage:", error)
-      localStorage.removeItem("tasklinkers_user")
     }
-    setIsLoading(false)
+
+    initializeAuth()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id)
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          // User signed in, get their profile
+          const profile = await UserProfileService.getProfile(session.user.id)
+          
+          if (profile) {
+            const userData: User = {
+              id: profile.id,
+              email: profile.email,
+              name: profile.name,
+              userType: profile.user_type as "freelancer" | "client",
+              avatar: profile.avatar_url || undefined,
+              isVerified: profile.is_verified,
+              joinDate: profile.join_date,
+              completedTasks: profile.completed_tasks,
+              rating: profile.rating,
+              skills: profile.skills || [],
+              bio: profile.bio || "",
+              location: profile.location || undefined,
+              hourlyRate: profile.hourly_rate || undefined,
+              portfolio: [],
+            }
+            setUser(userData)
+          }
+        } else if (event === 'SIGNED_OUT') {
+          // User signed out
+          setUser(null)
+        }
+      }
+    )
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   const login = async (userData: User) => {
-    try {
-      setUser(userData)
-      localStorage.setItem("tasklinkers_user", JSON.stringify(userData))
-    } catch (error) {
-      console.error("Error saving user to localStorage:", error)
-      throw new Error("Failed to save user data")
-    }
+    setUser(userData)
   }
 
-  const logout = () => {
+  const logout = async () => {
     try {
+      await supabase.auth.signOut()
       setUser(null)
-      localStorage.removeItem("tasklinkers_user")
     } catch (error) {
       console.error("Error during logout:", error)
     }
@@ -84,7 +151,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const updatedUser = { ...user, ...updates }
     setUser(updatedUser)
-    localStorage.setItem("tasklinkers_user", JSON.stringify(updatedUser))
   }
 
   return (
