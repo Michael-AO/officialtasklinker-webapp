@@ -165,8 +165,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return
 
-    const updatedUser = { ...user, ...updates }
-    setUser(updatedUser)
+    try {
+      console.log("🔄 Updating profile with:", updates)
+
+      // Call the profile update API
+      const response = await fetch("/api/user/profile/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.id,
+        },
+        body: JSON.stringify({
+          name: updates.name || user.name,
+          bio: updates.bio || user.bio,
+          location: updates.location || user.location,
+          hourly_rate: updates.hourlyRate || user.hourlyRate,
+          skills: updates.skills || user.skills,
+          avatar_url: updates.avatar || user.avatar,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to update profile")
+      }
+
+      const result = await response.json()
+      console.log("✅ Profile updated successfully:", result)
+
+      // Update local state
+      const updatedUser = { ...user, ...updates }
+      setUser(updatedUser)
+    } catch (error) {
+      console.error("❌ Profile update error:", error)
+      throw error
+    }
   }
 
   return (

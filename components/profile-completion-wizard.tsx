@@ -208,7 +208,32 @@ export function ProfileCompletionWizard() {
   const handleSave = async () => {
     setIsLoading(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      let avatarUrl = user?.avatar
+
+      // Upload profile image if selected
+      if (profileImage) {
+        console.log("📤 Uploading profile image...")
+        
+        const formData = new FormData()
+        formData.append("file", profileImage)
+
+        const uploadResponse = await fetch("/api/upload/avatar", {
+          method: "POST",
+          headers: {
+            "user-id": user?.id || "",
+          },
+          body: formData,
+        })
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json()
+          throw new Error(errorData.error || "Failed to upload profile image")
+        }
+
+        const uploadResult = await uploadResponse.json()
+        avatarUrl = uploadResult.data.url
+        console.log("✅ Profile image uploaded:", avatarUrl)
+      }
 
       const portfolioForProfile = portfolioItems.map((item) => ({
         id: item.id,
@@ -218,13 +243,14 @@ export function ProfileCompletionWizard() {
         url: item.url,
       }))
 
+      // Update profile with new avatar URL
       await updateProfile({
         bio: formData.bio,
         skills: formData.skills,
         location: formData.location,
         hourlyRate: formData.hourlyRate ? Number(formData.hourlyRate) : undefined,
         portfolio: portfolioForProfile,
-        avatar: profileImagePreview || user?.avatar,
+        avatar: avatarUrl,
       })
 
       toast({
@@ -233,9 +259,10 @@ export function ProfileCompletionWizard() {
       })
       setIsExpanded(false)
     } catch (error) {
+      console.error("Profile update error:", error)
       toast({
         title: "Error",
-        description: "Failed to save profile. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save profile. Please try again.",
         variant: "destructive",
       })
     } finally {

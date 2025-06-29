@@ -38,18 +38,46 @@ export default function EditProfilePage() {
     setIsLoading(true)
 
     try {
+      let avatarUrl = user?.avatar
+
+      // Upload profile image if selected
+      if (profileImage) {
+        console.log("📤 Uploading profile image...")
+        
+        const formData = new FormData()
+        formData.append("file", profileImage)
+
+        const uploadResponse = await fetch("/api/upload/avatar", {
+          method: "POST",
+          headers: {
+            "user-id": user?.id || "",
+          },
+          body: formData,
+        })
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json()
+          throw new Error(errorData.error || "Failed to upload profile image")
+        }
+
+        const uploadResult = await uploadResponse.json()
+        avatarUrl = uploadResult.data.url
+        console.log("✅ Profile image uploaded:", avatarUrl)
+      }
+
       await updateProfile({
         name: formData.name,
         bio: formData.bio,
         skills: formData.skills,
         location: formData.location,
         hourlyRate: Number.parseInt(formData.hourlyRate),
-        avatar: profileImagePreview || user?.avatar,
+        avatar: avatarUrl,
       })
 
       router.push("/dashboard/profile")
     } catch (error) {
       console.error("Failed to update profile:", error)
+      alert(error instanceof Error ? error.message : "Failed to update profile")
     } finally {
       setIsLoading(false)
     }

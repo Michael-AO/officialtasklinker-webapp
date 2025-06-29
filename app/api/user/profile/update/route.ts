@@ -46,17 +46,26 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 })
     }
 
+    // Prepare update object
+    const updateObject: any = {
+      name: updateData.name.trim(),
+      bio: updateData.bio || null,
+      location: updateData.location || null,
+      hourly_rate: updateData.hourly_rate || null,
+      skills: updateData.skills || [],
+      updated_at: new Date().toISOString(),
+    }
+
+    // Handle avatar URL update if provided
+    if (updateData.avatar_url) {
+      updateObject.avatar_url = updateData.avatar_url
+      console.log("🖼️ Updating avatar URL:", updateData.avatar_url)
+    }
+
     // Update the user profile
     const { data: updatedUser, error } = await supabase
       .from("users")
-      .update({
-        name: updateData.name.trim(),
-        bio: updateData.bio || null,
-        location: updateData.location || null,
-        hourly_rate: updateData.hourly_rate || null,
-        skills: updateData.skills || [],
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateObject)
       .eq("id", formattedUserId)
       .select()
       .single()
@@ -83,6 +92,7 @@ export async function PUT(request: NextRequest) {
         hourly_rate: updatedUser.hourly_rate,
         skills: updatedUser.skills,
         user_type: updatedUser.user_type,
+        avatar_url: updatedUser.avatar_url,
       }
     })
 
