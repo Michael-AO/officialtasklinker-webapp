@@ -434,7 +434,7 @@ export default function AdminTasksPage() {
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">
-                        ₦{(task.budget_min / 100).toLocaleString()} - ₦{(task.budget_max / 100).toLocaleString()}
+                        ₦{(task.budget_max / 100).toLocaleString()}
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(task.status)}>

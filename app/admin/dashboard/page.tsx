@@ -161,11 +161,8 @@ export default function AdminDashboard() {
     return "Pending"
   }
 
-  const formatBudget = (min: number, max: number) => {
-    if (min && max) {
-      return `₦${(min / 100).toLocaleString()} - ₦${(max / 100).toLocaleString()}`
-    }
-    return "Budget not set"
+  const formatCurrency = (amount: number) => {
+    return `₦${(amount / 100).toLocaleString()}`
   }
 
   const activityFeed = [
@@ -373,7 +370,7 @@ export default function AdminDashboard() {
                         <p className="text-xs text-gray-500">{task.client?.name || "Unknown Client"}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{formatBudget(task.budget_min, task.budget_max)}</TableCell>
+                    <TableCell className="font-medium">{formatCurrency(task.budget_max)}</TableCell>
                     <TableCell>
                       <Badge className={getStatusBadge(task.status)} className="capitalize">
                         {task.status.replace("_", " ")}

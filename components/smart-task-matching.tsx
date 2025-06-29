@@ -108,21 +108,14 @@ export function SmartTaskMatching() {
     return "text-gray-600"
   }
 
-  const formatBudget = (min: number, max: number) => {
-    const formatAmount = (amount: number) => {
-      if (amount >= 1000000) {
-        return `₦${(amount / 1000000).toFixed(1)}M`
-      } else if (amount >= 1000) {
-        return `₦${(amount / 1000).toFixed(0)}K`
-      } else {
-        return `₦${amount.toLocaleString()}`
-      }
+  const formatCurrency = (amount: number) => {
+    if (amount >= 1000000) {
+      return `₦${(amount / 1000000).toFixed(1)}M`
+    } else if (amount >= 1000) {
+      return `₦${(amount / 1000).toFixed(0)}K`
+    } else {
+      return `₦${amount.toLocaleString()}`
     }
-
-    if (min === max) {
-      return formatAmount(min)
-    }
-    return `${formatAmount(min)} - ${formatAmount(max)}`
   }
 
   const formatTimeAgo = (dateString: string) => {
@@ -208,7 +201,7 @@ export function SmartTaskMatching() {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <NairaIcon className="h-4 w-4" />
-                        {formatBudget(match.budget_min, match.budget_max)}
+                        {formatCurrency(match.budget_max)}
                       </div>
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />

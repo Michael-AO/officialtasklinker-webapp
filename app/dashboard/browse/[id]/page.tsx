@@ -590,7 +590,7 @@ export default function TaskViewPage() {
                 <span>
                   {task.budget_type === "fixed"
                     ? `${formatNaira(task.budget_max)} (Fixed Price)`
-                    : `${formatNaira(task.budget_min)} - ${formatNaira(task.budget_max)} (${task.budget_type})`}
+                    : `${formatNaira(task.budget_max)} (Hourly)`}
                 </span>
               </div>
               <div className="flex items-center gap-2">

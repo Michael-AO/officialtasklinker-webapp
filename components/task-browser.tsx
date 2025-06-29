@@ -212,7 +212,7 @@ export default function BrowseTasksPage() {
     totalTasks: tasks.length,
     avgBudget:
       tasks.length > 0
-        ? Math.round(tasks.reduce((sum, task) => sum + (task.budget_min + task.budget_max) / 2, 0) / tasks.length)
+        ? Math.round(tasks.reduce((sum, task) => sum + task.budget_max, 0) / tasks.length)
         : 0,
     avgApplications:
       tasks.length > 0 ? Math.round(tasks.reduce((sum, task) => sum + task.applications_count, 0) / tasks.length) : 0,
