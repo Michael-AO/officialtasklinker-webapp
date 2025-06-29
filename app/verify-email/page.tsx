@@ -166,11 +166,11 @@ export default function VerifyEmailPage() {
       // 2. Delete used OTP
       await supabase.from("email_otps").delete().eq("email", email).eq("otp", verificationCode)
 
-      // 3. Verify the OTP with Supabase (this will create/confirm the user)
+      // 3. Verify the OTP with Supabase (this will confirm the user)
       const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
         email: email,
         token: verificationCode,
-        type: 'email'
+        type: 'signup'
       })
 
       if (verifyError) {

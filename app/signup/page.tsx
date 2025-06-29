@@ -69,16 +69,20 @@ export default function SignupPage() {
     console.log("Starting signup process...")
 
     try {
-      // 1. Use OTP-only flow instead of signUp to avoid duplicate emails
-      console.log("Sending OTP email...")
-      const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
+      // 1. Create user in Supabase with email confirmation disabled
+      console.log("Creating user in Supabase...")
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
+        password: formData.password,
         options: {
           data: {
             first_name: formData.firstName,
             last_name: formData.lastName,
             user_type: formData.userType,
           },
+          // Note: To completely disable Supabase's automatic email confirmation,
+          // you need to configure this in your Supabase project settings:
+          // Go to Authentication > Settings > Email Templates and disable "Confirm signup"
         },
       })
 
@@ -86,7 +90,7 @@ export default function SignupPage() {
         console.error("Supabase auth error:", authError)
         throw authError
       }
-      console.log("OTP email sent successfully:", authData)
+      console.log("User created successfully:", authData)
 
       // 2. Generate OTP for our custom verification
       const otp = Math.floor(100000 + Math.random() * 900000).toString()
