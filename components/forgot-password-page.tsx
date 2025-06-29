@@ -124,13 +124,11 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Zap className="h-6 w-6 text-blue-600" />
+            <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-8 w-8" />
             <span className="text-xl font-bold">Tasklinkers</span>
           </div>
-          <CardTitle className="text-2xl">Forgot your password?</CardTitle>
-          <CardDescription>
-            Enter your email address and we'll send you instructions to reset your password
-          </CardDescription>
+          <CardTitle className="text-2xl">Reset your password</CardTitle>
+          <CardDescription>Enter your email to receive a reset link</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -143,14 +143,11 @@ export default function ResetPasswordPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Zap className="h-6 w-6 text-blue-600" />
+            <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-8 w-8" />
             <span className="text-xl font-bold">Tasklinkers</span>
           </div>
-          <CardTitle className="text-2xl">Reset your password</CardTitle>
-          <CardDescription>
-            Enter the 6-digit code sent to <span className="font-medium text-foreground">{email}</span> and create a new
-            password
-          </CardDescription>
+          <CardTitle className="text-2xl">Set new password</CardTitle>
+          <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
