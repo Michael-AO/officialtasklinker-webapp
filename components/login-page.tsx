@@ -6,6 +6,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Zap } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,28 +41,97 @@ export default function LoginPage() {
     }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      console.log("Attempting to sign in with Supabase...")
+      
+      // Use real Supabase authentication
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      })
 
-      // Mock successful login - create verified user
-      const mockUser = {
-        id: "1",
-        email,
-        name: email.split("@")[0],
-        userType: "client" as const, // Default to client for demo
-        avatar: "/placeholder.svg?height=40&width=40",
-        isVerified: true, // Login users are already verified
-        joinDate: "2023-01-15",
-        completedTasks: 24,
-        rating: 4.8,
-        skills: ["React", "Node.js", "TypeScript"],
-        bio: "Experienced professional",
+      if (authError) {
+        console.error("Supabase auth error:", authError)
+        throw authError
       }
 
-      await login(mockUser)
+      if (!authData.user) {
+        throw new Error("No user data returned")
+      }
+
+      console.log("✅ User authenticated successfully:", authData.user.id)
+
+      // Get or create user profile from database
+      const { data: userProfile, error: profileError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", authData.user.id)
+        .single()
+
+      if (profileError && profileError.code !== "PGRST116") {
+        console.error("Profile fetch error:", profileError)
+        throw profileError
+      }
+
+      let userData
+      if (profileError && profileError.code === "PGRST116") {
+        // User doesn't exist in database, create from auth data
+        console.log("Creating user profile from auth data...")
+        const { data: newUser, error: createError } = await supabase
+          .from("users")
+          .insert({
+            id: authData.user.id,
+            email: authData.user.email!,
+            name: authData.user.user_metadata?.first_name && authData.user.user_metadata?.last_name 
+              ? `${authData.user.user_metadata.first_name} ${authData.user.user_metadata.last_name}`
+              : authData.user.email!.split("@")[0],
+            user_type: authData.user.user_metadata?.user_type || "client",
+            is_verified: authData.user.email_confirmed_at ? true : false,
+            rating: 0,
+            completed_tasks: 0,
+            total_earned: 0,
+            join_date: authData.user.created_at || new Date().toISOString(),
+            is_active: true,
+            skills: [],
+            bio: "",
+            location: "",
+            hourly_rate: null,
+          })
+          .select()
+          .single()
+
+        if (createError) {
+          console.error("User creation error:", createError)
+          throw createError
+        }
+
+        userData = newUser
+      } else {
+        userData = userProfile
+      }
+
+      // Create user object for auth context
+      const user = {
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        userType: userData.user_type as "freelancer" | "client",
+        avatar: userData.avatar_url || undefined,
+        isVerified: userData.is_verified,
+        joinDate: userData.join_date,
+        completedTasks: userData.completed_tasks,
+        rating: userData.rating,
+        skills: userData.skills || [],
+        bio: userData.bio || "",
+        location: userData.location || undefined,
+        hourlyRate: userData.hourly_rate || undefined,
+        portfolio: [],
+      }
+
+      await login(user)
       router.push("/dashboard")
     } catch (err) {
-      setError("Invalid email or password. Please try again.")
+      console.error("Login error:", err)
+      setError(err instanceof Error ? err.message : "Invalid email or password. Please try again.")
     } finally {
       setIsLoading(false)
     }
