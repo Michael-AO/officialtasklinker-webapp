@@ -322,17 +322,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }),
       })
 
+      console.log("📡 Profile update response status:", response.status)
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to update profile")
+        const errorText = await response.text()
+        console.error("❌ Profile update response error:", errorText)
+
+        let errorData
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = { error: `HTTP ${response.status}: ${errorText}` }
+        }
+
+        throw new Error(errorData.error || `Failed to update profile: ${response.status}`)
       }
 
       const result = await response.json()
       console.log("✅ Profile updated successfully:", result)
 
       // Update local state
-    const updatedUser = { ...user, ...updates }
-    setUser(updatedUser)
+      const updatedUser = { ...user, ...updates }
+      setUser(updatedUser)
     } catch (error) {
       console.error("❌ Profile update error:", error)
       throw error

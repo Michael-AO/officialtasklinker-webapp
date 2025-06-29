@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { createServerClient } from "@/lib/supabase"
 
 // Helper function to convert simple IDs to UUID format
 function convertToUUID(id: string): string {
@@ -19,6 +19,7 @@ export async function PUT(request: NextRequest) {
     const userId = request.headers.get("user-id")
     
     if (!userId) {
+      console.error("❌ No user ID provided in headers")
       return NextResponse.json({ 
         success: false, 
         error: "User ID required" 
@@ -40,6 +41,7 @@ export async function PUT(request: NextRequest) {
 
     // Validate required fields
     if (!updateData.name || updateData.name.trim() === "") {
+      console.error("❌ Name is required but not provided")
       return NextResponse.json({ 
         success: false, 
         error: "Name is required" 
@@ -62,6 +64,11 @@ export async function PUT(request: NextRequest) {
       console.log("🖼️ Updating avatar URL:", updateData.avatar_url)
     }
 
+    console.log("📝 Final update object:", updateObject)
+
+    // Create server-side client with service role key
+    const supabase = createServerClient()
+
     // Update the user profile
     const { data: updatedUser, error } = await supabase
       .from("users")
@@ -72,6 +79,12 @@ export async function PUT(request: NextRequest) {
 
     if (error) {
       console.error("❌ Update error:", error)
+      console.error("❌ Update error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      })
       return NextResponse.json({ 
         success: false, 
         error: `Failed to update profile: ${error.message}` 
@@ -99,6 +112,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error("=== UPDATE PROFILE API ERROR ===")
     console.error("Unexpected error:", error)
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace")
 
     return NextResponse.json(
       {
