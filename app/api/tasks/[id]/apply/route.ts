@@ -166,6 +166,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     console.log("=== API: Application created successfully:", application.id)
 
+    // Note: Applications count is automatically updated by database triggers
+    // when a new application is inserted into the applications table
+
     return NextResponse.json({
       success: true,
       application: application,
