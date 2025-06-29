@@ -92,6 +92,15 @@ export async function GET(request: NextRequest) {
 
     console.log(`Found ${tasks?.length || 0} tasks for user ${userId}`)
 
+    // Check task ownership for debugging
+    const taskOwnershipCheck = (tasks || []).map(task => ({
+      taskId: task.id,
+      taskTitle: task.title,
+      taskClientId: task.client_id,
+      userId: userId,
+      matches: task.client_id === userId
+    }))
+
     return NextResponse.json({
       success: true,
       user: {
@@ -102,7 +111,11 @@ export async function GET(request: NextRequest) {
         created_at: user.created_at
       },
       tasks: tasks || [],
-      taskCount: tasks?.length || 0
+      taskCount: tasks?.length || 0,
+      debug: {
+        userId: userId,
+        taskOwnershipCheck: taskOwnershipCheck
+      }
     })
 
   } catch (error) {
