@@ -441,7 +441,7 @@ export default function TaskDetailPage() {
                 <div>
                   <p className="font-medium">{task.client.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    ⭐ {task.client.rating} ({task.client.reviews} reviews)
+                    ⭐ {task.client.rating}
                   </p>
                 </div>
               </div>

@@ -47,8 +47,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     let clientProfile = null
     if (task.client_id) {
       const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url, location")
+        .from("users")
+        .select("id, name, avatar_url, location, rating, completed_tasks, join_date, bio")
         .eq("id", task.client_id)
         .single()
 
@@ -79,14 +79,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       applications_count: applicationsCount || 0,
       client: {
         id: clientProfile?.id || task.client_id,
-        name: clientProfile?.full_name || "Anonymous Client",
-        avatar_url: clientProfile?.avatar_url,
-        rating: 4.8,
+        name: clientProfile?.name || "Anonymous Client",
+        avatar_url: clientProfile?.avatar_url || "/placeholder.svg?height=40&width=40",
+        rating: clientProfile?.rating || 0,
         location: clientProfile?.location || "Not specified",
-        completed_tasks: 0,
+        completed_tasks: clientProfile?.completed_tasks || 0,
         total_earned: 0,
-        join_date: task.created_at,
-        bio: "Experienced client on Tasklinkers platform",
+        join_date: clientProfile?.join_date || task.created_at,
+        bio: clientProfile?.bio || "Experienced client on Tasklinkers platform",
       },
     }
 
