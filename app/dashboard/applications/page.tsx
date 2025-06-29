@@ -127,12 +127,6 @@ export default function ApplicationsPage() {
               Find Jobs
             </Link>
           </Button>
-          <Button asChild>
-            <Link href="/dashboard/tasks/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Post Task
-            </Link>
-          </Button>
         </div>
       </div>
 
