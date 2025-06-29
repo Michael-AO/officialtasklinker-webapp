@@ -232,12 +232,16 @@ export class DashboardService {
 
   static async getRecentApplications(userId: string): Promise<any[]> {
     try {
+      console.log("🔍 getRecentApplications called with userId:", userId)
+      
       // Convert user ID to UUID format if needed
       let formattedUserId = userId
       if (userId.length < 36) {
         const paddedId = userId.padStart(8, "0")
         formattedUserId = `${paddedId}-0000-4000-8000-000000000000`
       }
+
+      console.log("🔍 Using formattedUserId:", formattedUserId)
 
       const { data, error } = await supabase
         .from("applications")
@@ -255,7 +259,7 @@ export class DashboardService {
           updated_at,
           response_date,
           feedback,
-          freelancer:users (
+          freelancer:users!applications_freelancer_id_fkey (
             id,
             name,
             email,
@@ -274,7 +278,7 @@ export class DashboardService {
             budget_max,
             currency,
             client_id,
-            client:users (
+            client:users!tasks_client_id_fkey (
               id,
               name,
               email,
@@ -287,6 +291,9 @@ export class DashboardService {
         .eq("freelancer_id", formattedUserId)
         .order("created_at", { ascending: false })
         .limit(5)
+
+      console.log("🔍 Query result - data length:", data?.length || 0)
+      console.log("🔍 Query result - error:", error)
 
       if (error) {
         console.error("❌ Database error in getRecentApplications:", error)
@@ -337,6 +344,9 @@ export class DashboardService {
           } : null,
         } : null,
       }))
+
+      console.log("🔍 Transformed data length:", transformedData.length)
+      console.log("🔍 First transformed application:", transformedData[0])
 
       return transformedData
     } catch (error) {

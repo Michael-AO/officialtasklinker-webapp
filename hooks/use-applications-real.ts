@@ -307,9 +307,6 @@ export function useApplicationsReal() {
 
       console.log("🔍 Using user ID:", userId)
 
-      // Fetch applications where user is either the freelancer (sent) or the task owner (received)
-      // Use separate queries to avoid the problematic .or() syntax
-      
       // First, get applications where user is the freelancer
       const { data: sentApplications, error: sentError } = await supabase
         .from("applications")
@@ -324,35 +321,7 @@ export function useApplicationsReal() {
           status,
           created_at,
           updated_at,
-          response_date,
-          task:tasks (
-            id,
-            title,
-            description,
-            category,
-            budget_min,
-            budget_max,
-            currency,
-            client_id,
-            client:users (
-              id,
-              name,
-              email,
-              avatar_url,
-              rating,
-              is_verified
-            )
-          ),
-          freelancer:users (
-            id,
-            name,
-            email,
-            avatar_url,
-            rating,
-            completed_tasks,
-            skills,
-            is_verified
-          )
+          response_date
         `)
         .eq("freelancer_id", userId)
         .order("created_at", { ascending: false })
@@ -371,35 +340,7 @@ export function useApplicationsReal() {
           status,
           created_at,
           updated_at,
-          response_date,
-          task:tasks!inner (
-            id,
-            title,
-            description,
-            category,
-            budget_min,
-            budget_max,
-            currency,
-            client_id,
-            client:users (
-              id,
-              name,
-              email,
-              avatar_url,
-              rating,
-              is_verified
-            )
-          ),
-          freelancer:users (
-            id,
-            name,
-            email,
-            avatar_url,
-            rating,
-            completed_tasks,
-            skills,
-            is_verified
-          )
+          response_date
         `)
         .eq("task.client_id", userId)
         .order("created_at", { ascending: false })
@@ -416,12 +357,64 @@ export function useApplicationsReal() {
 
       console.log("✅ Fetched applications:", data?.length || 0)
 
+      // Fetch related data for all applications
+      const taskIds = [...new Set(data.map(app => app.task_id))]
+      const userIds = [...new Set(data.map(app => app.freelancer_id))]
+
+      // Fetch tasks data
+      const { data: tasksData, error: tasksError } = await supabase
+        .from("tasks")
+        .select(`
+          id,
+          title,
+          description,
+          category,
+          budget_min,
+          budget_max,
+          currency,
+          client_id
+        `)
+        .in("id", taskIds)
+
+      if (tasksError) {
+        console.error("❌ Error fetching tasks:", tasksError)
+        throw tasksError
+      }
+
+      // Fetch users data
+      const { data: usersData, error: usersError } = await supabase
+        .from("users")
+        .select(`
+          id,
+          name,
+          email,
+          avatar_url,
+          rating,
+          completed_tasks,
+          skills,
+          is_verified
+        `)
+        .in("id", userIds)
+
+      if (usersError) {
+        console.error("❌ Error fetching users:", usersError)
+        throw usersError
+      }
+
+      // Create lookup maps
+      const tasksMap = new Map(tasksData?.map(task => [task.id, task]) || [])
+      const usersMap = new Map(usersData?.map(user => [user.id, user]) || [])
+
       // Transform the data to match our interface
       const transformedData = (data || []).map((app: any) => {
+        const task = tasksMap.get(app.task_id)
+        const freelancer = usersMap.get(app.freelancer_id)
+        const client = task ? usersMap.get(task.client_id) : null
+        
         // Ensure freelancer is always set for sent applications
-        let freelancer = app.freelancer;
-        if (!freelancer && app.freelancer_id === user.id) {
-          freelancer = {
+        let finalFreelancer = freelancer;
+        if (!finalFreelancer && app.freelancer_id === user.id) {
+          finalFreelancer = {
             id: user.id,
             name: user.name,
             email: user.email,
@@ -432,6 +425,7 @@ export function useApplicationsReal() {
             is_verified: user.isVerified || false,
           };
         }
+        
         return {
           id: app.id,
           task_id: app.task_id,
@@ -446,24 +440,56 @@ export function useApplicationsReal() {
           response_date: app.response_date,
           created_at: app.created_at,
           updated_at: app.updated_at,
-          task: {
-            id: app.task?.id,
-            title: app.task?.title,
-            description: app.task?.description,
-            category: app.task?.category,
-            budget_min: app.task?.budget_min,
-            budget_max: app.task?.budget_max,
-            currency: app.task?.currency,
+          task: task ? {
+            id: task.id,
+            title: task.title,
+            description: task.description,
+            category: task.category,
+            budget_min: task.budget_min,
+            budget_max: task.budget_max,
+            currency: task.currency,
+            client: client ? {
+              id: client.id,
+              name: client.name,
+              email: client.email,
+              avatar_url: client.avatar_url,
+              rating: client.rating || 0,
+              is_verified: client.is_verified || false,
+            } : {
+              id: "unknown",
+              name: "Unknown Client",
+              email: "unknown@example.com",
+              avatar_url: undefined,
+              rating: 0,
+              is_verified: false,
+            },
+          } : {
+            id: "unknown",
+            title: "Unknown Task",
+            description: "Task details not available",
+            category: "Unknown",
+            budget_min: 0,
+            budget_max: 0,
+            currency: "NGN",
             client: {
-              id: app.task?.client?.id,
-              name: app.task?.client?.name,
-              email: app.task?.client?.email,
-              avatar_url: app.task?.client?.avatar_url,
-              rating: app.task?.client?.rating || 0,
-              is_verified: app.task?.client?.is_verified || false,
+              id: "unknown",
+              name: "Unknown Client",
+              email: "unknown@example.com",
+              avatar_url: undefined,
+              rating: 0,
+              is_verified: false,
             },
           },
-          freelancer,
+          freelancer: finalFreelancer || {
+            id: "unknown",
+            name: "Unknown Freelancer",
+            email: "unknown@example.com",
+            avatar_url: undefined,
+            rating: 0,
+            completed_tasks: 0,
+            skills: [],
+            is_verified: false,
+          },
         };
       })
 

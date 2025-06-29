@@ -32,7 +32,19 @@ export default function DashboardPage() {
   const [isAccepting, setIsAccepting] = useState(false)
 
   // Filter applications to only show ones the current user has sent (as freelancer)
-  const myApplications = applications.filter(app => app.freelancer_id === user?.id)
+  const myApplications = (applications as any[]).filter(app => app.freelancer_id === user?.id)
+  
+  // Debug logging
+  console.log("🔍 Dashboard Debug:", {
+    userId: user?.id,
+    userIdType: typeof user?.id,
+    userIdLength: user?.id?.length,
+    applicationsCount: applications.length,
+    myApplicationsCount: myApplications.length,
+    firstApplication: applications[0],
+    userType: user?.userType,
+    applications: applications
+  })
 
   useEffect(() => {
     // Only redirect if we're not loading and there's definitely no user

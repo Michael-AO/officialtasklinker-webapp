@@ -55,6 +55,15 @@ export default function ApplicationsPage() {
 
   // Only show applications the user has sent (applied to)
   const sentApplications = applications.filter(app => app.freelancer?.id === user?.id)
+  
+  // Debug logging
+  console.log("🔍 Applications Page Debug:", {
+    userId: user?.id,
+    applicationsCount: applications.length,
+    sentApplicationsCount: sentApplications.length,
+    firstApplication: applications[0],
+    userType: user?.userType
+  })
 
   const filteredApplications = sentApplications.filter((app) => {
     const matchesSearch = app.task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
