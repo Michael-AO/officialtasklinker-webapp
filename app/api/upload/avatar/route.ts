@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const fileExtension = file.name.split('.').pop()
-    const fileName = `avatars/${userId}/${Date.now()}.${fileExtension}`
+    const fileName = `${userId}/${Date.now()}.${fileExtension}`
 
     console.log("📁 Uploading file:", fileName)
 
