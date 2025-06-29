@@ -80,15 +80,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const proposedAmount = Number.parseFloat(proposed_budget.toString())
     console.log("=== API: Proposed amount:", proposedAmount, "Budget range:", task.budget_min, "-", task.budget_max)
 
-    if (task.budget_min && proposedAmount < task.budget_min) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Proposed budget must be at least ₦${task.budget_min.toLocaleString()}`,
-        },
-        { status: 400 },
-      )
-    }
+    // Allow any competitive price - removed minimum budget restriction
+    // Users can now propose any price they want to be competitive
 
     if (task.budget_max && proposedAmount > task.budget_max) {
       return NextResponse.json(
