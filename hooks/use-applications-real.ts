@@ -16,7 +16,6 @@ export interface ApplicationWithDetails {
   status: "pending" | "accepted" | "rejected" | "withdrawn" | "interviewing"
   applied_date: string
   response_date?: string
-  feedback?: string
   created_at: string
   updated_at: string
   // Joined data
@@ -111,7 +110,6 @@ const generateMockApplications = (userType: "client" | "freelancer", userId: str
       status: "accepted",
       applied_date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
       response_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      feedback: "Great portfolio! We're excited to work with you.",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       task: {
@@ -158,7 +156,6 @@ const generateMockApplications = (userType: "client" | "freelancer", userId: str
       status: "interviewing",
       applied_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       response_date: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-      feedback: "Your experience looks great! Let's schedule a call to discuss the project requirements.",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       task: {
@@ -205,8 +202,6 @@ const generateMockApplications = (userType: "client" | "freelancer", userId: str
       status: "rejected",
       applied_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
       response_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      feedback:
-        "Thank you for your application. We decided to go with someone who has more experience in our specific industry.",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       task: {
@@ -330,7 +325,6 @@ export function useApplicationsReal() {
           created_at,
           updated_at,
           response_date,
-          feedback,
           task:tasks (
             id,
             title,
@@ -378,7 +372,6 @@ export function useApplicationsReal() {
           created_at,
           updated_at,
           response_date,
-          feedback,
           task:tasks!inner (
             id,
             title,
@@ -451,7 +444,6 @@ export function useApplicationsReal() {
           status: app.status,
           applied_date: app.created_at,
           response_date: app.response_date,
-          feedback: app.feedback,
           created_at: app.created_at,
           updated_at: app.updated_at,
           task: {
@@ -506,7 +498,6 @@ export function useApplicationsReal() {
   const updateApplicationStatus = async (
     applicationId: string,
     status: "accepted" | "rejected" | "interviewing",
-    feedback?: string,
   ) => {
     try {
       if (isUsingRealData) {
@@ -514,7 +505,6 @@ export function useApplicationsReal() {
           .from("applications")
           .update({
             status,
-            feedback,
             response_date: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
@@ -526,7 +516,7 @@ export function useApplicationsReal() {
       // Update local state
       setApplications((prev) =>
         prev.map((app) =>
-          app.id === applicationId ? { ...app, status, feedback, response_date: new Date().toISOString() } : app,
+          app.id === applicationId ? { ...app, status, response_date: new Date().toISOString() } : app,
         ),
       )
 
@@ -584,6 +574,14 @@ export function useApplicationsReal() {
         ? Math.round((applications.filter((app) => app.status === "accepted").length / applications.length) * 100)
         : 0,
   }
+
+  useEffect(() => {
+    // Poll every 10 seconds for new data
+    const interval = setInterval(() => {
+      fetchApplications();
+    }, 10000); // 10 seconds
+    return () => clearInterval(interval);
+  }, [fetchApplications]);
 
   return {
     applications,
