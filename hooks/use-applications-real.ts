@@ -12,7 +12,7 @@ export interface ApplicationWithDetails {
   budget_type: "fixed" | "hourly"
   estimated_duration: string
   cover_letter: string
-  attachments: string[]
+  attachments?: string[]
   status: "pending" | "accepted" | "rejected" | "withdrawn" | "interviewing"
   applied_date: string
   response_date?: string
@@ -326,7 +326,6 @@ export function useApplicationsReal() {
           budget_type,
           estimated_duration,
           cover_letter,
-          attachments,
           status,
           created_at,
           updated_at,
@@ -375,7 +374,6 @@ export function useApplicationsReal() {
           budget_type,
           estimated_duration,
           cover_letter,
-          attachments,
           status,
           created_at,
           updated_at,
