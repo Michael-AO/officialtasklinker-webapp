@@ -3,7 +3,7 @@
 import type React from "react"
 import { supabase } from "@/lib/supabase"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Zap, User, Briefcase } from "lucide-react"
@@ -31,9 +31,18 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [otpSent, setOtpSent] = useState(false)
+  const [signupCooldown, setSignupCooldown] = useState(0)
 
   const { login } = useAuth()
   const router = useRouter()
+
+  // Cooldown timer for signup attempts
+  useEffect(() => {
+    if (signupCooldown > 0) {
+      const timer = setTimeout(() => setSignupCooldown(signupCooldown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [signupCooldown])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -63,6 +72,14 @@ export default function SignupPage() {
     e.preventDefault()
     if (!validateForm()) return
 
+    // Check if we're in cooldown
+    if (signupCooldown > 0) {
+      setErrors({
+        general: `Please wait ${signupCooldown} seconds before trying again.`
+      })
+      return
+    }
+
     setIsLoading(true)
     setErrors({})
 
@@ -88,6 +105,13 @@ export default function SignupPage() {
 
       if (authError) {
         console.error("Supabase auth error:", authError)
+        
+        // Handle specific rate limit errors
+        if (authError.message?.includes("rate limit") || authError.message?.includes("429")) {
+          setSignupCooldown(60) // 60 second cooldown
+          throw new Error("Too many signup attempts. Please wait 60 seconds and try again, or use a different email address.")
+        }
+        
         throw authError
       }
       console.log("User created successfully:", authData)
@@ -368,8 +392,8 @@ export default function SignupPage() {
             </div>
             {errors.agreeToTerms && <p className="text-sm text-red-600">{errors.agreeToTerms}</p>}
 
-            <Button type="submit" className="w-full" disabled={isLoading || !isFormValid}>
-              {isLoading ? "Creating account..." : "Create account"}
+            <Button type="submit" className="w-full" disabled={isLoading || !isFormValid || signupCooldown > 0}>
+              {isLoading ? "Creating account..." : signupCooldown > 0 ? `Wait ${signupCooldown}s...` : "Create account"}
             </Button>
           </form>
 
