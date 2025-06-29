@@ -22,18 +22,25 @@ import {
 import {
   Search,
   Filter,
-  Eye,
-  Edit,
-  Trash2,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  DollarSign,
   Calendar,
-  User,
+  Clock,
+  Users,
+  Eye,
+  Star,
+  CheckCircle,
+  X,
+  MoreHorizontal,
+  Download,
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  UserCheck,
   FileText,
+  MessageSquare,
+  Settings,
+  User,
 } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import { supabase } from "@/lib/supabase"
 import { toast } from "@/hooks/use-toast"
 
@@ -234,7 +241,7 @@ export default function AdminTasksPage() {
       case "completed":
         return <CheckCircle className="h-4 w-4" />
       case "cancelled":
-        return <XCircle className="h-4 w-4" />
+        return <X className="h-4 w-4" />
       case "disputed":
         return <AlertTriangle className="h-4 w-4" />
       default:
@@ -294,7 +301,7 @@ export default function AdminTasksPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <NairaIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>

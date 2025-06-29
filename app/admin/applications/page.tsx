@@ -9,17 +9,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  Eye,
-  MessageSquare,
-  Star,
   Search,
   Filter,
   Calendar,
-  DollarSign,
+  Clock,
+  Users,
+  Eye,
+  Star,
+  CheckCircle,
+  X,
+  MoreHorizontal,
+  Download,
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  UserCheck,
+  FileText,
+  MessageSquare,
+  Settings,
 } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import { supabase } from "@/lib/supabase"
 import { toast } from "@/hooks/use-toast"
 
@@ -191,7 +200,7 @@ export default function AdminApplicationsPage() {
       case "accepted":
         return <CheckCircle className="h-4 w-4" />
       case "rejected":
-        return <XCircle className="h-4 w-4" />
+        return <X className="h-4 w-4" />
       default:
         return <Clock className="h-4 w-4" />
     }
@@ -394,7 +403,7 @@ export default function AdminApplicationsPage() {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>Applied {new Date(application.created_at).toLocaleDateString()}</span>
-                      <DollarSign className="h-4 w-4 ml-4" />
+                      <NairaIcon className="h-4 w-4 ml-4" />
                       <span>₦{(application.proposed_amount / 100).toLocaleString()}</span>
                     </div>
 

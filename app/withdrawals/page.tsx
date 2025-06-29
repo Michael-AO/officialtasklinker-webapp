@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
-import { DollarSign, CreditCard, Clock, CheckCircle, AlertTriangle, Plus, Download, Eye, Banknote } from "lucide-react"
+import { CreditCard, Clock, CheckCircle, AlertTriangle, Plus, Download, Eye, Banknote } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import { WithdrawalModal } from "@/components/withdrawal-modal"
 import { BankAccountModal } from "@/components/bank-account-modal"
 
@@ -161,7 +162,7 @@ export default function WithdrawalsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <NairaIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">₦{(availableBalance / 100).toLocaleString()}</div>

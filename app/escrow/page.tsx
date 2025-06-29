@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DollarSign, Shield, CheckCircle, Clock, AlertTriangle, Eye, MessageSquare, ExternalLink } from "lucide-react"
+import { Shield, CheckCircle, Clock, AlertTriangle, Eye, MessageSquare, ExternalLink } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import { EscrowDetailsModal } from "@/components/escrow-details-modal"
 import { PaymentModal } from "@/components/payment-modal"
 import { DisputeModal } from "@/components/dispute-modal"
@@ -102,7 +103,7 @@ export default function EscrowPage() {
       case "released":
         return <CheckCircle className="h-4 w-4" />
       case "refunded":
-        return <DollarSign className="h-4 w-4" />
+        return <NairaIcon className="h-4 w-4" />
       default:
         return <Clock className="h-4 w-4" />
     }

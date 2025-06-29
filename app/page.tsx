@@ -1,4 +1,5 @@
-import { ArrowRight, DollarSign, Shield, Users } from "lucide-react"
+import { ArrowRight, Shield, Users } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -357,7 +358,7 @@ export default function HomePage() {
               </Card>
               <Card>
                 <CardHeader>
-                  <DollarSign className="h-8 w-8" style={{ color: "#04A466" }} />
+                  <NairaIcon className="h-8 w-8" style={{ color: "#04A466" }} />
                   <CardTitle>Transparent Pricing</CardTitle>
                   <CardDescription>
                     No hidden fees. Clear pricing structure with competitive rates for both freelancers and clients.

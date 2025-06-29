@@ -2,7 +2,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarDays, DollarSign, Shield, CheckCircle } from "lucide-react"
+import { CalendarDays, Shield, CheckCircle } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 
 export default function PaymentsPage() {
   const escrowPayments = [
@@ -68,7 +69,7 @@ export default function PaymentsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <NairaIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$8,450</div>

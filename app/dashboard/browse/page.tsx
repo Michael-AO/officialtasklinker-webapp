@@ -13,7 +13,6 @@ import {
   Bookmark,
   Calendar,
   Clock,
-  DollarSign,
   Eye,
   Filter,
   MapPin,
@@ -24,6 +23,7 @@ import {
   TrendingUp,
   RefreshCw,
 } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import Link from "next/link"
 import { formatCurrency, getStatusColor, generateTaskCode } from "@/lib/api-utils"
 import { toast } from "@/hooks/use-toast"
@@ -311,7 +311,7 @@ export default function BrowseTasksPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg. Budget</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <NairaIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats.avgBudget)}</div>
@@ -331,7 +331,7 @@ export default function BrowseTasksPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <NairaIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats.totalBudget)}</div>
@@ -443,7 +443,7 @@ export default function BrowseTasksPage() {
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4" />
+                      <NairaIcon className="h-4 w-4" />
                       {formatCurrency(task.budget_max)}
                     </div>
                     <div className="flex items-center gap-1">

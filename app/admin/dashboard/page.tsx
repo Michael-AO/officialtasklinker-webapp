@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Users, FileText, CreditCard, TrendingUp, AlertTriangle, DollarSign, Eye, UserCheck } from "lucide-react"
+import { Users, FileText, CreditCard, TrendingUp, AlertTriangle, Eye, UserCheck } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
+import { NairaIcon } from "@/components/naira-icon"
 
 interface User {
   id: string
@@ -128,7 +129,7 @@ export default function AdminDashboard() {
       title: "Total Revenue",
       value: `₦${(stats.totalRevenue / 100).toLocaleString()}`,
       change: "+15%",
-      icon: DollarSign,
+      icon: NairaIcon,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
     },

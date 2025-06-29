@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, DollarSign, Calendar, MapPin, Star, Clock, FileText, Send, Loader2 } from "lucide-react"
+import { ArrowLeft, Calendar, MapPin, Star, Clock, FileText, Send, Loader2 } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
 
@@ -291,7 +292,7 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
+                  <NairaIcon className="h-4 w-4" />
                   {formatBudget(task.budget_min, task.budget_max)}
                 </div>
                 <div className="flex items-center gap-1">
@@ -515,7 +516,7 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
                 <span>Write a personalized cover letter</span>
               </div>
               <div className="flex items-start gap-2">
-                <DollarSign className="h-4 w-4 text-green-600 mt-0.5" />
+                <NairaIcon className="h-4 w-4 text-green-600 mt-0.5" />
                 <span>Propose a competitive price based on the fixed budget</span>
               </div>
               <div className="flex items-start gap-2">

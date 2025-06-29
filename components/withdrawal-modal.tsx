@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { DollarSign, CreditCard, AlertTriangle, Settings } from "lucide-react"
+import { CreditCard, AlertTriangle, Settings } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import { toast } from "@/hooks/use-toast"
 
 interface BankAccount {
@@ -118,7 +119,7 @@ export function WithdrawalModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <NairaIcon className="h-5 w-5" />
             Request Withdrawal
           </DialogTitle>
           <DialogDescription>Transfer your available balance to your bank account</DialogDescription>

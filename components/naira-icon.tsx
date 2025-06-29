@@ -1,11 +1,13 @@
 interface NairaIconProps {
     className?: string
+    style?: React.CSSProperties
   }
   
-  export function NairaIcon({ className = "h-4 w-4" }: NairaIconProps) {
+  export function NairaIcon({ className = "h-4 w-4", style }: NairaIconProps) {
     return (
       <svg
         className={className}
+        style={style}
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

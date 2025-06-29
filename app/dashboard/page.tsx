@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CalendarDays, FileText, Users } from "lucide-react"
+import { NairaIcon } from "@/components/naira-icon"
 import { ProfileCompletionWizard } from "@/components/profile-completion-wizard"
 import { SmartTaskMatching } from "@/components/smart-task-matching"
 import Link from "next/link"
@@ -21,7 +22,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { formatNairaCompact } from "@/lib/currency"
-import { NairaIcon } from "@/components/naira-icon"
 
 export default function DashboardPage() {
   const { user } = useAuth()
