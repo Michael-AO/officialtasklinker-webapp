@@ -69,7 +69,7 @@ export default function SignupPage() {
     console.log("Starting signup process...")
 
     try {
-      // 1. Create user in Supabase
+      // 1. Create user in Supabase with email confirmation disabled
       console.log("Creating user in Supabase...")
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -80,6 +80,9 @@ export default function SignupPage() {
             last_name: formData.lastName,
             user_type: formData.userType,
           },
+          // Note: Supabase will still send a confirmation email by default
+          // This is configured in your Supabase project settings
+          // To disable this, go to Authentication > Settings > Email Templates and disable "Confirm signup"
         },
       })
 

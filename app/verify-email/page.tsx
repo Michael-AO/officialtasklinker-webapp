@@ -357,7 +357,8 @@ export default function VerifyEmailPage() {
 
           <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-xs text-blue-800">
-              <strong>Demo tip:</strong> Enter any 6-digit number to verify
+              <strong>Note:</strong> You may receive two emails - one from Supabase and one from Tasklinkers. 
+              Use the 6-digit verification code from the Tasklinkers email to verify your account.
             </p>
           </div>
         </CardContent>
