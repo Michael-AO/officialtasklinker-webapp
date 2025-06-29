@@ -25,21 +25,28 @@ CREATE INDEX IF NOT EXISTS idx_portfolio_items_created_at ON portfolio_items(cre
 -- Enable RLS
 ALTER TABLE portfolio_items ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (to avoid conflicts)
+DROP POLICY IF EXISTS "Users can view their own portfolio items" ON portfolio_items;
+DROP POLICY IF EXISTS "Users can insert their own portfolio items" ON portfolio_items;
+DROP POLICY IF EXISTS "Users can update their own portfolio items" ON portfolio_items;
+DROP POLICY IF EXISTS "Users can delete their own portfolio items" ON portfolio_items;
+DROP POLICY IF EXISTS "Public can view portfolio items" ON portfolio_items;
+
 -- Create RLS policies
-CREATE POLICY IF NOT EXISTS "Users can view their own portfolio items" ON portfolio_items
+CREATE POLICY "Users can view their own portfolio items" ON portfolio_items
   FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can insert their own portfolio items" ON portfolio_items
+CREATE POLICY "Users can insert their own portfolio items" ON portfolio_items
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can update their own portfolio items" ON portfolio_items
+CREATE POLICY "Users can update their own portfolio items" ON portfolio_items
   FOR UPDATE USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can delete their own portfolio items" ON portfolio_items
+CREATE POLICY "Users can delete their own portfolio items" ON portfolio_items
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Allow public read access for portfolio items
-CREATE POLICY IF NOT EXISTS "Public can view portfolio items" ON portfolio_items
+CREATE POLICY "Public can view portfolio items" ON portfolio_items
   FOR SELECT USING (true);
 
 -- Verify the table was created
