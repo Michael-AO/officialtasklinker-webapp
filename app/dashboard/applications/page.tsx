@@ -64,7 +64,9 @@ export default function ApplicationsPage() {
     loading,
     error,
     stats,
-    authLoading
+    authLoading,
+    withdrawnCount: applications.filter(a => a.status === "withdrawn").length,
+    allStatuses: applications.map(a => a.status)
   })
 
   // Test auth context
@@ -105,7 +107,11 @@ export default function ApplicationsPage() {
     const matchesStatus = statusFilter === "all" || app.status === statusFilter
     const matchesCategory = categoryFilter === "all" || app.task.category === categoryFilter
 
-    return matchesSearch && matchesStatus && matchesCategory
+    // Exclude withdrawn applications from all tabs except the "withdrawn" tab
+    const isWithdrawn = app.status === "withdrawn"
+    const shouldShowWithdrawn = statusFilter === "withdrawn"
+    
+    return matchesSearch && matchesStatus && matchesCategory && (shouldShowWithdrawn || !isWithdrawn)
   })
 
   const handleWithdrawApplication = async (applicationId: string) => {
@@ -276,7 +282,7 @@ export default function ApplicationsPage() {
         {/* Status Filter Tabs */}
         <Tabs value={statusFilter} onValueChange={setStatusFilter}>
           <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="all">All ({filteredApplications.length})</TabsTrigger>
+            <TabsTrigger value="all">All ({applications.filter(a => a.status !== "withdrawn").length})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({filteredApplications.filter(a => a.status === "pending").length})</TabsTrigger>
             <TabsTrigger value="accepted">Accepted ({filteredApplications.filter(a => a.status === "accepted").length})</TabsTrigger>
             <TabsTrigger value="interviewing">Interviewing ({filteredApplications.filter(a => a.status === "interviewing").length})</TabsTrigger>
