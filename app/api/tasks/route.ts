@@ -3,7 +3,20 @@ import { createServerClient } from "@/lib/supabase"
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("API: Starting tasks fetch...")
+    
+    // Check environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("API: Missing environment variables")
+      return NextResponse.json({ 
+        success: false, 
+        error: "Database configuration error" 
+      }, { status: 500 })
+    }
+
     const supabase = createServerClient()
+    console.log("API: Supabase client created successfully")
+    
     const { searchParams } = new URL(request.url)
 
     const category = searchParams.get("category")
@@ -99,12 +112,18 @@ export async function GET(request: NextRequest) {
     const startIndex = (page - 1) * limit
     query = query.range(startIndex, startIndex + limit - 1)
 
+    console.log("API: Executing database query...")
     const { data: tasks, error, count } = await query
 
     if (error) {
       console.error("Database query error:", error)
-      return NextResponse.json({ success: false, error: "Failed to fetch tasks" }, { status: 500 })
+      return NextResponse.json({ 
+        success: false, 
+        error: `Database error: ${error.message}` 
+      }, { status: 500 })
     }
+
+    console.log("API: Database query successful, processing data...")
 
     // Transform data to match expected format
     const transformedTasks =
@@ -142,6 +161,9 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("API: Tasks fetch error:", error)
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ 
+      success: false, 
+      error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    }, { status: 500 })
   }
 }
