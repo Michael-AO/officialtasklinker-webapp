@@ -41,7 +41,7 @@ const categories = [
 ]
 
 const experienceLevels = ["All Levels", "entry", "intermediate", "expert"]
-const budgetRanges = ["All Budgets", "Under $500", "$500 - $1,000", "$1,000 - $2,500", "$2,500 - $5,000", "Over $5,000"]
+const budgetRanges = ["All Budgets", "Under ₦50,000", "₦50,000 - ₦100,000", "₦100,000 - ₦250,000", "₦250,000 - ₦500,000", "Over ₦500,000"]
 
 interface Task {
   id: string
@@ -108,23 +108,23 @@ export default function BrowseTasksPage() {
       // Map budget ranges to min/max values
       if (selectedBudget !== "All Budgets") {
         switch (selectedBudget) {
-          case "Under $500":
-            params.append("budget_max", "500")
+          case "Under ₦50,000":
+            params.append("budget_max", "50000")
             break
-          case "$500 - $1,000":
-            params.append("budget_min", "500")
-            params.append("budget_max", "1000")
+          case "₦50,000 - ₦100,000":
+            params.append("budget_min", "50000")
+            params.append("budget_max", "100000")
             break
-          case "$1,000 - $2,500":
-            params.append("budget_min", "1000")
-            params.append("budget_max", "2500")
+          case "₦100,000 - ₦250,000":
+            params.append("budget_min", "100000")
+            params.append("budget_max", "250000")
             break
-          case "$2,500 - $5,000":
-            params.append("budget_min", "2500")
-            params.append("budget_max", "5000")
+          case "₦250,000 - ₦500,000":
+            params.append("budget_min", "250000")
+            params.append("budget_max", "500000")
             break
-          case "Over $5,000":
-            params.append("budget_min", "5000")
+          case "Over ₦500,000":
+            params.append("budget_min", "500000")
             break
         }
       }

@@ -1,7 +1,7 @@
 // Utility functions for API calls and data formatting
 
-export function formatCurrency(amount: number, currency = "USD"): string {
-    return new Intl.NumberFormat("en-US", {
+export function formatCurrency(amount: number, currency = "NGN"): string {
+    return new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency,
     }).format(amount)
@@ -127,16 +127,16 @@ export function formatCurrency(amount: number, currency = "USD"): string {
   // Budget range utilities
   export function getBudgetRangeFilter(range: string) {
     switch (range) {
-      case "Under $500":
-        return { min: 0, max: 500 }
-      case "$500 - $1,000":
-        return { min: 500, max: 1000 }
-      case "$1,000 - $2,500":
-        return { min: 1000, max: 2500 }
-      case "$2,500 - $5,000":
-        return { min: 2500, max: 5000 }
-      case "Over $5,000":
-        return { min: 5000, max: undefined }
+      case "Under ₦50,000":
+        return { min: 0, max: 50000 }
+      case "₦50,000 - ₦100,000":
+        return { min: 50000, max: 100000 }
+      case "₦100,000 - ₦250,000":
+        return { min: 100000, max: 250000 }
+      case "₦250,000 - ₦500,000":
+        return { min: 250000, max: 500000 }
+      case "Over ₦500,000":
+        return { min: 500000, max: undefined }
       default:
         return undefined
     }
