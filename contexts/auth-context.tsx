@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (session?.user) {
             console.log("👤 User found in session:", session.user.id)
             
-            // Set basic user data immediately from session
+            // Set user state immediately
             const basicUserData: User = {
               id: session.user.id,
               email: session.user.email || "",
@@ -84,53 +84,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               bio: "",
               portfolio: [],
             }
-            
-            // Set user immediately to prevent loading state
             setUser(basicUserData)
+            setIsLoading(false) // Allow dashboard to render
             
-            // Load full profile data asynchronously (non-blocking)
-            setTimeout(async () => {
-              try {
-                console.log("📋 Loading full profile data...")
-                const profile = await UserProfileService.getProfile(session.user.id)
-                
-                if (profile) {
-                  console.log("✅ Full profile loaded successfully")
-                  
-                  // Update user with full profile data
-                  setUser(prevUser => prevUser ? {
-                    ...prevUser,
-                    name: profile.name,
-                    avatar: profile.avatar_url || prevUser.avatar,
-                    isVerified: profile.is_verified,
-                    joinDate: profile.join_date,
-                    completedTasks: profile.completed_tasks,
-                    rating: profile.rating,
-                    skills: profile.skills || [],
-                    bio: profile.bio || "",
-                    location: profile.location || undefined,
-                    hourlyRate: profile.hourly_rate || undefined,
-                  } : null)
-                } else {
-                  console.log("⚠️ No profile found in database, using session data")
-                }
-              } catch (profileError) {
-                console.warn("⚠️ Profile load error:", profileError)
-                // Keep using session data if profile loading fails
+            // Load profile in background
+            UserProfileService.getProfile(session.user.id).then(profile => {
+              if (profile) {
+                setUser(prevUser => prevUser ? {
+                  ...prevUser,
+                  name: profile.name,
+                  avatar: profile.avatar_url || prevUser.avatar,
+                  isVerified: profile.is_verified,
+                  joinDate: profile.join_date,
+                  completedTasks: profile.completed_tasks,
+                  rating: profile.rating,
+                  skills: profile.skills || [],
+                  bio: profile.bio || "",
+                  location: profile.location || undefined,
+                  hourlyRate: profile.hourly_rate || undefined,
+                } : null)
               }
-            }, 100) // Small delay to ensure basic user is set first
+            }).catch(profileError => {
+              console.warn("⚠️ Profile load error:", profileError)
+            })
             
-            // Load portfolio data asynchronously (non-blocking) with its own timeout
-            setTimeout(async () => {
+            // Load portfolio in background
+            (async () => {
               try {
-                console.log("📁 Loading portfolio data...")
                 const { data: portfolio, error: portfolioError } = await supabase
                   .from("portfolio_items")
                   .select("*")
                   .eq("user_id", session.user.id)
                   .order("is_featured", { ascending: false })
                   .order("created_at", { ascending: false })
-
                 if (!portfolioError && portfolio) {
                   const portfolioData = portfolio.map((item: any) => ({
                     id: item.id,
@@ -139,20 +125,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     image: item.image_url || item.file_url || "/placeholder.svg",
                     url: item.project_url,
                   }))
-                  console.log("📁 Portfolio loaded:", portfolioData.length, "items")
-                  
-                  // Update user with portfolio data
                   setUser(prevUser => prevUser ? {
                     ...prevUser,
                     portfolio: portfolioData
                   } : null)
-                } else if (portfolioError && portfolioError.code !== "42P01") {
-                  console.warn("⚠️ Portfolio load warning:", portfolioError.message)
                 }
               } catch (portfolioError) {
                 console.warn("⚠️ Portfolio load error:", portfolioError)
               }
-            }, 200) // Slightly longer delay for portfolio
+            })()
           } else {
             console.log("ℹ️ No active session found")
           }

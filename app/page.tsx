@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock, MapPin, Star } from "lucide-react"
+import { BrandLogo } from "@/components/brand-logo"
 
 export default function HomePage() {
   return (
