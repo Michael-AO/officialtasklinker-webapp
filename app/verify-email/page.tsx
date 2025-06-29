@@ -166,27 +166,36 @@ export default function VerifyEmailPage() {
       // 2. Delete used OTP
       await supabase.from("email_otps").delete().eq("email", email).eq("otp", verificationCode)
 
-      // 3. Get user data from Supabase auth to create/update user profile
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser()
+      // 3. Verify the OTP with Supabase (this will create/confirm the user)
+      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+        email: email,
+        token: verificationCode,
+        type: 'email'
+      })
 
-      if (authUser) {
-        // Create user record in the users table
-        const fullName = `${authUser.user_metadata?.first_name || ""} ${authUser.user_metadata?.last_name || ""}`.trim()
+      if (verifyError) {
+        console.error("OTP verification error:", verifyError)
+        throw new Error("Failed to verify OTP")
+      }
+
+      console.log("✅ OTP verified successfully:", verifyData)
+
+      // 4. Create user record in the users table
+      if (verifyData.user) {
+        const fullName = `${verifyData.user.user_metadata?.first_name || ""} ${verifyData.user.user_metadata?.last_name || ""}`.trim()
         
         console.log("🔍 Creating user record with name:", fullName)
         
         const { error: userCreateError } = await supabase
           .from("users")
           .upsert({
-            id: authUser.id,
-            email: authUser.email!,
-            name: fullName || authUser.email!.split("@")[0], // Fallback to email prefix if no name
-            user_type: (authUser.user_metadata?.user_type as "freelancer" | "client") || "freelancer",
-            avatar_url: authUser.user_metadata?.avatar_url || null,
+            id: verifyData.user.id,
+            email: verifyData.user.email!,
+            name: fullName || verifyData.user.email!.split("@")[0],
+            user_type: (verifyData.user.user_metadata?.user_type as "freelancer" | "client") || "freelancer",
+            avatar_url: verifyData.user.user_metadata?.avatar_url || null,
             is_verified: true,
-            phone: authUser.user_metadata?.phone || null,
+            phone: verifyData.user.user_metadata?.phone || null,
             bio: null,
             location: null,
             hourly_rate: null,
@@ -194,10 +203,10 @@ export default function VerifyEmailPage() {
             rating: 0,
             completed_tasks: 0,
             total_earned: 0,
-            join_date: authUser.created_at || new Date().toISOString(),
+            join_date: verifyData.user.created_at || new Date().toISOString(),
             last_active: new Date().toISOString(),
             is_active: true,
-            created_at: authUser.created_at || new Date().toISOString(),
+            created_at: verifyData.user.created_at || new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
 
@@ -209,13 +218,13 @@ export default function VerifyEmailPage() {
           console.log("✅ User record created successfully")
         }
 
-        // Create user object matching your User interface
+        // Create user object for auth context
         const userData = {
-          id: authUser.id,
-          email: authUser.email!,
-          name: fullName || authUser.email!.split("@")[0],
-          userType: (authUser.user_metadata?.user_type as "freelancer" | "client") || "freelancer",
-          avatar: authUser.user_metadata?.avatar_url || undefined,
+          id: verifyData.user.id,
+          email: verifyData.user.email!,
+          name: fullName || verifyData.user.email!.split("@")[0],
+          userType: (verifyData.user.user_metadata?.user_type as "freelancer" | "client") || "freelancer",
+          avatar: verifyData.user.user_metadata?.avatar_url || undefined,
           isVerified: true,
           joinDate: new Date().toISOString(),
           completedTasks: 0,
@@ -231,7 +240,7 @@ export default function VerifyEmailPage() {
         await updateProfile(userData)
       }
 
-      // 4. Show success and redirect
+      // 5. Show success and redirect
       setIsVerified(true)
       setTimeout(() => {
         router.push("/dashboard")

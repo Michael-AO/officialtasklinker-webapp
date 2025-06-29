@@ -69,20 +69,16 @@ export default function SignupPage() {
     console.log("Starting signup process...")
 
     try {
-      // 1. Create user in Supabase with email confirmation disabled
-      console.log("Creating user in Supabase...")
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // 1. Use OTP-only flow instead of signUp to avoid duplicate emails
+      console.log("Sending OTP email...")
+      const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
         email: formData.email,
-        password: formData.password,
         options: {
           data: {
             first_name: formData.firstName,
             last_name: formData.lastName,
             user_type: formData.userType,
           },
-          // Note: To completely disable Supabase's automatic email confirmation,
-          // you need to configure this in your Supabase project settings:
-          // Go to Authentication > Settings > Email Templates and disable "Confirm signup"
         },
       })
 
@@ -90,9 +86,9 @@ export default function SignupPage() {
         console.error("Supabase auth error:", authError)
         throw authError
       }
-      console.log("User created successfully:", authData)
+      console.log("OTP email sent successfully:", authData)
 
-      // 2. Generate OTP
+      // 2. Generate OTP for our custom verification
       const otp = Math.floor(100000 + Math.random() * 900000).toString()
       console.log("Generated OTP:", otp) // For development testing
 
@@ -110,8 +106,8 @@ export default function SignupPage() {
       }
       console.log("OTP stored successfully")
 
-      // 4. Send OTP email via Brevo API
-      console.log("Attempting to send OTP email...")
+      // 4. Send custom OTP email via Brevo API
+      console.log("Sending custom OTP email...")
       const emailResponse = await fetch("/api/send-otp", {
         method: "POST",
         headers: {
@@ -130,29 +126,12 @@ export default function SignupPage() {
       if (!emailResponse.ok) {
         console.error("Email sending failed:", emailResult)
         // Don't fail the entire signup if email fails
-        console.warn("Email sending failed, but user was created. OTP:", otp)
+        console.warn("Email sending failed, but OTP was sent via Supabase. OTP:", otp)
       } else {
-        console.log("Email sent successfully!")
+        console.log("Custom email sent successfully!")
       }
 
-      // 5. Create temporary user object for auth context (not verified yet)
-      const tempUser = {
-        id: authData.user?.id || "",
-        email: formData.email,
-        name: `${formData.firstName} ${formData.lastName}`,
-        userType: formData.userType,
-        isVerified: false,
-        joinDate: new Date().toISOString(),
-        completedTasks: 0,
-        rating: 0,
-        skills: [],
-        bio: "",
-      }
-
-      // Don't login yet - wait for verification
-      // await login(tempUser)
-
-      // 6. Show success message and redirect
+      // 5. Show success message and redirect
       setOtpSent(true)
       console.log("Redirecting to verify-email page...")
 
