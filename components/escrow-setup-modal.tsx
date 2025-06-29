@@ -102,21 +102,22 @@ export function EscrowSetupModal({
                 <div className="flex items-start gap-3">
                   <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
                   <div>
-                    <p className="font-medium text-blue-900">Secure Escrow Protection</p>
+                    <p className="font-medium text-blue-900">Escrow setup is <strong>coming soon</strong>.</p>
                     <p className="text-sm text-blue-700 mt-1">
-                      Your payment will be held securely until work is completed to your satisfaction.
+                      You'll be able to secure your payments here in the future.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-col items-stretch">
                 <Button variant="outline" onClick={onClose} className="flex-1">
                   Cancel
                 </Button>
-                <Button onClick={handleCreateEscrow} className="flex-1">
+                <Button disabled className="flex-1">
                   Create Escrow - {formatNaira(proposedBudget)}
                 </Button>
+                <p className="text-xs text-muted-foreground mt-1 text-center">Coming soon</p>
               </div>
             </>
           )}

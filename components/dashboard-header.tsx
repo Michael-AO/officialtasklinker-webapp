@@ -42,7 +42,11 @@ export function DashboardHeader() {
           </span>
         </div>
 
-        <NotificationDropdown />
+        {/* <NotificationDropdown /> */}
+
+        <span className="opacity-50 pointer-events-none">
+          <NotificationDropdown />
+        </span>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
