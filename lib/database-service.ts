@@ -273,10 +273,18 @@ export class DashboardService {
             budget_min,
             budget_max,
             currency,
-            client_id
+            client_id,
+            client:users!tasks_client_id_fkey (
+              id,
+              name,
+              email,
+              avatar_url,
+              rating,
+              is_verified
+            )
           )
         `)
-        .eq("task.client_id", formattedUserId)
+        .eq("freelancer_id", formattedUserId)
         .order("created_at", { ascending: false })
         .limit(5)
 
@@ -319,6 +327,14 @@ export class DashboardService {
           budget_min: app.task.budget_min,
           budget_max: app.task.budget_max,
           currency: app.task.currency,
+          client: app.task.client ? {
+            id: app.task.client.id,
+            name: app.task.client.name,
+            email: app.task.client.email,
+            avatar_url: app.task.client.avatar_url,
+            rating: app.task.client.rating || 0,
+            is_verified: app.task.client.is_verified || false,
+          } : null,
         } : null,
       }))
 

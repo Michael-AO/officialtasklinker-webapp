@@ -31,6 +31,9 @@ export default function DashboardPage() {
   const [showAcceptDialog, setShowAcceptDialog] = useState(false)
   const [isAccepting, setIsAccepting] = useState(false)
 
+  // Filter applications to only show ones the current user has sent (as freelancer)
+  const myApplications = applications.filter(app => app.freelancer_id === user?.id)
+
   useEffect(() => {
     // Only redirect if we're not loading and there's definitely no user
     if (!isLoading && user === null) {
@@ -178,7 +181,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Recent Applications</CardTitle>
-                <CardDescription>People who applied to your tasks</CardDescription>
+                <CardDescription>Tasks you've applied to</CardDescription>
               </div>
               <Button 
                 variant="outline" 
@@ -195,31 +198,30 @@ export default function DashboardPage() {
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
               </div>
-            ) : applications.length > 0 ? (
+            ) : myApplications.length > 0 ? (
               <>
-                {applications.slice(0, 3).map((application: any) => (
+                {myApplications.slice(0, 3).map((application: any) => (
                   <div key={application.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={application.freelancer?.avatar_url || "/placeholder.svg"} />
+                        <AvatarImage src={application.task?.client?.avatar_url || "/placeholder.svg"} />
                         <AvatarFallback>
-                          {application.freelancer?.name
+                          {application.task?.client?.name
                             ?.split(" ")
                             .map((n: string) => n[0])
-                            .join("") || "U"}
+                            .join("") || "C"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{application.freelancer?.name || "Unknown"}</p>
-                        <p className="text-sm text-muted-foreground">{application.task?.title || "Task title"}</p>
+                        <p className="font-medium">{application.task?.title || "Task title"}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {application.task?.client?.name || "Client"} • {application.status}
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => handleViewApplication(application.id)}>
                         View
-                      </Button>
-                      <Button size="sm" onClick={() => handleAcceptApplication(application)}>
-                        Accept
                       </Button>
                     </div>
                   </div>
@@ -233,8 +235,11 @@ export default function DashboardPage() {
               </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <p className="font-medium">No recent applications</p>
-                <p className="text-sm">Applications will appear here when freelancers apply to your tasks</p>
+                <p className="font-medium">No applications yet</p>
+                <p className="text-sm">Start applying to tasks to see your applications here</p>
+                <Button asChild className="mt-2">
+                  <Link href="/dashboard/browse">Browse Tasks</Link>
+                </Button>
               </div>
             )}
           </CardContent>
