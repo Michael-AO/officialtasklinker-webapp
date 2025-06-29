@@ -85,6 +85,8 @@ export function useRealDashboardData() {
       try {
         setData((prev) => ({ ...prev, loading: true }))
 
+        console.log("🔍 Dashboard Data Fetch - Starting for user:", user.id)
+
         // Use the same approach as the applications hook to avoid relationship issues
         const { supabase } = await import("@/lib/supabase")
         
@@ -109,6 +111,12 @@ export function useRealDashboardData() {
           .order("created_at", { ascending: false })
           .limit(5)
 
+        console.log("🔍 Dashboard - Sent applications query result:", {
+          count: sentApplications?.length || 0,
+          error: sentError,
+          firstApp: sentApplications?.[0]
+        })
+
         if (sentError) {
           console.error("❌ Error fetching sent applications:", sentError)
           throw sentError
@@ -118,11 +126,19 @@ export function useRealDashboardData() {
         const taskIds = sentApplications?.map(app => app.task_id).filter(Boolean) || []
         let tasksData: any[] = []
         
+        console.log("🔍 Dashboard - Task IDs to fetch:", taskIds)
+        
         if (taskIds.length > 0) {
           const { data: tasks, error: tasksError } = await supabase
             .from("tasks")
             .select("id, title, description, category, budget_min, budget_max, currency, client_id")
             .in("id", taskIds)
+          
+          console.log("🔍 Dashboard - Tasks query result:", {
+            count: tasks?.length || 0,
+            error: tasksError,
+            firstTask: tasks?.[0]
+          })
           
           if (tasksError) {
             console.error("❌ Error fetching tasks:", tasksError)
@@ -135,11 +151,19 @@ export function useRealDashboardData() {
         const clientIds = tasksData?.map(task => task.client_id).filter(Boolean) || []
         let clientsData: any[] = []
         
+        console.log("🔍 Dashboard - Client IDs to fetch:", clientIds)
+        
         if (clientIds.length > 0) {
           const { data: clients, error: clientsError } = await supabase
             .from("users")
             .select("id, name, email, avatar_url, rating, is_verified")
             .in("id", clientIds)
+          
+          console.log("🔍 Dashboard - Clients query result:", {
+            count: clients?.length || 0,
+            error: clientsError,
+            firstClient: clients?.[0]
+          })
           
           if (clientsError) {
             console.error("❌ Error fetching clients:", clientsError)
@@ -222,8 +246,15 @@ export function useRealDashboardData() {
           }
         })
 
+        console.log("🔍 Dashboard - Transformed applications:", {
+          count: transformedApplications.length,
+          firstApp: transformedApplications[0]
+        })
+
         // Get stats
         const stats = await DashboardService.getStats(user.id)
+
+        console.log("🔍 Dashboard - Stats result:", stats)
 
         setData({
           stats,
