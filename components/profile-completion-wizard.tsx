@@ -235,13 +235,44 @@ export function ProfileCompletionWizard() {
         console.log("✅ Profile image uploaded:", avatarUrl)
       }
 
-      const portfolioForProfile = portfolioItems.map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        image: item.fileUrl || `/placeholder.svg?height=200&width=300`,
-        url: item.url,
-      }))
+      // Save portfolio items to database
+      console.log("📁 Saving portfolio items to database...")
+      const portfolioPromises = portfolioItems.map(async (item) => {
+        if (item.file) {
+          // TODO: Upload file to storage and get URL
+          // For now, use placeholder
+          item.fileUrl = "/placeholder.svg?height=200&width=300"
+        }
+
+        const portfolioData = {
+          title: item.title,
+          description: item.description,
+          image: item.fileUrl || item.url,
+          url: item.url,
+          file_url: item.fileUrl,
+          file_type: item.fileType,
+          file_name: item.fileName,
+          file_size: item.file?.size || 0,
+        }
+
+        const response = await fetch("/api/user/portfolio", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(portfolioData),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(`Failed to save portfolio item: ${errorData.error}`)
+        }
+
+        return response.json()
+      })
+
+      await Promise.all(portfolioPromises)
+      console.log("✅ Portfolio items saved to database")
 
       // Update profile with new avatar URL
       await updateProfile({
@@ -249,7 +280,6 @@ export function ProfileCompletionWizard() {
         skills: formData.skills,
         location: formData.location,
         hourlyRate: formData.hourlyRate ? Number(formData.hourlyRate) : undefined,
-        portfolio: portfolioForProfile,
         avatar: avatarUrl,
       })
 

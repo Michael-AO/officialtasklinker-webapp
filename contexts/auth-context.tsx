@@ -68,6 +68,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (profile) {
             console.log("✅ User profile loaded successfully")
+            
+            // Load portfolio data
+            let portfolioData: any[] = []
+            try {
+              const { data: portfolio, error: portfolioError } = await supabase
+                .from("portfolio_items")
+                .select("*")
+                .eq("user_id", session.user.id)
+                .order("is_featured", { ascending: false })
+                .order("created_at", { ascending: false })
+
+              if (!portfolioError && portfolio) {
+                portfolioData = portfolio.map((item: any) => ({
+                  id: item.id,
+                  title: item.title,
+                  description: item.description,
+                  image: item.image_url || item.file_url || "/placeholder.svg",
+                  url: item.project_url,
+                }))
+                console.log("📁 Portfolio loaded:", portfolioData.length, "items")
+              } else if (portfolioError && portfolioError.code !== "42P01") {
+                console.warn("⚠️ Portfolio load warning:", portfolioError.message)
+              }
+            } catch (portfolioError) {
+              console.warn("⚠️ Portfolio load error:", portfolioError)
+            }
+            
             const userData: User = {
               id: profile.id,
               email: profile.email,
@@ -82,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               bio: profile.bio || "",
               location: profile.location || undefined,
               hourlyRate: profile.hourly_rate || undefined,
-              portfolio: [],
+              portfolio: portfolioData,
             }
             setUser(userData)
           } else {
@@ -111,6 +138,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const profile = await UserProfileService.getProfile(session.user.id)
           
           if (profile) {
+            // Load portfolio data
+            let portfolioData: any[] = []
+            try {
+              const { data: portfolio, error: portfolioError } = await supabase
+                .from("portfolio_items")
+                .select("*")
+                .eq("user_id", session.user.id)
+                .order("is_featured", { ascending: false })
+                .order("created_at", { ascending: false })
+
+              if (!portfolioError && portfolio) {
+                portfolioData = portfolio.map((item: any) => ({
+                  id: item.id,
+                  title: item.title,
+                  description: item.description,
+                  image: item.image_url || item.file_url || "/placeholder.svg",
+                  url: item.project_url,
+                }))
+                console.log("📁 Portfolio loaded on sign in:", portfolioData.length, "items")
+              }
+            } catch (portfolioError) {
+              console.warn("⚠️ Portfolio load error on sign in:", portfolioError)
+            }
+            
             const userData: User = {
               id: profile.id,
               email: profile.email,
@@ -125,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               bio: profile.bio || "",
               location: profile.location || undefined,
               hourlyRate: profile.hourly_rate || undefined,
-              portfolio: [],
+              portfolio: portfolioData,
             }
             setUser(userData)
           }
