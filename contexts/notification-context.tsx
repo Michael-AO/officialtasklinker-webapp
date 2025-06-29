@@ -39,7 +39,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         title: "Application Accepted",
         message: "Your application for 'Website Development' has been accepted by Sarah Johnson.",
         timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-        read: false,
+        read: true,
         actionUrl: "/dashboard/tasks/task_001",
         actionLabel: "View Task",
         metadata: { taskId: "task_001", clientId: "client_001" },
@@ -50,7 +50,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         title: "New Task Match",
         message: "A new task matching your skills has been posted: 'Mobile App Development'.",
         timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-        read: false,
+        read: true,
         actionUrl: "/dashboard/browse/task_002",
         actionLabel: "View Task",
         metadata: { taskId: "task_002" },
@@ -61,7 +61,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         title: "Payment Released",
         message: "Payment of ₦50,000 has been released for completed task 'Logo Design'.",
         timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        read: false,
+        read: true,
         actionUrl: "/dashboard/payments",
         actionLabel: "View Payment",
         metadata: { amount: 50000, taskId: "task_003" },
