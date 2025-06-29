@@ -369,8 +369,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("✅ Profile updated successfully:", result)
 
       // Update local state
-      const updatedUser = { ...user, ...updates }
-      setUser(updatedUser)
+    const updatedUser = { ...user, ...updates }
+    setUser(updatedUser)
     } catch (error) {
       console.error("❌ Profile update error:", error)
       throw error

@@ -173,13 +173,12 @@ export default function ProfilePage() {
     if (!profile) return 0
 
     let completed = 0
-    const total = 5 // Total sections to complete
+    const total = 4 // Core profile sections (excluding portfolio)
 
     if (profile.bio && profile.bio.trim()) completed++
     if (profile.skills && profile.skills.length > 0) completed++
     if (profile.location && profile.location.trim()) completed++
     if (profile.hourly_rate && profile.hourly_rate > 0) completed++
-    if (profile.portfolio && profile.portfolio.length > 0) completed++
 
     return Math.round((completed / total) * 100)
   }

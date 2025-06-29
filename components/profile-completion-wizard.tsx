@@ -193,9 +193,9 @@ export function ProfileCompletionWizard() {
   const completionStatus = calculateCompletionStatus()
 
   const calculateOverallProgress = () => {
-    const totalSections = 5 // Include profile picture now
+    const totalSections = 4 // Core profile sections (excluding portfolio)
     const completedSections = Object.values(completionStatus).filter(
-      (status, index) => index < 4 && status, // Only count first 4 sections, skip verification
+      (status, index) => index < 3 && status, // Only count first 3 sections (bio, skills, location), skip portfolio and verification
     ).length
     const hasProfilePicture = !!(profileImage || user?.avatar)
     const totalCompleted = completedSections + (hasProfilePicture ? 1 : 0)
@@ -238,18 +238,39 @@ export function ProfileCompletionWizard() {
       // Save portfolio items to database
       console.log("📁 Saving portfolio items to database...")
       const portfolioPromises = portfolioItems.map(async (item) => {
+        let fileUrl = item.fileUrl || item.url
+
+        // Upload file to storage if it exists
         if (item.file) {
-          // TODO: Upload file to storage and get URL
-          // For now, use placeholder
-          item.fileUrl = "/placeholder.svg?height=200&width=300"
+          console.log("📤 Uploading portfolio file:", item.fileName)
+          
+          const formData = new FormData()
+          formData.append("file", item.file)
+
+          const uploadResponse = await fetch("/api/upload/portfolio", {
+            method: "POST",
+            headers: {
+              "user-id": user?.id || "",
+            },
+            body: formData,
+          })
+
+          if (uploadResponse.ok) {
+            const uploadResult = await uploadResponse.json()
+            fileUrl = uploadResult.data.url
+            console.log("✅ Portfolio file uploaded:", fileUrl)
+          } else {
+            console.warn("⚠️ Portfolio file upload failed, using placeholder")
+            fileUrl = "/placeholder.svg?height=200&width=300"
+          }
         }
 
         const portfolioData = {
           title: item.title,
           description: item.description,
-          image: item.fileUrl || item.url,
+          image: fileUrl,
           url: item.url,
-          file_url: item.fileUrl,
+          file_url: fileUrl,
           file_type: item.fileType,
           file_name: item.fileName,
           file_size: item.file?.size || 0,
