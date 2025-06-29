@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Add timeout to prevent hanging
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Auth initialization timeout")), 10000) // 10 second timeout
+          setTimeout(() => reject(new Error("Auth initialization timeout")), 30000) // 30 second timeout
         })
         
         const authPromise = (async () => {
@@ -96,37 +96,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // Set user immediately to prevent loading state
               setUser(userData)
               
-              // Load portfolio data asynchronously (non-blocking)
-              try {
-                console.log("📁 Loading portfolio data...")
-                const { data: portfolio, error: portfolioError } = await supabase
-                  .from("portfolio_items")
-                  .select("*")
-                  .eq("user_id", session.user.id)
-                  .order("is_featured", { ascending: false })
-                  .order("created_at", { ascending: false })
+              // Load portfolio data asynchronously (non-blocking) with its own timeout
+              setTimeout(async () => {
+                try {
+                  console.log("📁 Loading portfolio data...")
+                  const { data: portfolio, error: portfolioError } = await supabase
+                    .from("portfolio_items")
+                    .select("*")
+                    .eq("user_id", session.user.id)
+                    .order("is_featured", { ascending: false })
+                    .order("created_at", { ascending: false })
 
-                if (!portfolioError && portfolio) {
-                  const portfolioData = portfolio.map((item: any) => ({
-                    id: item.id,
-                    title: item.title,
-                    description: item.description,
-                    image: item.image_url || item.file_url || "/placeholder.svg",
-                    url: item.project_url,
-                  }))
-                  console.log("📁 Portfolio loaded:", portfolioData.length, "items")
-                  
-                  // Update user with portfolio data
-                  setUser(prevUser => prevUser ? {
-                    ...prevUser,
-                    portfolio: portfolioData
-                  } : null)
-                } else if (portfolioError && portfolioError.code !== "42P01") {
-                  console.warn("⚠️ Portfolio load warning:", portfolioError.message)
+                  if (!portfolioError && portfolio) {
+                    const portfolioData = portfolio.map((item: any) => ({
+                      id: item.id,
+                      title: item.title,
+                      description: item.description,
+                      image: item.image_url || item.file_url || "/placeholder.svg",
+                      url: item.project_url,
+                    }))
+                    console.log("📁 Portfolio loaded:", portfolioData.length, "items")
+                    
+                    // Update user with portfolio data
+                    setUser(prevUser => prevUser ? {
+                      ...prevUser,
+                      portfolio: portfolioData
+                    } : null)
+                  } else if (portfolioError && portfolioError.code !== "42P01") {
+                    console.warn("⚠️ Portfolio load warning:", portfolioError.message)
+                  }
+                } catch (portfolioError) {
+                  console.warn("⚠️ Portfolio load error:", portfolioError)
                 }
-              } catch (portfolioError) {
-                console.warn("⚠️ Portfolio load error:", portfolioError)
-              }
+              }, 100) // Small delay to ensure user is set first
             } else {
               console.log("⚠️ No profile found for user, but session exists")
             }
@@ -142,6 +144,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("❌ Error initializing auth:", error)
         // Set loading to false even if there's an error
         setIsLoading(false)
+        
+        // If it's a timeout error, try to get basic session info without portfolio
+        if (error instanceof Error && error.message.includes("timeout")) {
+          console.log("⏰ Auth timeout, trying fallback initialization...")
+          try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session?.user) {
+              console.log("🔄 Fallback: Found session, setting basic user data")
+              const basicUserData: User = {
+                id: session.user.id,
+                email: session.user.email || "",
+                name: session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+                userType: (session.user.user_metadata?.user_type as "freelancer" | "client") || "client",
+                avatar: session.user.user_metadata?.avatar_url || undefined,
+                isVerified: session.user.email_confirmed_at ? true : false,
+                joinDate: session.user.created_at || new Date().toISOString(),
+                completedTasks: 0,
+                rating: 0,
+                skills: [],
+                bio: "",
+                portfolio: [],
+              }
+              setUser(basicUserData)
+            }
+          } catch (fallbackError) {
+            console.error("❌ Fallback initialization also failed:", fallbackError)
+          }
+        }
       } finally {
         console.log("✅ Auth initialization complete")
         setIsLoading(false)
