@@ -166,18 +166,7 @@ export default function VerifyEmailPage() {
       // 2. Delete used OTP
       await supabase.from("email_otps").delete().eq("email", email).eq("otp", verificationCode)
 
-      // 3. Call Supabase's verifyOtp
-      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-        email: email,
-        token: verificationCode,
-        type: 'signup'
-      })
-
-      if (verifyError) {
-        throw new Error("Failed to verify OTP with Supabase")
-      }
-
-      // 4. Get user from users table using email
+      // 3. Get user from users table using email
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("*")
@@ -188,7 +177,7 @@ export default function VerifyEmailPage() {
         throw new Error("User not found. Please try signing up again.")
       }
 
-      // 5. Mark user as verified in your users table
+      // 4. Mark user as verified in your users table
       await supabase
         .from("users")
         .update({
@@ -197,7 +186,7 @@ export default function VerifyEmailPage() {
         })
         .eq("id", userData.id)
 
-      // 6. Update auth context
+      // 5. Update auth context
       const fullName = `${userData.first_name || ""} ${userData.last_name || ""}`.trim()
       const userDataForContext = {
         id: userData.id,
@@ -217,7 +206,7 @@ export default function VerifyEmailPage() {
       }
       await updateProfile(userDataForContext)
 
-      // 7. Show success and redirect
+      // 6. Show success and redirect
       setIsVerified(true)
       setTimeout(() => {
         router.push("/dashboard")
