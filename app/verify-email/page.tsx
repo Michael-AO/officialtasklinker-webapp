@@ -172,11 +172,48 @@ export default function VerifyEmailPage() {
       } = await supabase.auth.getUser()
 
       if (authUser) {
+        // Create user record in the users table
+        const fullName = `${authUser.user_metadata?.first_name || ""} ${authUser.user_metadata?.last_name || ""}`.trim()
+        
+        console.log("🔍 Creating user record with name:", fullName)
+        
+        const { error: userCreateError } = await supabase
+          .from("users")
+          .upsert({
+            id: authUser.id,
+            email: authUser.email!,
+            name: fullName || authUser.email!.split("@")[0], // Fallback to email prefix if no name
+            user_type: (authUser.user_metadata?.user_type as "freelancer" | "client") || "freelancer",
+            avatar_url: authUser.user_metadata?.avatar_url || null,
+            is_verified: true,
+            phone: authUser.user_metadata?.phone || null,
+            bio: null,
+            location: null,
+            hourly_rate: null,
+            skills: [],
+            rating: 0,
+            completed_tasks: 0,
+            total_earned: 0,
+            join_date: authUser.created_at || new Date().toISOString(),
+            last_active: new Date().toISOString(),
+            is_active: true,
+            created_at: authUser.created_at || new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+
+        if (userCreateError) {
+          console.error("❌ Error creating user record:", userCreateError)
+          // Don't fail the verification if user record creation fails
+          console.warn("User record creation failed, but verification continues")
+        } else {
+          console.log("✅ User record created successfully")
+        }
+
         // Create user object matching your User interface
         const userData = {
           id: authUser.id,
           email: authUser.email!,
-          name: `${authUser.user_metadata?.first_name || ""} ${authUser.user_metadata?.last_name || ""}`.trim(),
+          name: fullName || authUser.email!.split("@")[0],
           userType: (authUser.user_metadata?.user_type as "freelancer" | "client") || "freelancer",
           avatar: authUser.user_metadata?.avatar_url || undefined,
           isVerified: true,
