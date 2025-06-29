@@ -301,35 +301,125 @@ export function useApplicationsReal() {
     if (!user?.id) return []
 
     try {
-      let query = supabase
-        .from("applications")
-        .select(`
-          *,
-          task:tasks (
-            *,
-            client:users!tasks_client_id_fkey (*)
-          ),
-          freelancer:users!applications_freelancer_id_fkey (*)
-        `)
-        .order("created_at", { ascending: false })
+      console.log("🔍 Fetching applications for user:", user.id)
 
-      // Filter based on user type
-      if (user.user_type === "client") {
-        query = query.eq("task.client_id", user.id)
-      } else if (user.user_type === "freelancer") {
-        query = query.eq("freelancer_id", user.id)
+      // Convert user ID to UUID format if needed
+      let userId = user.id
+      if (userId.length < 36) {
+        const paddedId = userId.padStart(8, "0")
+        userId = `${paddedId}-0000-4000-8000-000000000000`
       }
 
-      const { data, error } = await query
+      console.log("🔍 Using user ID:", userId)
 
-      if (error) throw error
+      // Fetch applications where user is either the freelancer (sent) or the task owner (received)
+      const { data, error } = await supabase
+        .from("applications")
+        .select(`
+          id,
+          task_id,
+          freelancer_id,
+          proposed_budget,
+          budget_type,
+          estimated_duration,
+          cover_letter,
+          attachments,
+          status,
+          created_at,
+          updated_at,
+          response_date,
+          feedback,
+          task:tasks (
+            id,
+            title,
+            description,
+            category,
+            budget_min,
+            budget_max,
+            currency,
+            client_id,
+            client:users!tasks_client_id_fkey (
+              id,
+              name,
+              email,
+              avatar_url,
+              rating,
+              is_verified
+            )
+          ),
+          freelancer:users!applications_freelancer_id_fkey (
+            id,
+            name,
+            email,
+            avatar_url,
+            rating,
+            completed_tasks,
+            skills,
+            is_verified
+          )
+        `)
+        .or(`freelancer_id.eq.${userId},task.client_id.eq.${userId}`)
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("❌ Database error:", error)
+        throw error
+      }
+
+      console.log("✅ Fetched applications:", data?.length || 0)
+
+      // Transform the data to match our interface
+      const transformedData = (data || []).map((app: any) => ({
+        id: app.id,
+        task_id: app.task_id,
+        freelancer_id: app.freelancer_id,
+        proposed_budget: app.proposed_budget,
+        budget_type: app.budget_type || "fixed",
+        estimated_duration: app.estimated_duration || "",
+        cover_letter: app.cover_letter,
+        attachments: app.attachments || [],
+        status: app.status,
+        applied_date: app.created_at,
+        response_date: app.response_date,
+        feedback: app.feedback,
+        created_at: app.created_at,
+        updated_at: app.updated_at,
+        task: {
+          id: app.task?.id,
+          title: app.task?.title,
+          description: app.task?.description,
+          category: app.task?.category,
+          budget_min: app.task?.budget_min,
+          budget_max: app.task?.budget_max,
+          currency: app.task?.currency,
+          client: {
+            id: app.task?.client?.id,
+            name: app.task?.client?.name,
+            email: app.task?.client?.email,
+            avatar_url: app.task?.client?.avatar_url,
+            rating: app.task?.client?.rating || 0,
+            is_verified: app.task?.client?.is_verified || false,
+          },
+        },
+        freelancer: app.freelancer ? {
+          id: app.freelancer.id,
+          name: app.freelancer.name,
+          email: app.freelancer.email,
+          avatar_url: app.freelancer.avatar_url,
+          rating: app.freelancer.rating || 0,
+          completed_tasks: app.freelancer.completed_tasks || 0,
+          skills: app.freelancer.skills || [],
+          is_verified: app.freelancer.is_verified || false,
+        } : undefined,
+      }))
 
       setIsUsingRealData(true)
-      return data || []
+      return transformedData
     } catch (error) {
-      console.warn("Failed to fetch real applications, using mock data:", error)
+      console.error("❌ Error fetching applications:", error)
       setIsUsingRealData(false)
-      return generateMockApplications(user.user_type || "freelancer", user.id)
+      // Return empty array instead of mock data
+      return []
     }
   }
 
@@ -344,8 +434,8 @@ export function useApplicationsReal() {
       setApplications(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch applications")
-      // Fallback to mock data
-      setApplications(generateMockApplications(user.user_type || "freelancer", user.id))
+      // Don't fallback to mock data - just show empty state
+      setApplications([])
     } finally {
       setLoading(false)
     }

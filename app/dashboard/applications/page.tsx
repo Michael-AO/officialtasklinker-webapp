@@ -125,11 +125,6 @@ export default function ApplicationsPage() {
           <h1 className="text-3xl font-bold">Applications</h1>
           <p className="text-muted-foreground">
             Manage your job applications and received applications
-            {!isUsingRealData && (
-              <Badge variant="outline" className="ml-2">
-                Demo Data
-              </Badge>
-            )}
           </p>
         </div>
         <div className="flex gap-2">
