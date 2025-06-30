@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowRight, Shield, Users } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
 import Link from "next/link"
