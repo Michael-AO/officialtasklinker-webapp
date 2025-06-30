@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 export default function CallbackPageContent() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
   const [message, setMessage] = useState("")
+  const [debug, setDebug] = useState<string>("")
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -19,28 +20,37 @@ export default function CallbackPageContent() {
         // Get token from URL parameters
         const token = searchParams.get("token")
         const type = searchParams.get("type")
+        console.log("[Callback] token:", token, "type:", type)
+        setDebug(prev => prev + `Token: ${token}, Type: ${type}\n`)
 
         if (!token || type !== "signup") {
           setStatus("error")
-          setMessage("Invalid confirmation link")
+          setMessage("Invalid or missing confirmation link. Please check your email and try again.")
+          setDebug(prev => prev + `Error: Missing or invalid token/type.\n`)
           return
         }
 
         // Verify the token with Supabase
+        console.log("[Callback] Verifying token with Supabase...")
+        setDebug(prev => prev + `Verifying token with Supabase...\n`)
         const { data, error } = await supabase.auth.verifyOtp({
           token_hash: token,
           type: 'signup'
         })
+        console.log("[Callback] Supabase verifyOtp result:", { data, error })
+        setDebug(prev => prev + `Supabase verifyOtp result: ${JSON.stringify({ data, error })}\n`)
 
         if (error) {
-          console.error("Token verification error:", error)
           setStatus("error")
           setMessage("Invalid or expired confirmation link. Please try signing up again.")
+          setDebug(prev => prev + `Error: ${error.message || error}\n`)
           return
         }
 
-        if (data.user) {
+        if (data && data.user) {
           // Mark user as verified in our database
+          console.log("[Callback] Marking user as verified in DB:", data.user.email)
+          setDebug(prev => prev + `Marking user as verified in DB: ${data.user.email}\n`)
           const { error: updateError } = await supabase
             .from("users")
             .update({
@@ -50,13 +60,14 @@ export default function CallbackPageContent() {
             .eq("email", data.user.email)
 
           if (updateError) {
-            console.error("Database update error:", updateError)
+            console.error("[Callback] Database update error:", updateError)
+            setDebug(prev => prev + `Database update error: ${updateError.message || updateError}\n`)
             // Don't fail the whole process if database update fails
-            // The user is still confirmed in Supabase Auth
           }
 
           setStatus("success")
           setMessage("Email confirmed successfully! Redirecting to dashboard...")
+          setDebug(prev => prev + `Success! Redirecting...\n`)
 
           // Redirect to dashboard after a short delay
           setTimeout(() => {
@@ -65,11 +76,13 @@ export default function CallbackPageContent() {
         } else {
           setStatus("error")
           setMessage("Confirmation failed. Please try again.")
+          setDebug(prev => prev + `Error: No user returned from Supabase.\n`)
         }
-      } catch (error) {
-        console.error("Email confirmation error:", error)
+      } catch (error: any) {
+        console.error("[Callback] Email confirmation error:", error)
         setStatus("error")
         setMessage("An unexpected error occurred. Please try again.")
+        setDebug(prev => prev + `Exception: ${error.message || error}\n`)
       }
     }
 
@@ -111,7 +124,7 @@ export default function CallbackPageContent() {
                 <XCircle className="h-8 w-8 text-red-600" />
               </div>
               <CardTitle className="text-2xl text-red-600">Confirmation Failed</CardTitle>
-              <CardDescription>We couldn't verify your email address</CardDescription>
+              <CardDescription>{message}</CardDescription>
             </>
           )}
         </CardHeader>
@@ -151,6 +164,10 @@ export default function CallbackPageContent() {
                   Go to Login
                 </Button>
               </div>
+              <details className="mt-4 text-left text-xs text-gray-500 whitespace-pre-wrap">
+                <summary className="cursor-pointer">Show debug info</summary>
+                {debug}
+              </details>
             </div>
           )}
         </CardContent>
