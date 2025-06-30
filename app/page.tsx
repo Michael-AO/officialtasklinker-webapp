@@ -137,8 +137,8 @@ export default function HomePage() {
                 ) : (
                   tasks.map((task) => (
                     <Link href="/login" key={task.id} className="min-w-[450px] max-w-[450px] flex-shrink-0">
-                      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
-                        <CardHeader>
+                      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer min-h-[340px] flex flex-col justify-between">
+                        <CardHeader className="h-full flex flex-col justify-between">
                           <div className="flex justify-between items-start">
                             <div>
                               <CardTitle className="text-lg">{task.title}</CardTitle>
@@ -153,6 +153,7 @@ export default function HomePage() {
                               <div className="text-sm text-gray-500">{task.budget_type === "hourly" ? "Hourly" : "Fixed Price"}</div>
                             </div>
                           </div>
+                          <div className="mt-6" />
                           <CardDescription className="mt-3 line-clamp-2">{task.description}</CardDescription>
                           <div className="flex flex-wrap gap-2 mt-3">
                             {(task.skills_required || []).slice(0, 4).map((skill: string, idx: number) => (
