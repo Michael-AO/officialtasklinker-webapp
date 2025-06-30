@@ -50,7 +50,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navigation */}
-      <header className="w-full border-b bg-white/95 backdrop-blur">
+      <header className="w-full fixed top-0 left-0 z-50 border-b bg-white/95 backdrop-blur shadow-sm">
         <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-5 flex items-center min-h-[72px]">
           <Link className="flex items-center justify-center" href="/">
             <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-6 w-6" />
@@ -75,11 +75,11 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main className="flex-1 pt-[88px]">
         {/* Hero Section */}
-        <section className="w-full min-h-screen flex items-center">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-6 w-full">
-            <div className="bg-[#04A466] text-white rounded-tl-[20px] rounded-tr-[20px] min-h-[70vh] flex flex-col items-center justify-center space-y-4 text-center w-full">
+        <section className="w-full min-h-screen flex items-center text-white" style={{ backgroundColor: "#04A466" }}>
+          <div className="max-w-[1200px] mx-auto px-4 md:px-6">
+            <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
                   Connect. Work. Get <span className="inline-block min-w-[3.5ch] border-r-2 border-white animate-blink caret-transparent">{paidText}</span>
