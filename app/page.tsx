@@ -1,6 +1,8 @@
 import { ArrowRight, Shield, Users } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +10,25 @@ import { Clock, MapPin, Star } from "lucide-react"
 import { BrandLogo } from "@/components/brand-logo"
 
 export default function HomePage() {
+  const [tasks, setTasks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchTasks() {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("id, title, description, budget_min, budget_max, budget_type, location, created_at, skills_required")
+        .eq("status", "active")
+        .eq("visibility", "public")
+        .order("created_at", { ascending: false })
+        .limit(6)
+      setTasks(data || [])
+      setLoading(false)
+    }
+    fetchTasks()
+  }, [])
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navigation */}
@@ -81,248 +102,64 @@ export default function HomePage() {
 
             <div className="relative">
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                {/* Task Card 1 */}
-                <Card className="min-w-[450px] max-w-[450px] flex-shrink-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">Build E-commerce Website</CardTitle>
-                        <p className="text-sm text-gray-500 mt-1">Posted 2 hours ago</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">₦150,000</div>
-                        <div className="text-sm text-gray-500">Fixed Price</div>
-                      </div>
-                    </div>
-                    <CardDescription className="mt-3">
-                      Looking for an experienced developer to build a modern e-commerce platform with payment
-                      integration and admin dashboard.
-                    </CardDescription>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">React</span>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Node.js</span>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">MongoDB</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>Remote</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>2-3 months</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span>4.8 (12 reviews)</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-
-                {/* Task Card 2 */}
-                <Card className="min-w-[450px] max-w-[450px] flex-shrink-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">Mobile App UI/UX Design</CardTitle>
-                        <p className="text-sm text-gray-500 mt-1">Posted 4 hours ago</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">₦80,000</div>
-                        <div className="text-sm text-gray-500">Fixed Price</div>
-                      </div>
-                    </div>
-                    <CardDescription className="mt-3">
-                      Need a creative designer to create modern, user-friendly mobile app designs for iOS and Android
-                      platforms.
-                    </CardDescription>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Figma</span>
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">UI/UX</span>
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                        Mobile Design
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>Lagos, Nigeria</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>3-4 weeks</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span>4.9 (8 reviews)</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-
-                {/* Task Card 3 */}
-                <Card className="min-w-[450px] max-w-[450px] flex-shrink-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">Content Writing & SEO</CardTitle>
-                        <p className="text-sm text-gray-500 mt-1">Posted 6 hours ago</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">₦45,000</div>
-                        <div className="text-sm text-gray-500">Fixed Price</div>
-                      </div>
-                    </div>
-                    <CardDescription className="mt-3">
-                      Seeking a skilled content writer to create SEO-optimized blog posts and website content for a tech
-                      startup.
-                    </CardDescription>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                        Content Writing
-                      </span>
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">SEO</span>
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Blog Writing</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>Remote</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>2 weeks</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span>4.7 (15 reviews)</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-
-                {/* Task Card 4 */}
-                <Card className="min-w-[450px] max-w-[450px] flex-shrink-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">Social Media Management</CardTitle>
-                        <p className="text-sm text-gray-500 mt-1">Posted 8 hours ago</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">₦60,000</div>
-                        <div className="text-sm text-gray-500">Monthly</div>
-                      </div>
-                    </div>
-                    <CardDescription className="mt-3">
-                      Looking for a social media expert to manage Instagram, Twitter, and LinkedIn accounts for a
-                      growing business.
-                    </CardDescription>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <span className="px-2 py-1 bg-pink-100 text-pink-800 text-xs rounded-full">Social Media</span>
-                      <span className="px-2 py-1 bg-pink-100 text-pink-800 text-xs rounded-full">Content Creation</span>
-                      <span className="px-2 py-1 bg-pink-100 text-pink-800 text-xs rounded-full">Marketing</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>Abuja, Nigeria</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>Ongoing</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span>4.6 (20 reviews)</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-
-                {/* Task Card 5 */}
-                <Card className="min-w-[450px] max-w-[450px] flex-shrink-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">Data Analysis & Visualization</CardTitle>
-                        <p className="text-sm text-gray-500 mt-1">Posted 10 hours ago</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">₦120,000</div>
-                        <div className="text-sm text-gray-500">Fixed Price</div>
-                      </div>
-                    </div>
-                    <CardDescription className="mt-3">
-                      Need a data analyst to process large datasets and create interactive dashboards for business
-                      insights.
-                    </CardDescription>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">Python</span>
-                      <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">Tableau</span>
-                      <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">SQL</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>Remote</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>1 month</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span>4.9 (6 reviews)</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-
-                {/* Task Card 6 */}
-                <Card className="min-w-[450px] max-w-[450px] flex-shrink-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">Video Editing & Animation</CardTitle>
-                        <p className="text-sm text-gray-500 mt-1">Posted 12 hours ago</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">₦90,000</div>
-                        <div className="text-sm text-gray-500">Fixed Price</div>
-                      </div>
-                    </div>
-                    <CardDescription className="mt-3">
-                      Looking for a creative video editor to produce promotional videos and animated content for
-                      marketing campaigns.
-                    </CardDescription>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">After Effects</span>
-                      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Premiere Pro</span>
-                      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Animation</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>Port Harcourt</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>3 weeks</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span>4.8 (10 reviews)</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
+                {loading ? (
+                  [...Array(3)].map((_, i) => (
+                    <Card key={i} className="min-w-[450px] max-w-[450px] flex-shrink-0 animate-pulse opacity-60">
+                      <CardHeader>
+                        <div className="h-6 w-3/4 bg-gray-200 rounded mb-2" />
+                        <div className="h-4 w-1/2 bg-gray-100 rounded mb-2" />
+                        <div className="h-4 w-1/3 bg-gray-100 rounded mb-2" />
+                        <div className="h-4 w-full bg-gray-100 rounded mb-2" />
+                        <div className="h-4 w-2/3 bg-gray-100 rounded" />
+                      </CardHeader>
+                    </Card>
+                  ))
+                ) : tasks.length === 0 ? (
+                  <div className="text-center w-full text-gray-500 py-8">No recent tasks found.</div>
+                ) : (
+                  tasks.map((task) => (
+                    <Link href="/login" key={task.id} className="min-w-[450px] max-w-[450px] flex-shrink-0">
+                      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg">{task.title}</CardTitle>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {new Date(task.created_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-green-600">
+                                ₦{task.budget_max?.toLocaleString()}
+                              </div>
+                              <div className="text-sm text-gray-500">{task.budget_type === "hourly" ? "Hourly" : "Fixed Price"}</div>
+                            </div>
+                          </div>
+                          <CardDescription className="mt-3 line-clamp-2">{task.description}</CardDescription>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {(task.skills_required || []).slice(0, 4).map((skill: string, idx: number) => (
+                              <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{skill}</span>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              <span>{task.location || "Remote"}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{task.duration || "-"}</span>
+                            </div>
+                          </div>
+                        </CardHeader>
+                      </Card>
+                    </Link>
+                  ))
+                )}
               </div>
-
               <div className="text-center mt-8">
                 <Button size="lg" variant="outline" asChild>
-                  <Link href="/dashboard/browse">View All Tasks</Link>
+                  <Link href="/login">View All Tasks</Link>
                 </Button>
               </div>
             </div>
