@@ -167,14 +167,45 @@ export default function VerifyEmailPage() {
       await supabase.from("email_otps").delete().eq("email", email).eq("otp", verificationCode)
 
       // 3. Get user from users table using email
-      const { data: userData, error: userError } = await supabase
+      let userData = null;
+      let userError = null;
+      const { data, error } = await supabase
         .from("users")
         .select("*")
         .eq("email", email)
-        .single()
+        .single();
+      userData = data;
+      userError = error;
 
       if (userError || !userData) {
-        throw new Error("User not found. Please try signing up again.")
+        // Try to get from Supabase Auth
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          // Create user in users table
+          const { data: newUser, error: createError } = await supabase.from("users").insert([
+            {
+              id: authUser.id,
+              email: authUser.email || "",
+              name: authUser.user_metadata?.name || (authUser.email ? authUser.email.split("@")[0] : "User"),
+              user_type: authUser.user_metadata?.user_type || "client",
+              is_verified: true,
+              join_date: authUser.created_at || new Date().toISOString(),
+              avatar_url: authUser.user_metadata?.avatar_url || null,
+              rating: 0,
+              completed_tasks: 0,
+              total_earned: 0,
+              is_active: true,
+              skills: [],
+              bio: "",
+              location: "",
+              hourly_rate: null,
+            }
+          ]).select().single();
+          if (createError) throw new Error("Failed to create user profile after verification");
+          userData = newUser;
+        } else {
+          throw new Error("User not found. Please try signing up again.");
+        }
       }
 
       // 4. Mark user as verified in your users table
