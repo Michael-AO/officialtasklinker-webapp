@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Shield, Users } from "lucide-react"
+import { ArrowRight, Shield, Users, Menu, X } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -15,6 +15,7 @@ export default function HomePage() {
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [paidText, setPaidText] = useState("");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -56,7 +57,8 @@ export default function HomePage() {
             <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-6 w-6" />
             <span className="ml-2 text-xl font-bold">Tasklinkers</span>
           </Link>
-          <nav className="ml-auto flex gap-4 sm:gap-6">
+          {/* Desktop nav */}
+          <nav className="ml-auto hidden md:flex gap-4 sm:gap-6">
             <Link className="text-sm font-medium hover:underline underline-offset-4" href="#features">
               Features
             </Link>
@@ -64,7 +66,7 @@ export default function HomePage() {
               How It Works
             </Link>
           </nav>
-          <div className="ml-4 flex gap-2">
+          <div className="ml-4 hidden md:flex gap-2">
             <Button variant="ghost" asChild>
               <Link href="/login">Sign In</Link>
             </Button>
@@ -72,6 +74,45 @@ export default function HomePage() {
               <Link href="/signup">Get Started</Link>
             </Button>
           </div>
+          {/* Mobile hamburger + Get Started */}
+          <div className="ml-auto flex md:hidden items-center gap-2">
+            <Button asChild size="sm" className="px-3 py-2">
+              <Link href="/signup">Get Started</Link>
+            </Button>
+            <Button variant="ghost" size="icon" className="p-2" onClick={() => setMobileNavOpen(true)} aria-label="Open menu">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </div>
+        </div>
+        {/* Mobile menu overlay */}
+        {mobileNavOpen && (
+          <div className="fixed inset-0 z-50 bg-black/50 md:hidden" onClick={() => setMobileNavOpen(false)} />
+        )}
+        {/* Mobile menu drawer */}
+        <div className={`fixed inset-0 z-50 md:hidden transition-transform duration-200 ${mobileNavOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          style={{ willChange: 'transform', pointerEvents: mobileNavOpen ? 'auto' : 'none' }}
+        >
+          <div className="absolute inset-0 bg-white" />
+          <div className="flex items-center justify-between px-4 py-4 border-b relative z-10">
+            <span className="text-xl font-bold">Menu</span>
+            <Button variant="ghost" size="icon" className="p-2" onClick={() => setMobileNavOpen(false)} aria-label="Close menu">
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+          <nav className="flex flex-col gap-2 px-4 py-6 relative z-10">
+            <Link href="#features" className="py-2 text-base font-medium hover:underline" onClick={() => setMobileNavOpen(false)}>
+              Features
+            </Link>
+            <Link href="#how-it-works" className="py-2 text-base font-medium hover:underline" onClick={() => setMobileNavOpen(false)}>
+              How It Works
+            </Link>
+            <Link href="/login" className="py-2 text-base font-medium hover:underline" onClick={() => setMobileNavOpen(false)}>
+              Sign In
+            </Link>
+            <Button asChild className="mt-4 w-full">
+              <Link href="/signup" onClick={() => setMobileNavOpen(false)}>Get Started</Link>
+            </Button>
+          </nav>
         </div>
       </header>
 
