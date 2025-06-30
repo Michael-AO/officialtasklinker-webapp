@@ -115,6 +115,17 @@ CREATE TABLE notifications (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create email_otps table for email verification
+CREATE TABLE email_otps (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email VARCHAR(255) NOT NULL,
+  otp VARCHAR(6) NOT NULL,
+  type VARCHAR(20) DEFAULT 'signup',
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create admin_users table
 CREATE TABLE admin_users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

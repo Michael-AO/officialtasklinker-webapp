@@ -86,77 +86,71 @@ export default function SignupPage() {
     console.log("Starting signup process...")
 
     try {
-      // 1. Create user in Supabase with email confirmation disabled
+      // 1. Create user in Supabase (with default email confirmation enabled)
       console.log("Creating user in Supabase...")
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
+            user_type: formData.userType,
+            // You can still store first/last name in metadata if you want
             first_name: formData.firstName,
             last_name: formData.lastName,
-            user_type: formData.userType,
           },
-          // Note: To completely disable Supabase's automatic email confirmation,
-          // you need to configure this in your Supabase project settings:
-          // Go to Authentication > Settings > Email Templates and disable "Confirm signup"
         },
       })
 
       if (authError) {
         console.error("Supabase auth error:", authError)
-        
-        // Handle specific rate limit errors
         if (authError.message?.includes("rate limit") || authError.message?.includes("429")) {
-          setSignupCooldown(60) // 60 second cooldown
+          setSignupCooldown(60)
           throw new Error("Too many signup attempts. Please wait 60 seconds and try again, or use a different email address.")
         }
-        
+        if (authError.message?.includes("already registered") || authError.message?.includes("already exists")) {
+          throw new Error("An account with this email already exists. Please try signing in instead.")
+        }
         throw authError
       }
-      console.log("User created successfully:", authData)
+      if (!authData.user) {
+        throw new Error("Failed to create user account. Please try again.")
+      }
+      console.log("User created successfully:", authData.user.id)
 
-      // 2. Create user record in the users table
-      if (authData.user) {
-        console.log("Creating user record in users table...")
-        const fullName = `${formData.firstName} ${formData.lastName}`.trim()
-        
-        const { error: userCreateError } = await supabase.from("users").insert({
-          id: authData.user.id,
-          email: authData.user.email!,
-          name: fullName || authData.user.email!.split("@")[0],
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          user_type: formData.userType,
-          avatar_url: null,
-          is_verified: false,
-          phone: null,
-          bio: null,
-          location: null,
-          hourly_rate: null,
-          skills: [],
-          rating: 0,
-          completed_tasks: 0,
-          total_earned: 0,
-          join_date: authData.user.created_at || new Date().toISOString(),
-          last_active: new Date().toISOString(),
-          is_active: true,
-          created_at: authData.user.created_at || new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-
-        if (userCreateError) {
-          console.error("❌ Error creating user record:", userCreateError)
-          // Don't fail the entire signup if user record creation fails
-          console.warn("User record creation failed, but auth user was created. User ID:", authData.user.id)
-        } else {
-          console.log("✅ User record created successfully")
-        }
+      // 2. Create user record in the users table (only columns that exist)
+      console.log("Creating user record in users table...")
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim()
+      const { error: userCreateError } = await supabase.from("users").insert({
+        id: authData.user.id,
+        email: authData.user.email!,
+        name: fullName || authData.user.email!.split("@")[0],
+        user_type: formData.userType,
+        avatar_url: null,
+        is_verified: false,
+        phone: null,
+        bio: null,
+        location: null,
+        hourly_rate: null,
+        skills: [],
+        rating: 0,
+        completed_tasks: 0,
+        total_earned: 0,
+        join_date: authData.user.created_at || new Date().toISOString(),
+        last_active: new Date().toISOString(),
+        is_active: true,
+        created_at: authData.user.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      if (userCreateError) {
+        console.error("❌ Error creating user record:", userCreateError)
+        console.warn("User record creation failed, but auth user was created. User ID:", authData.user.id)
+      } else {
+        console.log("✅ User record created successfully")
       }
 
       // 3. Generate OTP for our custom verification
       const otp = Math.floor(100000 + Math.random() * 900000).toString()
-      console.log("Generated OTP:", otp) // For development testing
+      console.log("Generated OTP:", otp)
 
       // 4. Store OTP in database
       console.log("Storing OTP in database...")
@@ -165,10 +159,9 @@ export default function SignupPage() {
         otp: otp,
         expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
       })
-
       if (otpError) {
         console.error("OTP storage error:", otpError)
-        throw otpError
+        throw new Error(`Failed to store verification code: ${otpError.message}`)
       }
       console.log("OTP stored successfully")
 
@@ -185,14 +178,11 @@ export default function SignupPage() {
           type: "signup",
         }),
       })
-
       const emailResult = await emailResponse.json()
       console.log("Email API response:", emailResult)
-
       if (!emailResponse.ok) {
         console.error("Email sending failed:", emailResult)
-        // Don't fail the entire signup if email fails
-        console.warn("Email sending failed, but OTP was sent via Supabase. OTP:", otp)
+        console.warn("Email sending failed, but OTP was stored. OTP:", otp)
       } else {
         console.log("Custom email sent successfully!")
       }
@@ -200,15 +190,13 @@ export default function SignupPage() {
       // 6. Show success message and redirect
       setOtpSent(true)
       console.log("Redirecting to verify-email page...")
-
-      // Redirect to verification page
       setTimeout(() => {
         router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
       }, 1500)
     } catch (error) {
       console.error("Signup error:", error)
       setErrors({
-        general: error instanceof Error ? error.message : "Registration failed",
+        general: error instanceof Error ? error.message : "Registration failed. Please try again.",
       })
     } finally {
       setIsLoading(false)

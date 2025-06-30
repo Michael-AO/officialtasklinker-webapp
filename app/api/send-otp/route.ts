@@ -49,7 +49,8 @@ export async function POST(request: Request) {
           </head>
           <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">⚡ Tasklinkers</h1>
+              <img src='https://YOUR_DOMAIN/logo-full.svg' alt='Tasklinkers Logo' style='width: 120px; margin-bottom: 10px; background: transparent;' />
+              <h1 style="color: white; margin: 0; font-size: 28px;">Tasklinkers</h1>
               <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">
                 ${type === "resend" ? "New Verification Code" : "Welcome to the platform!"}
               </p>

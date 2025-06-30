@@ -43,6 +43,12 @@ CREATE INDEX idx_notifications_type ON notifications(type);
 CREATE INDEX idx_notifications_is_read ON notifications(is_read);
 CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 
+-- Email OTPs table indexes
+CREATE INDEX idx_email_otps_email ON email_otps(email);
+CREATE INDEX idx_email_otps_otp ON email_otps(otp);
+CREATE INDEX idx_email_otps_expires_at ON email_otps(expires_at);
+CREATE INDEX idx_email_otps_used ON email_otps(used);
+
 -- Admin users table indexes
 CREATE INDEX idx_admin_users_email ON admin_users(email);
 CREATE INDEX idx_admin_users_role ON admin_users(role);
