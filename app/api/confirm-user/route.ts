@@ -1,33 +1,89 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json();
-    console.log("[confirm-user] Called with userId:", userId);
-    if (!userId) {
-      console.log("[confirm-user] Missing userId");
-      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    const { userId, token } = await request.json();
+
+    if (!userId && !token) {
+      return NextResponse.json(
+        { error: "User ID or confirmation token is required" },
+        { status: 400 }
+      );
     }
 
-    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      email_confirm: true,
+    let userEmail: string | null = null;
+
+    // If we have a token, verify it with Supabase
+    if (token) {
+      const { data, error } = await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: 'signup'
+      });
+
+      if (error) {
+        console.error("Token verification error:", error);
+        return NextResponse.json(
+          { error: "Invalid or expired confirmation token" },
+          { status: 400 }
+        );
+      }
+
+      if (data.user) {
+        userEmail = data.user.email;
+      }
+    } else if (userId) {
+      // If we have userId, get user info
+      const { data: { user }, error } = await supabase.auth.admin.getUserById(userId);
+      
+      if (error || !user) {
+        console.error("User lookup error:", error);
+        return NextResponse.json(
+          { error: "User not found" },
+          { status: 404 }
+        );
+      }
+
+      userEmail = user.email;
+    }
+
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: "Could not determine user email" },
+        { status: 400 }
+      );
+    }
+
+    // Mark user as verified in our database
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({
+        is_verified: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("email", userEmail);
+
+    if (updateError) {
+      console.error("Database update error:", updateError);
+      return NextResponse.json(
+        { error: "Failed to update user verification status" },
+        { status: 500 }
+      );
+    }
+
+    console.log(`✅ User ${userEmail} marked as verified`);
+
+    return NextResponse.json({
+      success: true,
+      message: "User confirmed successfully",
+      email: userEmail
     });
 
-    if (error) {
-      console.error("[confirm-user] Supabase admin error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    console.log("[confirm-user] Success:", data);
-    return NextResponse.json({ success: true, data });
-  } catch (err) {
-    console.error("[confirm-user] Exception:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    console.error("Confirm user error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 } 

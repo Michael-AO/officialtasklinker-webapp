@@ -30,7 +30,6 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [otpSent, setOtpSent] = useState(false)
   const [signupCooldown, setSignupCooldown] = useState(0)
 
   const { login } = useAuth()
@@ -148,47 +147,7 @@ export default function SignupPage() {
         console.log("✅ User record created successfully")
       }
 
-      // 3. Generate OTP for our custom verification
-      const otp = Math.floor(100000 + Math.random() * 900000).toString()
-      console.log("Generated OTP:", otp)
-
-      // 4. Store OTP in database
-      console.log("Storing OTP in database...")
-      const { error: otpError } = await supabase.from("email_otps").insert({
-        email: formData.email,
-        otp: otp,
-        expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      })
-      if (otpError) {
-        console.error("OTP storage error:", otpError)
-        throw new Error(`Failed to store verification code: ${otpError.message}`)
-      }
-      console.log("OTP stored successfully")
-
-      // 5. Send custom OTP email via Brevo API
-      console.log("Sending custom OTP email...")
-      const emailResponse = await fetch("/api/send-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          otp: otp,
-          type: "signup",
-        }),
-      })
-      const emailResult = await emailResponse.json()
-      console.log("Email API response:", emailResult)
-      if (!emailResponse.ok) {
-        console.error("Email sending failed:", emailResult)
-        console.warn("Email sending failed, but OTP was stored. OTP:", otp)
-      } else {
-        console.log("Custom email sent successfully!")
-      }
-
-      // 6. Show success message and redirect
-      setOtpSent(true)
+      // 3. Show success message and redirect to verification page
       console.log("Redirecting to verify-email page...")
       setTimeout(() => {
         router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
@@ -234,11 +193,6 @@ export default function SignupPage() {
             {errors.general && (
               <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
                 {errors.general}
-              </div>
-            )}
-            {otpSent && (
-              <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
-                Account created! Check your email for the verification code.
               </div>
             )}
 
