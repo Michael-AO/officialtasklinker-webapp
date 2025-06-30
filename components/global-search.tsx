@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Search, FileText, Users, MessageSquare, DollarSign, Clock, Star } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 interface SearchResult {
   id: string
@@ -22,87 +23,27 @@ interface SearchResult {
   url: string
 }
 
-const mockSearchResults: SearchResult[] = [
-  {
-    id: "1",
-    type: "task",
-    title: "E-commerce Website Development",
-    description: "Build a modern e-commerce platform with React and Node.js",
-    metadata: {
-      budget: "$2,500",
-      status: "active",
-      date: "2 days ago",
-      category: "Web Development",
-    },
-    url: "/dashboard/browse/1",
-  },
-  {
-    id: "2",
-    type: "application",
-    title: "Mobile App UI/UX Design",
-    description: "Applied for mobile app design project",
-    metadata: {
-      budget: "$42/hr",
-      status: "accepted",
-      date: "1 week ago",
-      category: "Design",
-    },
-    url: "/dashboard/applications/2",
-  },
-  {
-    id: "3",
-    type: "user",
-    title: "Sarah Johnson",
-    description: "Full-stack developer specializing in React and Node.js",
-    metadata: {
-      rating: 4.8,
-      category: "Web Development",
-    },
-    url: "/dashboard/freelancers/sarah-johnson",
-  },
-  {
-    id: "4",
-    type: "message",
-    title: "Project Discussion with TechCorp",
-    description: "Latest message: 'When can we schedule the next milestone review?'",
-    metadata: {
-      date: "2 hours ago",
-    },
-    url: "/dashboard/messages?conversation=techcorp",
-  },
-  {
-    id: "5",
-    type: "task",
-    title: "Mobile App Development",
-    description: "iOS and Android app development with React Native",
-    metadata: {
-      budget: "$3,200",
-      status: "active",
-      date: "1 day ago",
-      category: "Mobile Development",
-    },
-    url: "/dashboard/browse/5",
-  },
-  {
-    id: "6",
-    type: "task",
-    title: "Logo Design Project",
-    description: "Creative logo design for startup company",
-    metadata: {
-      budget: "$500",
-      status: "active",
-      date: "3 days ago",
-      category: "Design",
-    },
-    url: "/dashboard/browse/6",
-  },
-]
-
 export function GlobalSearch() {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const prevOpen = useRef(open)
+  const [allTasks, setAllTasks] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("id, title, description, budget_max, budget_type, created_at, category, status, skills_required")
+        .eq("status", "active")
+        .eq("visibility", "public")
+        .order("created_at", { ascending: false })
+        .limit(50)
+      if (!error && data) setAllTasks(data)
+    }
+    fetchTasks()
+  }, [])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -118,24 +59,44 @@ export function GlobalSearch() {
   useEffect(() => {
     if (searchTerm.length > 0) {
       setIsLoading(true)
-      // Simulate API call with realistic delay
       const timeoutId = setTimeout(() => {
-        const filtered = mockSearchResults.filter(
-          (result) =>
-            result.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            result.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            result.metadata.category?.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
+        const filtered = allTasks
+          .filter((task) =>
+            task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (task.category && task.category.toLowerCase().includes(searchTerm.toLowerCase()))
+          )
+          .map((task) => ({
+            id: task.id,
+            type: "task" as const,
+            title: task.title,
+            description: task.description,
+            metadata: {
+              budget: task.budget_max ? `₦${task.budget_max.toLocaleString()}` : undefined,
+              status: task.status,
+              date: task.created_at ? new Date(task.created_at).toLocaleDateString() : undefined,
+              category: task.category,
+            },
+            url: `/dashboard/browse/${task.id}`,
+          }))
         setResults(filtered)
         setIsLoading(false)
       }, 300)
-
       return () => clearTimeout(timeoutId)
     } else {
       setResults([])
       setIsLoading(false)
     }
-  }, [searchTerm])
+  }, [searchTerm, allTasks])
+
+  useEffect(() => {
+    if (prevOpen.current && !open) {
+      setSearchTerm("")
+      setResults([])
+      setIsLoading(false)
+    }
+    prevOpen.current = open
+  }, [open])
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -219,53 +180,43 @@ export function GlobalSearch() {
               </CommandEmpty>
             )}
             {!isLoading && results.length > 0 && (
-              <CommandGroup heading={`${results.length} result${results.length === 1 ? "" : "s"} found`}>
-                {results.map((result) => (
-                  <CommandItem
-                    key={result.id}
-                    onSelect={() => handleResultClick(result.url)}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-start gap-3 p-2 w-full">
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {getIcon(result.type)}
-                        <Badge variant="secondary" className={getTypeColor(result.type)}>
-                          {result.type}
-                        </Badge>
+              <>
+                <div className="flex flex-col gap-3 mt-2">
+                  {results.map((result) => (
+                    <div
+                      key={result.id}
+                      className="bg-white border rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handleResultClick(result.url)}
+                      tabIndex={0}
+                      role="button"
+                      style={{ outline: 'none' }}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-base truncate">{result.title}</span>
+                        {result.metadata.budget && (
+                          <span className="text-green-600 font-bold text-sm ml-2">{result.metadata.budget}</span>
+                        )}
                       </div>
-                      <div className="flex-1 space-y-1 min-w-0">
-                        <p className="font-medium truncate">{result.title}</p>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{result.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          {result.metadata.budget && (
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3" />
-                              {result.metadata.budget}
-                            </div>
-                          )}
-                          {result.metadata.rating && (
-                            <div className="flex items-center gap-1">
-                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              {result.metadata.rating}
-                            </div>
-                          )}
-                          {result.metadata.date && (
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {result.metadata.date}
-                            </div>
-                          )}
-                          {result.metadata.status && (
-                            <Badge variant="outline" className="text-xs">
-                              {result.metadata.status}
-                            </Badge>
-                          )}
-                        </div>
+                      <div className="text-xs text-gray-500 mb-2 flex items-center gap-2">
+                        {result.metadata.date && <span>{result.metadata.date}</span>}
+                        {result.metadata.category && <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">{result.metadata.category}</span>}
+                      </div>
+                      <div className="text-sm text-gray-700 mb-1 line-clamp-2">{result.description}</div>
+                      <div className="flex items-center gap-2 mt-2">
+                        {result.type && (
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-800 text-xs rounded-full capitalize">{result.type}</span>
+                        )}
+                        {result.metadata.status && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">{result.metadata.status}</span>
+                        )}
+                        {result.metadata.rating && (
+                          <span className="flex items-center gap-1 text-yellow-600 text-xs"><Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />{result.metadata.rating}</span>
+                        )}
                       </div>
                     </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+                  ))}
+                </div>
+              </>
             )}
             {searchTerm.length === 0 && (
               <div className="p-4 text-center text-sm text-muted-foreground">

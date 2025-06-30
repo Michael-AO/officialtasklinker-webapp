@@ -217,6 +217,19 @@ export default function VerifyEmailPage() {
         })
         .eq("id", userData.id)
 
+      // 4.5. Confirm user in Supabase Auth
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const confirmResponse = await fetch("/api/confirm-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: authUser.id }),
+        });
+        if (!confirmResponse.ok) {
+          console.error("Failed to confirm user in Supabase Auth");
+        }
+      }
+
       // 5. Update auth context
       const fullName = `${userData.first_name || ""} ${userData.last_name || ""}`.trim()
       const userDataForContext = {

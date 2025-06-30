@@ -287,7 +287,7 @@ export default function ApplicationsPage() {
             <TabsTrigger value="accepted">Accepted ({filteredApplications.filter(a => a.status === "accepted").length})</TabsTrigger>
             <TabsTrigger value="interviewing">Interviewing ({filteredApplications.filter(a => a.status === "interviewing").length})</TabsTrigger>
             <TabsTrigger value="rejected">Rejected ({filteredApplications.filter(a => a.status === "rejected").length})</TabsTrigger>
-            <TabsTrigger value="withdrawn">Withdrawn ({filteredApplications.filter(a => a.status === "withdrawn").length})</TabsTrigger>
+            <TabsTrigger value="withdrawn">Withdrawn ({applications.filter(a => a.status === "withdrawn").length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value={statusFilter} className="space-y-4">
