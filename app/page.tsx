@@ -14,6 +14,7 @@ import { BrandLogo } from "@/components/brand-logo"
 export default function HomePage() {
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [paidText, setPaidText] = useState("");
 
   useEffect(() => {
     async function fetchTasks() {
@@ -30,6 +31,21 @@ export default function HomePage() {
     }
     fetchTasks()
   }, [])
+
+  // Typewriter effect for 'Paid'
+  useEffect(() => {
+    const fullText = "Paid.";
+    let idx = 0;
+    setPaidText("");
+    const interval = setInterval(() => {
+      setPaidText(fullText.slice(0, idx + 1));
+      idx++;
+      if (idx === fullText.length) {
+        clearInterval(interval);
+      }
+    }, 120);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -66,7 +82,7 @@ export default function HomePage() {
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
-                  Connect. Work. Get Paid.
+                  Connect. Work. Get <span className="inline-block min-w-[3.5ch] border-r-2 border-white animate-blink caret-transparent">{paidText}</span>
                 </h1>
                 <p className="mx-auto max-w-[700px] text-white/90 md:text-xl">
                   The secure platform where freelancers and clients meet. Post tasks, find talent, and manage payments

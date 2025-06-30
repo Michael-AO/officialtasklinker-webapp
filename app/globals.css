@@ -92,3 +92,11 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes blink {
+  0%, 100% { border-color: transparent; }
+  50% { border-color: white; }
+}
+.animate-blink {
+  animation: blink 1s steps(1) infinite;
+}
