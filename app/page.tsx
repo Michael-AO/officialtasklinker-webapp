@@ -137,38 +137,29 @@ export default function HomePage() {
                 ) : (
                   tasks.map((task) => (
                     <Link href="/login" key={task.id} className="min-w-[450px] max-w-[450px] flex-shrink-0">
-                      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer min-h-[340px] flex flex-col justify-between">
-                        <CardHeader className="h-full flex flex-col justify-between">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <CardTitle className="text-lg">{task.title}</CardTitle>
-                              <p className="text-sm text-gray-500 mt-1">
-                                {new Date(task.created_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
-                              </p>
-                            </div>
+                      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+                        <CardHeader>
+                          <div className="flex justify-between items-start mb-2">
+                            <CardTitle className="text-lg font-semibold">{task.title}</CardTitle>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-green-600">
-                                ₦{task.budget_max?.toLocaleString()}
-                              </div>
-                              <div className="text-sm text-gray-500">{task.budget_type === "hourly" ? "Hourly" : "Fixed Price"}</div>
+                              <div className="text-lg font-bold text-green-600">₦{task.budget_max?.toLocaleString()}</div>
+                              <div className="text-xs text-gray-500">{task.budget_type === "hourly" ? "Hourly" : "Fixed Price"}</div>
                             </div>
                           </div>
-                          <div className="mt-6" />
-                          <CardDescription className="mt-3 line-clamp-2">{task.description}</CardDescription>
+                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>{task.location || "Remote"}</span>
+                            <span className="mx-1">•</span>
+                            <Clock className="h-4 w-4" />
+                            <span>{task.duration || "-"}</span>
+                            <span className="mx-1">•</span>
+                            <span>{new Date(task.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <CardDescription className="mt-2 line-clamp-2 text-sm text-gray-700">{task.description}</CardDescription>
                           <div className="flex flex-wrap gap-2 mt-3">
                             {(task.skills_required || []).slice(0, 4).map((skill: string, idx: number) => (
                               <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{skill}</span>
                             ))}
-                          </div>
-                          <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
-                              <span>{task.location || "Remote"}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{task.duration || "-"}</span>
-                            </div>
                           </div>
                         </CardHeader>
                       </Card>
