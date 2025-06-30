@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Shield, Users, Menu, X } from "lucide-react"
+import { ArrowRight, Shield, Users, Menu, X, Calendar } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -10,6 +10,37 @@ import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock, MapPin, Star } from "lucide-react"
 import { BrandLogo } from "@/components/brand-logo"
+
+// Add a helper for relative time
+function formatTimeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} day${Math.floor(diff / 86400) > 1 ? 's' : ''} ago`;
+  return date.toLocaleDateString();
+}
+
+// Add a helper for 'June 25th, 2025' style date
+function formatFullDate(dateString: string) {
+  const date = new Date(dateString);
+  const day = date.getDate();
+  const month = date.toLocaleString('default', { month: 'long' });
+  const year = date.getFullYear();
+  // Get ordinal suffix
+  function ordinal(n: number) {
+    if (n > 3 && n < 21) return 'th';
+    switch (n % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  }
+  return `${month} ${day}${ordinal(day)}, ${year}`;
+}
 
 export default function HomePage() {
   const [tasks, setTasks] = useState<any[]>([])
@@ -86,33 +117,34 @@ export default function HomePage() {
         </div>
         {/* Mobile menu overlay */}
         {mobileNavOpen && (
-          <div className="fixed inset-0 z-50 bg-black/50 md:hidden" onClick={() => setMobileNavOpen(false)} />
+          <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setMobileNavOpen(false)} />
         )}
         {/* Mobile menu drawer */}
-        <div className={`fixed inset-0 z-50 md:hidden transition-transform duration-200 ${mobileNavOpen ? 'translate-x-0' : 'translate-x-full'}`}
-          style={{ willChange: 'transform', pointerEvents: mobileNavOpen ? 'auto' : 'none' }}
+        <div className={`fixed top-0 right-0 z-50 h-full w-4/5 max-w-xs md:hidden transition-transform duration-200 ${mobileNavOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          style={{ willChange: 'transform', pointerEvents: mobileNavOpen ? 'auto' : 'none', backgroundColor: '#fff' }}
         >
-          <div className="absolute inset-0 bg-white" />
-          <div className="flex items-center justify-between px-4 py-4 border-b relative z-10">
-            <span className="text-xl font-bold">Menu</span>
-            <Button variant="ghost" size="icon" className="p-2" onClick={() => setMobileNavOpen(false)} aria-label="Close menu">
-              <X className="h-6 w-6" />
-            </Button>
+          <div className="flex flex-col h-full bg-white">
+            <div className="flex items-center justify-between px-4 py-4 border-b">
+              <span className="text-xl font-bold">Menu</span>
+              <Button variant="ghost" size="icon" className="p-2" onClick={() => setMobileNavOpen(false)} aria-label="Close menu">
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+            <nav className="flex flex-col gap-2 px-4 py-6 flex-1">
+              <Link href="#features" className="py-2 text-base font-medium hover:underline" onClick={() => setMobileNavOpen(false)}>
+                Features
+              </Link>
+              <Link href="#how-it-works" className="py-2 text-base font-medium hover:underline" onClick={() => setMobileNavOpen(false)}>
+                How It Works
+              </Link>
+              <Link href="/login" className="py-2 text-base font-medium hover:underline" onClick={() => setMobileNavOpen(false)}>
+                Sign In
+              </Link>
+              <Button asChild className="mt-4 w-full">
+                <Link href="/signup" onClick={() => setMobileNavOpen(false)}>Get Started</Link>
+              </Button>
+            </nav>
           </div>
-          <nav className="flex flex-col gap-2 px-4 py-6 relative z-10">
-            <Link href="#features" className="py-2 text-base font-medium hover:underline" onClick={() => setMobileNavOpen(false)}>
-              Features
-            </Link>
-            <Link href="#how-it-works" className="py-2 text-base font-medium hover:underline" onClick={() => setMobileNavOpen(false)}>
-              How It Works
-            </Link>
-            <Link href="/login" className="py-2 text-base font-medium hover:underline" onClick={() => setMobileNavOpen(false)}>
-              Sign In
-            </Link>
-            <Button asChild className="mt-4 w-full">
-              <Link href="/signup" onClick={() => setMobileNavOpen(false)}>Get Started</Link>
-            </Button>
-          </nav>
         </div>
       </header>
 
@@ -159,60 +191,65 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="relative">
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                {loading ? (
-                  [...Array(3)].map((_, i) => (
-                    <Card key={i} className="min-w-[450px] max-w-[450px] flex-shrink-0 animate-pulse opacity-60">
-                      <CardHeader>
-                        <div className="h-6 w-3/4 bg-gray-200 rounded mb-2" />
-                        <div className="h-4 w-1/2 bg-gray-100 rounded mb-2" />
-                        <div className="h-4 w-1/3 bg-gray-100 rounded mb-2" />
-                        <div className="h-4 w-full bg-gray-100 rounded mb-2" />
-                        <div className="h-4 w-2/3 bg-gray-100 rounded" />
-                      </CardHeader>
-                    </Card>
-                  ))
-                ) : tasks.length === 0 ? (
-                  <div className="text-center w-full text-gray-500 py-8">No recent tasks found.</div>
-                ) : (
-                  tasks.map((task) => (
-                    <Link href="/login" key={task.id} className="min-w-[450px] max-w-[450px] flex-shrink-0">
-                      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
-                        <CardHeader>
-                          <div className="flex justify-between items-start mb-2">
-                            <CardTitle className="text-lg font-semibold">{task.title}</CardTitle>
-                            <div className="text-right">
-                              <div className="text-lg font-bold text-green-600">₦{task.budget_max?.toLocaleString()}</div>
-                              <div className="text-xs text-gray-500">{task.budget_type === "hourly" ? "Hourly" : "Fixed Price"}</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>{task.location || "Remote"}</span>
-                            <span className="mx-1">•</span>
-                            <Clock className="h-4 w-4" />
-                            <span>{task.duration || "-"}</span>
-                            <span className="mx-1">•</span>
-                            <span>{new Date(task.created_at).toLocaleDateString()}</span>
-                          </div>
-                          <CardDescription className="mt-2 line-clamp-2 text-sm text-gray-700">{task.description}</CardDescription>
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {(task.skills_required || []).slice(0, 4).map((skill: string, idx: number) => (
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+              {loading ? (
+                [...Array(3)].map((_, i) => (
+                  <Card key={i} className="min-w-[450px] max-w-[450px] flex-shrink-0 animate-pulse opacity-60">
+                    <CardHeader>
+                      <div className="h-6 w-3/4 bg-gray-200 rounded mb-2" />
+                      <div className="h-4 w-1/2 bg-gray-100 rounded mb-2" />
+                      <div className="h-4 w-1/3 bg-gray-100 rounded mb-2" />
+                      <div className="h-4 w-full bg-gray-100 rounded mb-2" />
+                      <div className="h-4 w-2/3 bg-gray-100 rounded" />
+                    </CardHeader>
+                  </Card>
+                ))
+              ) : tasks.length === 0 ? (
+                <div className="text-center w-full text-gray-500 py-8">No recent tasks found.</div>
+              ) : (
+                tasks.map((task) => (
+                  <Link href="/login" key={task.id} className="min-w-[450px] max-w-[450px] flex-shrink-0">
+                    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+                      <CardHeader className="relative">
+                        {/* Title */}
+                        <CardTitle className="text-lg font-semibold truncate" title={task.title}>{task.title}</CardTitle>
+                        {/* Date and Location (no gap below title) */}
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span>{formatFullDate(task.created_at)}</span>
+                          <span className="mx-1">•</span>
+                          <span>{task.location || "Remote"}</span>
+                        </div>
+                        {/* Small gap before description */}
+                        <div className="h-2" />
+                        {/* Description */}
+                        <CardDescription className="mb-4 line-clamp-2 text-sm text-gray-700">{task.description}</CardDescription>
+                        {/* Bottom: Skills left, Duration right */}
+                        <div className="flex items-end justify-between mt-4">
+                          <div className="flex flex-wrap gap-2">
+                            {(task.skills_required || []).slice(0, 3).map((skill: string, idx: number) => (
                               <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{skill}</span>
                             ))}
                           </div>
-                        </CardHeader>
-                      </Card>
-                    </Link>
-                  ))
-                )}
-              </div>
-              <div className="text-center mt-8">
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/login">View All Tasks</Link>
-                </Button>
-              </div>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Clock className="h-4 w-4" />
+                            <span>{task.duration || "-"}</span>
+                          </div>
+                        </div>
+                        {/* Budget at top right */}
+                        <div className="absolute top-4 right-4 text-right">
+                          <div className="text-lg font-bold text-green-600">₦{task.budget_max?.toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">{task.budget_type === "hourly" ? "Hourly" : "Fixed Price"}</div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  </Link>
+                ))
+              )}
+            </div>
+            <div className="text-center mt-8">
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/login">View All Tasks</Link>
+              </Button>
             </div>
           </div>
         </section>
