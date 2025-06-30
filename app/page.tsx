@@ -77,9 +77,9 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="w-full min-h-screen flex items-center text-white" style={{ backgroundColor: "#04A466" }}>
-          <div className="max-w-[1200px] mx-auto px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center">
+        <section className="w-full min-h-screen flex items-center">
+          <div className="max-w-[1200px] mx-auto px-4 md:px-6 w-full">
+            <div className="bg-[#04A466] text-white rounded-tl-[20px] rounded-tr-[20px] min-h-[70vh] flex flex-col items-center justify-center space-y-4 text-center w-full">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
                   Connect. Work. Get <span className="inline-block min-w-[3.5ch] border-r-2 border-white animate-blink caret-transparent">{paidText}</span>
