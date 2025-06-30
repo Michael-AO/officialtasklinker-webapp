@@ -34,8 +34,8 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navigation */}
-      <header className="w-full h-14 border-b">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-full flex items-center">
+      <header className="w-full border-b bg-white/95 backdrop-blur">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-5 flex items-center min-h-[72px]">
           <Link className="flex items-center justify-center" href="/">
             <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-6 w-6" />
             <span className="ml-2 text-xl font-bold">Tasklinkers</span>
@@ -61,7 +61,7 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 text-white" style={{ backgroundColor: "#04A466" }}>
+        <section className="w-full min-h-screen flex items-center text-white" style={{ backgroundColor: "#04A466" }}>
           <div className="max-w-[1200px] mx-auto px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
