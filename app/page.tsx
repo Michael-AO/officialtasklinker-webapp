@@ -191,7 +191,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+            <div className="flex flex-col gap-4 pb-4">
               {loading ? (
                 [...Array(3)].map((_, i) => (
                   <Card key={i} className="min-w-[450px] max-w-[450px] flex-shrink-0 animate-pulse opacity-60">
@@ -208,11 +208,16 @@ export default function HomePage() {
                 <div className="text-center w-full text-gray-500 py-8">No recent tasks found.</div>
               ) : (
                 tasks.map((task) => (
-                  <Link href="/login" key={task.id} className="min-w-[450px] max-w-[450px] flex-shrink-0">
+                  <Link href="/login" key={task.id} className="w-full">
                     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
                       <CardHeader className="relative">
                         {/* Title */}
-                        <CardTitle className="text-lg font-semibold truncate" title={task.title}>{task.title}</CardTitle>
+                        <CardTitle
+                          className="text-lg font-semibold truncate pr-32 max-w-[calc(100%-3.5rem)] md:max-w-[calc(100%-5rem)]"
+                          title={task.title}
+                        >
+                          {task.title}
+                        </CardTitle>
                         {/* Date and Location (no gap below title) */}
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <span>{formatFullDate(task.created_at)}</span>
