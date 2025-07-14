@@ -57,7 +57,14 @@ export async function GET(request: NextRequest) {
         completed_tasks,
         is_verified,
         created_at,
-        total_earned
+        total_earned,
+        bio,
+        location,
+        hourly_rate,
+        skills,
+        phone,
+        avatar_url,
+        profile_completion
       `)
       .eq("id", userId)
       .single()
@@ -79,6 +86,13 @@ export async function GET(request: NextRequest) {
           completed_tasks: 0,
           is_verified: false,
           total_earned: 0,
+          bio: null,
+          location: null,
+          hourly_rate: null,
+          skills: [],
+          phone: null,
+          avatar_url: null,
+          profile_completion: 0,
         }
 
         const { data: newUser, error: createError } = await supabase.from("users").insert(newUserData).select().single()
@@ -102,14 +116,14 @@ export async function GET(request: NextRequest) {
           success: true,
           data: {
             ...newUser,
-            avatar_url: null,
-            bio: null,
-            location: null,
-            hourly_rate: null,
-            skills: [],
+            avatar_url: newUser.avatar_url || null,
+            bio: newUser.bio || null,
+            location: newUser.location || null,
+            hourly_rate: newUser.hourly_rate || null,
+            skills: newUser.skills || [],
             join_date: newUser.created_at,
             last_active: newUser.created_at,
-            phone: null,
+            phone: newUser.phone || null,
           },
         })
       }
@@ -137,18 +151,19 @@ export async function GET(request: NextRequest) {
       name: user.name || "User",
       email: user.email || "",
       user_type: user.user_type || "freelancer",
-      avatar_url: null, // Will be added when we implement avatar uploads
-      bio: null, // Will be added when we implement bio editing
-      location: null, // Will be added when we implement location
-      hourly_rate: null, // Will be added when we implement rates
-      skills: [], // Will be added when we implement skills
+      avatar_url: user.avatar_url || null,
+      bio: user.bio || null,
+      location: user.location || null,
+      hourly_rate: user.hourly_rate || null,
+      skills: user.skills || [],
       rating: user.rating || 0,
       completed_tasks: user.completed_tasks || 0,
       total_earned: user.total_earned || 0,
       join_date: user.created_at,
       last_active: user.created_at,
       is_verified: user.is_verified || false,
-      phone: null, // Will be added when we implement phone
+      phone: user.phone || null,
+      profile_completion: user.profile_completion || 0,
     }
 
     console.log("✅ Profile formatted successfully for:", formattedProfile.name)

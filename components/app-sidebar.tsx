@@ -17,6 +17,9 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
+import { isVerifiedEmail } from "@/lib/utils"
+import { SupportModal } from "@/components/support-modal"
 
 import {
   Sidebar,
@@ -47,6 +50,7 @@ const navigationItems = [
     title: "My Tasks",
     url: "/dashboard/tasks",
     icon: FileText,
+    adminOnly: true,
   },
   {
     title: "Applications",
@@ -93,6 +97,7 @@ const disabledItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { user } = useAuth()
 
   const isActive = (url: string) => {
     if (url === "/dashboard") {
@@ -100,6 +105,9 @@ export function AppSidebar() {
     }
     return pathname.startsWith(url)
   }
+
+  // Check if user can post tasks (only admin emails)
+  const canPostTasks = user && isVerifiedEmail(user.email)
 
   return (
     <Sidebar className="bg-black border-r border-gray-800">
@@ -115,20 +123,37 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-gray-300">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
-                  >
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navigationItems.map((item) => {
+                // Check if this is an admin-only item and user is not admin
+                const isAdminOnly = item.adminOnly
+                const shouldDisable = isAdminOnly && !canPostTasks
+                
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    {shouldDisable ? (
+                      <SidebarMenuButton 
+                        disabled 
+                        className="text-gray-500 cursor-not-allowed opacity-60"
+                        title="Only admin accounts can access this feature"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    ) : (
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.url)}
+                        className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
+                      >
+                        <Link href={item.url}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    )}
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -137,20 +162,37 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-gray-300">Quick Actions</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {quickActions.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
-                  >
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {quickActions.map((item) => {
+                // Check if this is the "Post New Task" item and user is not admin
+                const isPostTask = item.title === "Post New Task"
+                const shouldDisable = isPostTask && !canPostTasks
+                
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    {shouldDisable ? (
+                      <SidebarMenuButton 
+                        disabled 
+                        className="text-gray-500 cursor-not-allowed opacity-60"
+                        title="Only admin accounts can post tasks"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    ) : (
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.url)}
+                        className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
+                      >
+                        <Link href={item.url}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    )}
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -191,7 +233,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-300">Legal</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-300">Legal & Support</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -205,6 +247,9 @@ export function AppSidebar() {
                     <span>Privacy & Terms</span>
                   </Link>
                 </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SupportModal />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -227,8 +272,6 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-
-      <SidebarRail />
     </Sidebar>
   )
 }

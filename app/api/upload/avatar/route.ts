@@ -96,21 +96,53 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ Public URL generated:", publicUrl)
 
-    // Update user's avatar_url in database
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({
-        avatar_url: publicUrl,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId)
+    // Update user's avatar_url in database using enhanced function with cleanup
+    try {
+      const { error: updateError } = await supabase
+        .rpc('update_user_avatar_with_cleanup', {
+          user_id: userId,
+          avatar_url: publicUrl
+        })
 
-    if (updateError) {
-      console.error("❌ Database update error:", updateError)
-      // Don't fail the upload if database update fails
-      console.warn("⚠️ File uploaded but failed to update database")
-    } else {
-      console.log("✅ Database updated successfully")
+      if (updateError) {
+        console.error("❌ Database update error:", updateError)
+        
+        // Fallback: try the original function
+        const { error: fallbackError } = await supabase
+          .rpc('update_user_avatar', {
+            user_id: userId,
+            avatar_url: publicUrl
+          })
+
+        if (fallbackError) {
+          console.error("❌ Fallback RPC error:", fallbackError)
+          
+          // Final fallback: try direct SQL query
+          const { error: sqlError } = await supabase
+            .from("users")
+            .update({
+              avatar_url: publicUrl,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", userId)
+
+          if (sqlError) {
+            console.error("❌ Final fallback SQL update error:", sqlError)
+            console.warn("⚠️ File uploaded but failed to update database")
+            // Continue anyway - the file is uploaded and we can return the URL
+          } else {
+            console.log("✅ Database updated successfully via final fallback")
+          }
+        } else {
+          console.log("✅ Database updated successfully via fallback RPC")
+        }
+      } else {
+        console.log("✅ Database updated successfully via enhanced RPC with cleanup")
+      }
+    } catch (dbError) {
+      console.error("❌ Database update exception:", dbError)
+      console.warn("⚠️ File uploaded but database update failed")
+      // Continue anyway - the file is uploaded and we can return the URL
     }
 
     return NextResponse.json({

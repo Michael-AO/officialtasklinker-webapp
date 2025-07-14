@@ -48,6 +48,16 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 })
     }
 
+    // Calculate profile completion percentage
+    let completed = 0
+    const total = 3 // Core profile sections (bio, skills, location)
+
+    if (updateData.bio && updateData.bio.trim()) completed++
+    if (updateData.skills && updateData.skills.length > 0) completed++
+    if (updateData.location && updateData.location.trim()) completed++
+
+    const profileCompletion = Math.round((completed / total) * 100)
+
     // Prepare update object
     const updateObject: any = {
       name: updateData.name.trim(),
@@ -55,6 +65,7 @@ export async function PUT(request: NextRequest) {
       location: updateData.location || null,
       hourly_rate: updateData.hourly_rate || null,
       skills: updateData.skills || [],
+      profile_completion: profileCompletion,
       updated_at: new Date().toISOString(),
     }
 

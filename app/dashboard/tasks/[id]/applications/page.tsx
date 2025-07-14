@@ -30,22 +30,47 @@ import {
 import { toast } from "@/hooks/use-toast"
 import { formatNaira } from "@/lib/currency"
 import { NairaIcon } from "@/components/naira-icon"
+import { ProgressTracking } from "@/components/progress-tracking"
 import { useAuth } from "@/contexts/auth-context"
+import { ViewApplicationModal } from "@/components/view-application-modal"
 
 interface Application {
   id: string
+  user_id: string
+  task_id: string
   freelancer_id: string
   freelancer_name: string
   freelancer_avatar: string
+  freelancer_email: string
   proposed_budget: number
+  proposed_timeline: number
   cover_letter: string
   status: "pending" | "interviewing" | "accepted" | "rejected"
   applied_date: string
+  created_at: string
+  updated_at: string
+  freelancer: {
+    id: string
+    name: string
+    email: string
+    avatar_url?: string
+  }
+  portfolio?: {
+    id: string
+    title: string
+    description?: string
+    file_url?: string
+  }[]
+  answers?: {
+    question: string
+    answer: string
+  }[]
 }
 
 interface Task {
   id: string
   title: string
+  client_id?: string
 }
 
 export default function TaskApplicationsPage() {
@@ -72,6 +97,7 @@ export default function TaskApplicationsPage() {
   const [acceptDialogOpen, setAcceptDialogOpen] = useState(false)
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false)
   const [currentApplicationId, setCurrentApplicationId] = useState<string | null>(null)
+  const [showProgressTracking, setShowProgressTracking] = useState<string | null>(null)
 
   // Fetch applications from API
   useEffect(() => {
@@ -114,23 +140,51 @@ export default function TaskApplicationsPage() {
             setApplications([
               {
                 id: "1",
+                user_id: "freelancer-1",
+                task_id: taskId,
                 freelancer_id: "freelancer-1",
                 freelancer_name: "Alex Rodriguez",
                 freelancer_avatar: "/placeholder.svg?height=40&width=40",
+                freelancer_email: "alex@example.com",
                 proposed_budget: 250000,
+                proposed_timeline: 14,
                 cover_letter: "I have over 5 years of experience building e-commerce platforms with React and Node.js.",
                 status: "pending",
                 applied_date: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                freelancer: {
+                  id: "freelancer-1",
+                  name: "Alex Rodriguez",
+                  email: "alex@example.com",
+                  avatar_url: "/placeholder.svg?height=40&width=40",
+                },
+                portfolio: [],
+                answers: [],
               },
               {
                 id: "2",
+                user_id: "freelancer-2",
+                task_id: taskId,
                 freelancer_id: "freelancer-2",
                 freelancer_name: "Sarah Kim",
                 freelancer_avatar: "/placeholder.svg?height=40&width=40",
+                freelancer_email: "sarah@example.com",
                 proposed_budget: 220000,
+                proposed_timeline: 10,
                 cover_letter: "I specialize in building modern web applications with a focus on user experience.",
                 status: "interviewing",
                 applied_date: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                freelancer: {
+                  id: "freelancer-2",
+                  name: "Sarah Kim",
+                  email: "sarah@example.com",
+                  avatar_url: "/placeholder.svg?height=40&width=40",
+                },
+                portfolio: [],
+                answers: [],
               },
             ])
             setTask({ id: taskId, title: "Sample Task" })
@@ -182,9 +236,21 @@ export default function TaskApplicationsPage() {
   const handleAcceptApplication = async (applicationId: string) => {
     setIsAccepting(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Call the API to accept the application
+      const response = await fetch(`/api/tasks/${taskId}/applications/${applicationId}/accept`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user?.id || "",
+        },
+      })
 
-      // Update application status to accepted
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to accept application")
+      }
+
+      // Update local state
       setApplications((prev) =>
         prev.map((app) =>
           app.id === applicationId
@@ -199,15 +265,16 @@ export default function TaskApplicationsPage() {
 
       toast({
         title: "Application Accepted!",
-        description: `${application?.freelancer_name}'s application has been accepted. They will be notified to start work.`,
+        description: `${application?.freelancer_name}'s application has been accepted. They will be notified via email to start work.`,
       })
 
       setAcceptDialogOpen(false)
       setCurrentApplicationId(null)
     } catch (error) {
+      console.error("Accept application error:", error)
       toast({
         title: "Error",
-        description: "Failed to accept application. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to accept application. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -218,24 +285,41 @@ export default function TaskApplicationsPage() {
   const handleRejectApplication = async (applicationId: string) => {
     setIsRejecting(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Call the API to reject the application
+      const response = await fetch(`/api/tasks/${taskId}/applications/${applicationId}/reject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user?.id || "",
+        },
+        body: JSON.stringify({
+          feedback: rejectFeedback,
+        }),
+      })
 
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to reject application")
+      }
+
+      // Update local state
       setApplications((prev) => prev.map((app) => (app.id === applicationId ? { ...app, status: "rejected" } : app)))
 
       const application = applications.find((app) => app.id === applicationId)
 
       toast({
         title: "Application Rejected",
-        description: `${application?.freelancer_name}'s application has been rejected.`,
+        description: `${application?.freelancer_name}'s application has been rejected. They will be notified via email.`,
       })
 
       setRejectDialogOpen(false)
       setCurrentApplicationId(null)
       setRejectFeedback("")
     } catch (error) {
+      console.error("Reject application error:", error)
       toast({
         title: "Error",
-        description: "Failed to reject application. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to reject application. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -293,7 +377,48 @@ export default function TaskApplicationsPage() {
     )
   }
 
+  // Check if user is a freelancer who applied to this task
+  const userApplication = applications.find(app => app.freelancer_id === user?.id)
+  const isFreelancerViewingOwnApplication = userApplication && task?.client_id !== user?.id
+
   if (error && applications.length === 0) {
+    // If it's a 403 error and user is a freelancer, show freelancer view
+    if (error.includes("403") || error.includes("not client or accepted freelancer")) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Task Applications</h1>
+              <p className="text-muted-foreground">Your application status</p>
+            </div>
+          </div>
+          
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="text-center space-y-4">
+                <h3 className="text-lg font-semibold">Application Status</h3>
+                <p className="text-muted-foreground">
+                  You have applied to this task. The client will review your application and get back to you.
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" asChild>
+                    <a href={`/dashboard/tasks/${taskId}`}>View Task Details</a>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <a href="/dashboard/applications">View All Applications</a>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -306,6 +431,74 @@ export default function TaskApplicationsPage() {
             <p className="text-muted-foreground text-red-600">Error: {error}</p>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // If freelancer is viewing their own accepted application, show simplified view
+  if (isFreelancerViewingOwnApplication && userApplication?.status === "accepted") {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Application Management</h1>
+            <p className="text-muted-foreground">
+              {task?.title || "Loading task..."} - Your accepted application
+            </p>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={userApplication.freelancer_avatar || "/placeholder.svg"} />
+                  <AvatarFallback>
+                    {userApplication.freelancer_name
+                      .split(" ")
+                      .map((n: string) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">{userApplication.freelancer_name}</h3>
+                    <Badge className="bg-green-100 text-green-800">
+                      Accepted
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>{formatNaira(userApplication.proposed_budget)}</span>
+                    <span>Applied {new Date(userApplication.applied_date).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-6">{userApplication.cover_letter}</p>
+            
+            {/* Progress Tracking for accepted freelancer */}
+            <div className="pt-6 border-t">
+              <h4 className="text-lg font-semibold mb-4">Project Progress</h4>
+              <ProgressTracking
+                applicationId={userApplication.id}
+                freelancerEmail={userApplication.freelancer_email}
+                freelancerName={userApplication.freelancer_name}
+                taskTitle={task?.title || "Task"}
+                isClient={false}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -472,6 +665,7 @@ export default function TaskApplicationsPage() {
                   </div>
 
                   <div className="flex gap-2">
+                    <ViewApplicationModal application={application} />
                     {application.status === "pending" && (
                       <>
                         <Button
@@ -536,9 +730,17 @@ export default function TaskApplicationsPage() {
                     )}
 
                     {application.status === "accepted" && (
-                      <Button size="sm" asChild>
-                        <a href={`/dashboard/tasks/${taskId}`}>View Project</a>
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => setShowProgressTracking(showProgressTracking === application.id ? null : application.id)}
+                        >
+                          {showProgressTracking === application.id ? "Hide Progress" : "Track Progress"}
+                        </Button>
+                        <Button size="sm" asChild>
+                          <a href={`/dashboard/tasks/${taskId}`}>View Project</a>
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -546,6 +748,19 @@ export default function TaskApplicationsPage() {
 
               <CardContent>
                 <p className="text-sm text-muted-foreground">{application.cover_letter}</p>
+                
+                {/* Progress Tracking for accepted applications */}
+                {application.status === "accepted" && showProgressTracking === application.id && (
+                  <div className="mt-6 pt-6 border-t">
+                    <ProgressTracking
+                      applicationId={application.id}
+                      freelancerEmail={application.freelancer_email}
+                      freelancerName={application.freelancer_name}
+                      taskTitle={task?.title || "Task"}
+                      isClient={true}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))
@@ -597,14 +812,30 @@ export default function TaskApplicationsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reject Application</DialogTitle>
-            <DialogDescription>Are you sure you want to reject this application?</DialogDescription>
+            <DialogDescription>Are you sure you want to reject this application? You can provide optional feedback to the freelancer.</DialogDescription>
           </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="reject-feedback" className="text-sm font-medium">
+                Feedback (Optional)
+              </label>
+              <textarea
+                id="reject-feedback"
+                placeholder="Provide constructive feedback to help the freelancer improve..."
+                value={rejectFeedback}
+                onChange={(e) => setRejectFeedback(e.target.value)}
+                className="w-full mt-1 p-3 border border-gray-300 rounded-md resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
                 setRejectDialogOpen(false)
                 setCurrentApplicationId(null)
+                setRejectFeedback("")
               }}
               disabled={isRejecting}
             >

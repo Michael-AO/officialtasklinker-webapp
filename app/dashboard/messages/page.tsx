@@ -18,7 +18,6 @@ import {
   Paperclip,
   Search,
   Send,
-  Star,
   Users,
   MessageCircle,
   Clock,
@@ -453,10 +452,6 @@ export default function MessagesPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold">{selectedConversation.participant.name}</h3>
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm">{selectedConversation.participant.rating}</span>
-                          </div>
                         </div>
                         <div className="text-sm text-muted-foreground">{selectedConversation.task_title}</div>
                       </div>

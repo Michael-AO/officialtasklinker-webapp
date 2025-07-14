@@ -4,7 +4,7 @@ import { DialogFooter } from "@/components/ui/dialog"
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,25 +48,78 @@ export function ProfileCompletionWizard() {
   const [isDismissed, setIsDismissed] = useState(false)
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [profileImagePreview, setProfileImagePreview] = useState<string>("")
+  const [hasBeenCompleted, setHasBeenCompleted] = useState(false)
+
+  // Check if profile has been completed before (stored in localStorage)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user?.id) {
+      const completedKey = `profile_completed_${user.id}`
+      const wasCompleted = localStorage.getItem(completedKey)
+      
+      // Calculate current profile completion
+      let completed = 0
+      const total = 3 // Core profile sections (bio, skills, location)
+      
+      if (user.bio && user.bio.trim()) completed++
+      if (user.skills && user.skills.length > 0) completed++
+      if (user.location && user.location.trim()) completed++
+      
+      const currentProgress = Math.round((completed / total) * 100)
+      
+      // If user has 100% completion in database, mark as completed
+      if (user.profile_completion === 100) {
+        localStorage.setItem(completedKey, 'true')
+        setHasBeenCompleted(true)
+      }
+      
+      // If profile was marked as complete but is now incomplete, clear the flag
+      if (wasCompleted === 'true' && currentProgress < 100) {
+        localStorage.removeItem(completedKey)
+        setHasBeenCompleted(false)
+      } else if (wasCompleted === 'true' && currentProgress === 100) {
+        setHasBeenCompleted(true)
+      }
+    }
+  }, [user?.id, user?.bio, user?.skills, user?.location])
+
+  // Initialize form data with user data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        bio: user.bio || "",
+        skills: user.skills || [],
+        location: user.location || "",
+        hourlyRate: user.hourlyRate?.toString() || "",
+        portfolio: user.portfolio || [],
+      })
+      
+      setPortfolioItems(
+        user.portfolio?.map((item) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          fileUrl: item.image,
+          url: item.url,
+        })) || []
+      )
+    }
+  }, [user])
+
+  // Don't render if profile has been completed before
+  if (hasBeenCompleted) {
+    return null
+  }
 
   const [formData, setFormData] = useState({
-    bio: user?.bio || "",
-    skills: user?.skills || [],
-    location: user?.location || "",
-    hourlyRate: user?.hourlyRate || "",
-    portfolio: user?.portfolio || [],
+    bio: "",
+    skills: [] as string[],
+    location: "",
+    hourlyRate: "",
+    portfolio: [] as any[],
   })
 
   const [newSkill, setNewSkill] = useState("")
-  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(
-    user?.portfolio?.map((item) => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      fileUrl: item.image,
-      url: item.url,
-    })) || [],
-  )
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const profileImageInputRef = useRef<HTMLInputElement>(null)
@@ -193,17 +246,19 @@ export function ProfileCompletionWizard() {
   const completionStatus = calculateCompletionStatus()
 
   const calculateOverallProgress = () => {
-    const totalSections = 4 // Core profile sections (excluding portfolio)
-    const completedSections = Object.values(completionStatus).filter(
-      (status, index) => index < 3 && status, // Only count first 3 sections (bio, skills, location), skip portfolio and verification
-    ).length
-    const hasProfilePicture = !!(profileImage || user?.avatar)
-    const totalCompleted = completedSections + (hasProfilePicture ? 1 : 0)
-    return Math.round((totalCompleted / totalSections) * 100)
+    const totalSections = 3 // Core profile sections (bio, skills, location)
+    let completedSections = 0
+    
+    if (formData.bio && formData.bio.trim()) completedSections++
+    if (formData.skills && formData.skills.length > 0) completedSections++
+    if (formData.location && formData.location.trim()) completedSections++
+    
+    return Math.round((completedSections / totalSections) * 100)
   }
 
-  const overallProgress = calculateOverallProgress()
-  const isProfileComplete = overallProgress === 100
+  // Use stored profile completion if available, otherwise calculate
+  const overallProgress = user?.profile_completion || calculateOverallProgress()
+  const isProfileComplete = overallProgress === 100 || hasBeenCompleted
 
   const handleSave = async () => {
     setIsLoading(true)
@@ -214,25 +269,41 @@ export function ProfileCompletionWizard() {
       if (profileImage) {
         console.log("📤 Uploading profile image...")
         
-        const formData = new FormData()
-        formData.append("file", profileImage)
+        try {
+          const formData = new FormData()
+          formData.append("file", profileImage)
 
-        const uploadResponse = await fetch("/api/upload/avatar", {
-          method: "POST",
-          headers: {
-            "user-id": user?.id || "",
-          },
-          body: formData,
-        })
+          const uploadResponse = await fetch("/api/upload/avatar", {
+            method: "POST",
+            headers: {
+              "user-id": user?.id || "",
+            },
+            body: formData,
+          })
 
-        if (!uploadResponse.ok) {
-          const errorData = await uploadResponse.json()
-          throw new Error(errorData.error || "Failed to upload profile image")
+          if (uploadResponse.ok) {
+            const uploadResult = await uploadResponse.json()
+            avatarUrl = uploadResult.data.url
+            console.log("✅ Profile image uploaded:", avatarUrl)
+          } else {
+            const errorData = await uploadResponse.json()
+            console.warn("⚠️ Avatar upload failed:", errorData.error)
+            // Continue without avatar - don't fail the entire profile update
+            toast({
+              title: "Avatar Upload Warning",
+              description: "Profile image upload failed, but profile was updated successfully.",
+              variant: "default",
+            })
+          }
+        } catch (uploadError) {
+          console.warn("⚠️ Avatar upload error:", uploadError)
+          // Continue without avatar - don't fail the entire profile update
+          toast({
+            title: "Avatar Upload Warning",
+            description: "Profile image upload failed, but profile was updated successfully.",
+            variant: "default",
+          })
         }
-
-        const uploadResult = await uploadResponse.json()
-        avatarUrl = uploadResult.data.url
-        console.log("✅ Profile image uploaded:", avatarUrl)
       }
 
       // Save portfolio items to database
@@ -244,23 +315,28 @@ export function ProfileCompletionWizard() {
         if (item.file) {
           console.log("📤 Uploading portfolio file:", item.fileName)
           
-          const formData = new FormData()
-          formData.append("file", item.file)
+          try {
+            const formData = new FormData()
+            formData.append("file", item.file)
 
-          const uploadResponse = await fetch("/api/upload/portfolio", {
-            method: "POST",
-            headers: {
-              "user-id": user?.id || "",
-            },
-            body: formData,
-          })
+            const uploadResponse = await fetch("/api/upload/portfolio", {
+              method: "POST",
+              headers: {
+                "user-id": user?.id || "",
+              },
+              body: formData,
+            })
 
-          if (uploadResponse.ok) {
-            const uploadResult = await uploadResponse.json()
-            fileUrl = uploadResult.data.url
-            console.log("✅ Portfolio file uploaded:", fileUrl)
-          } else {
-            console.warn("⚠️ Portfolio file upload failed, using placeholder")
+            if (uploadResponse.ok) {
+              const uploadResult = await uploadResponse.json()
+              fileUrl = uploadResult.data.url
+              console.log("✅ Portfolio file uploaded:", fileUrl)
+            } else {
+              console.warn("⚠️ Portfolio file upload failed, using placeholder")
+              fileUrl = "/placeholder.svg?height=200&width=300"
+            }
+          } catch (uploadError) {
+            console.warn("⚠️ Portfolio file upload error:", uploadError)
             fileUrl = "/placeholder.svg?height=200&width=300"
           }
         }
@@ -280,6 +356,7 @@ export function ProfileCompletionWizard() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-user-id": user?.id || "",
           },
           body: JSON.stringify(portfolioData),
         })
@@ -306,10 +383,23 @@ export function ProfileCompletionWizard() {
 
       await refreshPortfolio()
 
-      toast({
-        title: "Profile Updated!",
-        description: "Your profile has been successfully updated.",
-      })
+      // Check if profile is now complete and mark it as completed in localStorage
+      const finalProgress = calculateOverallProgress()
+      if (finalProgress === 100) {
+        const completedKey = `profile_completed_${user?.id}`
+        localStorage.setItem(completedKey, 'true')
+        setHasBeenCompleted(true)
+        
+        toast({
+          title: "Profile Complete! 🎉",
+          description: "Your profile is now 100% complete and will no longer show the setup wizard.",
+        })
+      } else {
+        toast({
+          title: "Profile Updated!",
+          description: "Your profile has been successfully updated.",
+        })
+      }
       setIsExpanded(false)
     } catch (error) {
       console.error("Profile update error:", error)
@@ -420,14 +510,10 @@ export function ProfileCompletionWizard() {
                   className="hidden"
                 />
               </div>
-            </section>
 
-            {/* Bio Section */}
-            <section className="space-y-4">
-              <h3 className="text-xl font-semibold">Professional Bio</h3>
-              <p className="text-muted-foreground">Tell clients about your experience</p>
+              {/* Bio Section - moved here */}
               <div className="space-y-2">
-                <Label htmlFor="bio">Your Bio</Label>
+                <Label htmlFor="bio">About Me</Label>
                 <Textarea
                   id="bio"
                   placeholder="I'm a skilled professional with expertise in..."
@@ -438,13 +524,10 @@ export function ProfileCompletionWizard() {
                 />
                 <div className="text-sm text-muted-foreground">{formData.bio.length}/500 characters</div>
               </div>
-            </section>
 
-            {/* Skills Section */}
-            <section className="space-y-4">
-              <h3 className="text-xl font-semibold">Skills & Expertise</h3>
-              <p className="text-muted-foreground">Add skills that match the work you want to do</p>
+              {/* Skills Section - moved here */}
               <div className="space-y-4">
+                <Label>Skills & Expertise</Label>
                 <div className="flex gap-2">
                   <Input
                     placeholder="Add a skill (e.g., React, Design, Writing)..."

@@ -19,6 +19,7 @@ export interface User {
   bio: string
   location?: string
   hourlyRate?: number
+  profile_completion?: number
   portfolio?: Array<{
     id: string
     title: string
@@ -118,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const portfolioResponse = await fetch("/api/user/portfolio", {
                   method: "GET",
                   headers: {
+                    "x-user-id": session.user.id,
                     "Content-Type": "application/json",
                   },
                 })
@@ -263,6 +265,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const portfolioResponse = await fetch("/api/user/portfolio", {
                 method: "GET",
                 headers: {
+                  "x-user-id": session.user.id,
                   "Content-Type": "application/json",
                 },
               })
@@ -389,6 +392,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const portfolioResponse = await fetch("/api/user/portfolio", {
         method: "GET",
         headers: {
+          "x-user-id": user.id,
           "Content-Type": "application/json",
         },
       })

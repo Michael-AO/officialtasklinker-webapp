@@ -26,6 +26,8 @@ import {
 import Link from "next/link"
 import { formatCurrency, getStatusColor, generateTaskCode } from "@/lib/api-utils"
 import { NairaIcon } from "@/components/naira-icon"
+import { VerifiedBadge } from "@/components/ui/verified-badge"
+import { isVerifiedEmail } from "@/lib/utils"
 
 const categories = [
   "All Categories",
@@ -69,6 +71,7 @@ interface Task {
     name: string
     rating: number
     location: string
+    email?: string
   }
 }
 
@@ -479,11 +482,13 @@ export default function BrowseTasksPage() {
                     <Link href={`/dashboard/browse/${task.id}`} className="hover:underline">
                       <CardTitle className="text-lg">{task.title}</CardTitle>
                     </Link>
+                    {task.client?.email && isVerifiedEmail(task.client.email) && (
+                      <VerifiedBadge size="sm" />
+                    )}
                     <Badge variant="outline" className="text-xs">
                       {generateTaskCode(task.id)}
                     </Badge>
                     {task.urgency === "high" && <Badge variant="destructive">Urgent</Badge>}
-                    <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
@@ -542,13 +547,9 @@ export default function BrowseTasksPage() {
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium">{task.client?.name || "Client"}</span>
-                      <Badge variant="outline" className="text-xs">
-                        Verified
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm">{task.client?.rating || "4.8"}</span>
+                      {task.client?.email && isVerifiedEmail(task.client.email) && (
+                        <span className="text-xs text-muted-foreground">(Verified)</span>
+                      )}
                     </div>
                   </div>
 

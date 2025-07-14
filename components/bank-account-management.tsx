@@ -271,7 +271,7 @@ export function BankAccountManagement() {
           <h2 className="text-2xl font-bold">Bank Accounts</h2>
           <p className="text-muted-foreground">Manage your withdrawal bank accounts</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>
+        <Button onClick={() => setShowAddModal(true)} disabled={true}>
           <Plus className="h-4 w-4 mr-2" />
           Add Bank Account
         </Button>
@@ -316,22 +316,22 @@ export function BankAccountManagement() {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" disabled={true}>
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEditModal(account)}>
+                      <DropdownMenuItem onClick={() => openEditModal(account)} disabled={true}>
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
                       {!account.isDefault && account.isVerified && (
-                        <DropdownMenuItem onClick={() => setAsDefault(account.id)}>
+                        <DropdownMenuItem onClick={() => setAsDefault(account.id)} disabled={true}>
                           <Star className="h-4 w-4 mr-2" />
                           Set as Default
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={() => deleteBankAccount(account.id)} className="text-red-600">
+                      <DropdownMenuItem onClick={() => deleteBankAccount(account.id)} className="text-red-600" disabled={true}>
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete
                       </DropdownMenuItem>
@@ -347,7 +347,7 @@ export function BankAccountManagement() {
               <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="font-semibold mb-2">No Bank Accounts</h3>
               <p className="text-sm text-muted-foreground mb-4">Add a bank account to start receiving withdrawals</p>
-              <Button onClick={() => setShowAddModal(true)}>
+              <Button onClick={() => setShowAddModal(true)} disabled={true}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Bank Account
               </Button>
@@ -367,7 +367,7 @@ export function BankAccountManagement() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Select Bank</Label>
-              <Select value={selectedBankCode} onValueChange={setSelectedBankCode}>
+              <Select value={selectedBankCode} onValueChange={setSelectedBankCode} disabled={true}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose your bank" />
                 </SelectTrigger>
@@ -394,10 +394,11 @@ export function BankAccountManagement() {
                   }}
                   placeholder="0123456789"
                   maxLength={10}
+                  disabled={true}
                 />
                 <Button
                   onClick={verifyAccount}
-                  disabled={isVerifying || !selectedBankCode || accountNumber.length < 10}
+                  disabled={true}
                   size="sm"
                 >
                   {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
@@ -423,10 +424,10 @@ export function BankAccountManagement() {
           </div>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setShowAddModal(false)}>
+            <Button variant="outline" onClick={() => setShowAddModal(false)} disabled={true}>
               Cancel
             </Button>
-            <Button onClick={addBankAccount} disabled={isSaving || !isVerified}>
+            <Button onClick={addBankAccount} disabled={true}>
               {isSaving ? "Adding..." : "Add Account"}
             </Button>
           </div>
@@ -444,7 +445,7 @@ export function BankAccountManagement() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Select Bank</Label>
-              <Select value={selectedBankCode} onValueChange={setSelectedBankCode}>
+              <Select value={selectedBankCode} onValueChange={setSelectedBankCode} disabled={true}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose your bank" />
                 </SelectTrigger>
@@ -471,10 +472,11 @@ export function BankAccountManagement() {
                   }}
                   placeholder="0123456789"
                   maxLength={10}
+                  disabled={true}
                 />
                 <Button
                   onClick={verifyAccount}
-                  disabled={isVerifying || !selectedBankCode || accountNumber.length < 10}
+                  disabled={true}
                   size="sm"
                 >
                   {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
@@ -500,10 +502,10 @@ export function BankAccountManagement() {
           </div>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setShowEditModal(false)}>
+            <Button variant="outline" onClick={() => setShowEditModal(false)} disabled={true}>
               Cancel
             </Button>
-            <Button onClick={updateBankAccount} disabled={isSaving || !isVerified}>
+            <Button onClick={updateBankAccount} disabled={true}>
               {isSaving ? "Updating..." : "Update Account"}
             </Button>
           </div>

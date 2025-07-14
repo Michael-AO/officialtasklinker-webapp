@@ -14,19 +14,18 @@ import {
   Calendar,
   Clock,
   Eye,
-  Filter,
   MapPin,
   Search,
   Star,
   Users,
   Briefcase,
-  TrendingUp,
-  RefreshCw,
 } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
 import Link from "next/link"
 import { formatCurrency, getStatusColor, generateTaskCode } from "@/lib/api-utils"
 import { toast } from "@/hooks/use-toast"
+import { VerifiedBadge } from "@/components/ui/verified-badge"
+import { isVerifiedEmail } from "@/lib/utils"
 
 const categories = [
   "All Categories",
@@ -70,13 +69,14 @@ interface Task {
     name: string
     rating: number
     location: string
+    email?: string
+    avatar_url?: string
   }
 }
 
 export default function BrowseTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
   const [selectedExperience, setSelectedExperience] = useState("All Levels")
@@ -87,10 +87,8 @@ export default function BrowseTasksPage() {
   const [debugInfo, setDebugInfo] = useState<any>(null)
 
   // Fetch tasks from API - only real database data
-  const fetchTasks = async (showRefreshToast = false) => {
+  const fetchTasks = async () => {
     try {
-      if (showRefreshToast) setRefreshing(true)
-
       console.log("=== FRONTEND: Starting fetch ===")
 
       // Build query parameters
@@ -159,13 +157,6 @@ export default function BrowseTasksPage() {
 
       setTasks(fetchedTasks)
       setDebugInfo(data.debug)
-
-      if (showRefreshToast) {
-        toast({
-          title: "Tasks Updated",
-          description: `Found ${fetchedTasks.length} tasks from ${data.debug?.source || "database"}`,
-        })
-      }
     } catch (error) {
       console.error("Error fetching tasks:", error)
       toast({
@@ -176,7 +167,6 @@ export default function BrowseTasksPage() {
       setTasks([])
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
   }
 
@@ -268,20 +258,6 @@ export default function BrowseTasksPage() {
               </span>
             )}
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => fetchTasks(true)} disabled={refreshing}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh DB
-          </Button>
-          <Button variant="outline" size="sm">
-            <Filter className="mr-2 h-4 w-4" />
-            Advanced Filters
-          </Button>
-          <Button variant="outline" size="sm">
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Trending
-          </Button>
         </div>
       </div>
 
@@ -436,11 +412,13 @@ export default function BrowseTasksPage() {
                     <Link href={`/dashboard/browse/${task.id}`} className="hover:underline">
                       <CardTitle className="text-lg">{task.title}</CardTitle>
                     </Link>
+                    {task.client?.email && isVerifiedEmail(task.client.email) && (
+                      <VerifiedBadge size="sm" />
+                    )}
                     <Badge variant="outline" className="text-xs">
                       {generateTaskCode(task.id)}
                     </Badge>
                     {task.urgency === "high" && <Badge variant="destructive">Urgent</Badge>}
-                    <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
@@ -490,7 +468,7 @@ export default function BrowseTasksPage() {
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src="/placeholder.svg" />
+                        <AvatarImage src={task.client?.avatar_url || "/placeholder.svg"} />
                         <AvatarFallback>
                           {task.client?.name
                             ?.split(" ")
@@ -499,13 +477,9 @@ export default function BrowseTasksPage() {
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium">{task.client?.name || "Client"}</span>
-                      <Badge variant="outline" className="text-xs">
-                        Verified
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm">{task.client?.rating || "4.8"}</span>
+                      {task.client?.email && isVerifiedEmail(task.client.email) && (
+                        <span className="text-xs text-muted-foreground">(Verified)</span>
+                      )}
                     </div>
                   </div>
 
@@ -542,12 +516,6 @@ export default function BrowseTasksPage() {
                   ? "No tasks in database match your filters"
                   : "No tasks available"}
               </p>
-              <div className="mt-4">
-                <Button variant="outline" onClick={() => fetchTasks(true)}>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Refresh Database
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>

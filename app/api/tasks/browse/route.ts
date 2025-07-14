@@ -40,9 +40,11 @@ export async function GET(request: NextRequest) {
         client_id,
         users!tasks_client_id_fkey (
           name,
+          email,
           rating,
           completed_tasks,
-          is_verified
+          is_verified,
+          avatar_url
         )
       `)
       .eq("status", "active")
@@ -89,10 +91,11 @@ export async function GET(request: NextRequest) {
 
     console.log(`Found ${tasks?.length || 0} tasks`)
 
-    // Get application counts for each task
+    // Get application counts and check for accepted applications for each task
     const tasksWithCounts = await Promise.all(
       (tasks || []).map(async (task) => {
         try {
+          // Get total application count
           const { count: appCount, error: countError } = await supabase
             .from("applications")
             .select("*", { count: "exact", head: true })
@@ -100,6 +103,23 @@ export async function GET(request: NextRequest) {
 
           if (countError) {
             console.warn("Error getting application count for task", task.id, countError)
+          }
+
+          // Check if there's an accepted application
+          const { data: acceptedApp, error: acceptedError } = await supabase
+            .from("applications")
+            .select("id")
+            .eq("task_id", task.id)
+            .eq("status", "accepted")
+            .single()
+
+          if (acceptedError && acceptedError.code !== 'PGRST116') { // PGRST116 is "not found"
+            console.warn("Error checking accepted application for task", task.id, acceptedError)
+          }
+
+          // If there's an accepted application, exclude this task
+          if (acceptedApp) {
+            return null
           }
 
           return {
@@ -122,16 +142,20 @@ export async function GET(request: NextRequest) {
       }),
     )
 
+    // Filter out null values (tasks with accepted applications)
+    const availableTasks = tasksWithCounts.filter(task => task !== null)
+
+    console.log(`Available tasks (no accepted applications): ${availableTasks.length}`)
     console.log("=== BROWSE TASKS API SUCCESS ===")
 
     return NextResponse.json({
       success: true,
-      tasks: tasksWithCounts,
+      tasks: availableTasks,
       pagination: {
         page,
         limit,
-        total: count || 0,
-        totalPages: Math.ceil((count || 0) / limit),
+        total: availableTasks.length,
+        totalPages: Math.ceil(availableTasks.length / limit),
       },
     })
   } catch (error) {

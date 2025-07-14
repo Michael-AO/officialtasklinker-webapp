@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { MilestoneManager } from "@/components/milestone-manager"
+import { ProgressTracking } from "@/components/progress-tracking"
 import { formatNaira } from "@/lib/currency"
 import { NairaIcon } from "@/components/naira-icon"
 import { useAuth } from "@/contexts/auth-context"
@@ -60,6 +61,7 @@ interface TaskData {
 interface Application {
   id: string
   freelancer_name: string
+  freelancer_email?: string
   proposed_budget: number
   status: string
   applied_date: string
@@ -79,6 +81,66 @@ export default function TaskDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [escrowData, setEscrowData] = useState<any>(null)
   const [milestones, setMilestones] = useState<any[]>([])
+  const [progressData, setProgressData] = useState<any>(null)
+
+  // Check if current user is a freelancer with an application
+  const userApplication = applications.find(app => app.freelancer_name === user?.name)
+  const isClient = task?.client?.name === user?.name
+  const isFreelancerWithApplication = !isClient && !!user?.id // If not client, assume freelancer
+  const isAcceptedFreelancer = userApplication?.status === "accepted"
+  const isPendingFreelancer = userApplication?.status === "pending"
+
+  // Fetch progress data for freelancers
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (!isFreelancerWithApplication || !userApplication?.id || !user?.id) return
+
+      try {
+        const response = await fetch(`/api/applications/${userApplication.id}/progress`, {
+          headers: {
+            "user-id": user.id,
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setProgressData(data.progress)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching progress:", error)
+      }
+    }
+
+    fetchProgress()
+  }, [isFreelancerWithApplication, userApplication?.id, user?.id])
+
+  // Get progress status for freelancers
+  const getProgressStatus = () => {
+    if (!progressData) return "Yet to Begin"
+    
+    if (progressData.completed) return "Completed"
+    if (progressData.midpoint) return "Mid Point"
+    if (progressData.project_kickoff) return "Project Kickoff"
+    if (progressData.first_contact) return "First Contact"
+    return "Yet to Begin"
+  }
+
+  const getProgressColor = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "bg-purple-100 text-purple-800"
+      case "Mid Point":
+        return "bg-yellow-100 text-yellow-800"
+      case "Project Kickoff":
+        return "bg-green-100 text-green-800"
+      case "First Contact":
+        return "bg-blue-100 text-blue-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
 
   // Fetch applications
   useEffect(() => {
@@ -334,12 +396,15 @@ export default function TaskDetailPage() {
         </div>
         <div className="flex gap-2">
           <Badge className={getStatusColor(task.status)}>{task.status.replace("_", " ")}</Badge>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/dashboard/tasks/${taskId}/edit`}>
-              <Settings className="h-4 w-4 mr-2" />
-              Edit Task
-            </Link>
-          </Button>
+          {/* Only show Edit Task button if user is the client */}
+          {task.client.name === user?.name && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/dashboard/tasks/${taskId}/edit`}>
+                <Settings className="h-4 w-4 mr-2" />
+                Edit Task
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -393,10 +458,26 @@ export default function TaskDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Applications</span>
-                <span>{task.applications_count}</span>
-              </div>
+              {/* Show application status for freelancers, count for clients */}
+              {applications.some(app => app.freelancer_name === user?.name) ? (
+                <div className="flex justify-between text-sm">
+                  <span>Your Application</span>
+                  {(() => {
+                    const userApplication = applications.find(app => app.freelancer_name === user?.name);
+                    const status = userApplication?.status || 'pending';
+                    return (
+                      <Badge variant="outline" className={getStatusColor(status)}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </Badge>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <div className="flex justify-between text-sm">
+                  <span>Applications</span>
+                  <span>{task.applications_count}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span>Views</span>
                 <span>{task.views_count}</span>
@@ -423,7 +504,7 @@ export default function TaskDetailPage() {
                   <div>
                     <p className="font-medium">{task.accepted_freelancer.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      ⭐ {task.accepted_freelancer.rating} ({task.accepted_freelancer.completed_tasks} jobs)
+                      ({task.accepted_freelancer.completed_tasks} jobs)
                     </p>
                   </div>
                 </div>
@@ -440,9 +521,6 @@ export default function TaskDetailPage() {
                 />
                 <div>
                   <p className="font-medium">{task.client.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    ⭐ {task.client.rating}
-                  </p>
                 </div>
               </div>
             </div>
@@ -453,16 +531,28 @@ export default function TaskDetailPage() {
       {/* Task Management Tabs */}
       <Tabs defaultValue="applications" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview" disabled className="opacity-50 cursor-not-allowed">
+          <TabsTrigger 
+            value="overview" 
+            disabled={isFreelancerWithApplication} 
+            className={isFreelancerWithApplication ? "opacity-50 cursor-not-allowed" : ""}
+          >
             Overview
           </TabsTrigger>
           <TabsTrigger value="applications">
             Applications ({applicationsLoading ? "..." : applications.length})
           </TabsTrigger>
-          <TabsTrigger value="project" disabled className="opacity-50 cursor-not-allowed">
+          <TabsTrigger 
+            value="project" 
+            disabled={isFreelancerWithApplication} 
+            className={isFreelancerWithApplication ? "opacity-50 cursor-not-allowed" : ""}
+          >
             Project Management
           </TabsTrigger>
-          <TabsTrigger value="payments" disabled className="opacity-50 cursor-not-allowed">
+          <TabsTrigger 
+            value="payments" 
+            disabled={isFreelancerWithApplication} 
+            className={isFreelancerWithApplication ? "opacity-50 cursor-not-allowed" : ""}
+          >
             Escrow & Payments
           </TabsTrigger>
         </TabsList>
@@ -529,7 +619,7 @@ export default function TaskDetailPage() {
                     Preview Task
                   </Link>
                 </Button>
-                {task.applications_count === 0 && (
+                {task.applications_count === 0 && task.client.name === user?.name && (
                   <Button variant="outline" className="w-full justify-start" asChild>
                     <Link href={`/dashboard/tasks/${taskId}/edit`}>
                       <Settings className="h-4 w-4 mr-2" />
@@ -554,16 +644,133 @@ export default function TaskDetailPage() {
                   <Skeleton className="h-20 w-full" />
                   <Skeleton className="h-20 w-full" />
                 </div>
+              ) : isFreelancerWithApplication ? (
+                // Show freelancer view even if applications array is empty due to 403
+                <div className="space-y-4">
+                  {/* Application Status */}
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground mb-2">Your Application Status:</p>
+                    <Badge className="bg-yellow-100 text-yellow-800">
+                      Pending
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">
+                      Applied: {new Date().toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  {/* Progress Status for accepted freelancers */}
+                  {isAcceptedFreelancer && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground mb-2">Project Progress:</p>
+                      <Badge className={getProgressColor(getProgressStatus())}>
+                        {getProgressStatus()}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground">
+                        Status updated by client
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Message for pending freelancers */}
+                  {isPendingFreelancer && (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <h4 className="font-semibold text-yellow-800 mb-2">⏳ Application Pending</h4>
+                      <p className="text-sm text-yellow-700">
+                        Your application is under review. The client will get back to you soon.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Progress Tracking for accepted freelancers */}
+                  {isAcceptedFreelancer && userApplication && (
+                    <div className="pt-6 border-t">
+                      <h4 className="text-lg font-semibold mb-4">Project Progress Tracking</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Track the progress of your project as the client updates checkpoints.
+                      </p>
+                      <ProgressTracking
+                        applicationId={userApplication.id}
+                        freelancerEmail={userApplication.freelancer_email || ""}
+                        freelancerName={userApplication.freelancer_name}
+                        taskTitle={task?.title || "Task"}
+                        isClient={false}
+                      />
+                    </div>
+                  )}
+                </div>
               ) : applications.length > 0 ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    You have {applications.length} application{applications.length !== 1 ? "s" : ""} for this task.
-                  </p>
-                  <Button asChild>
-                    <Link href={`/dashboard/tasks/${taskId}/applications`}>
-                      View All Applications ({applications.length})
-                    </Link>
-                  </Button>
+                  {/* Check if current user is a freelancer with an application */}
+                  {isFreelancerWithApplication ? (
+                    <div className="space-y-4">
+                      {/* Application Status */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground mb-2">Your Application Status:</p>
+                        <Badge className={getStatusColor(userApplication!.status)}>
+                          {userApplication!.status.charAt(0).toUpperCase() + userApplication!.status.slice(1)}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground">
+                          Applied: {new Date(userApplication!.applied_date).toLocaleDateString()}
+                        </p>
+                      </div>
+
+                      {/* Progress Tracking for accepted freelancers */}
+                      {isAcceptedFreelancer && userApplication && (
+                        <div className="pt-6 border-t">
+                          <h4 className="text-lg font-semibold mb-4">Project Progress</h4>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Track the progress of your project as the client updates checkpoints.
+                          </p>
+                          <ProgressTracking
+                            applicationId={userApplication.id}
+                            freelancerEmail={userApplication.freelancer_email || ""}
+                            freelancerName={userApplication.freelancer_name}
+                            taskTitle={task?.title || "Task"}
+                            isClient={false}
+                          />
+                        </div>
+                      )}
+
+                      {/* Message for pending freelancers */}
+                      {isPendingFreelancer && (
+                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <h4 className="font-semibold text-yellow-800 mb-2">⏳ Application Pending</h4>
+                          <p className="text-sm text-yellow-700">
+                            Your application is under review. The client will get back to you soon.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        You have {applications.length} application{applications.length !== 1 ? "s" : ""} for this task.
+                      </p>
+                      
+                      {/* Show progress tracking for accepted applications */}
+                      {applications.filter(app => app.status === "accepted").map(acceptedApp => (
+                        <div key={acceptedApp.id} className="space-y-4">
+                          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <h4 className="font-semibold text-green-800 mb-2">✅ Accepted Application</h4>
+                            <p className="text-sm text-green-700 mb-3">
+                              {acceptedApp.freelancer_name} has been accepted for this project.
+                            </p>
+                            <Button asChild>
+                              <Link href={`/dashboard/tasks/${taskId}/applications`}>
+                                View Details & Manage Progress
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <Button asChild>
+                        <Link href={`/dashboard/tasks/${taskId}/applications`}>
+                          View All Applications ({applications.length})
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">

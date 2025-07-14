@@ -98,11 +98,11 @@ export function SecuritySettings() {
             </div>
             <div className="flex gap-2">
               {hasPinSetup ? (
-                <Button variant="outline" onClick={handlePinChange}>
+                <Button variant="outline" onClick={handlePinChange} disabled={true}>
                   Change PIN
                 </Button>
               ) : (
-                <Button onClick={handlePinSetup}>Setup PIN</Button>
+                <Button onClick={handlePinSetup} disabled={true}>Setup PIN</Button>
               )}
             </div>
           </div>
@@ -147,7 +147,7 @@ export function SecuritySettings() {
                   : "Enable 2FA for enhanced account security"}
               </p>
             </div>
-            <Switch checked={twoFactorEnabled} onCheckedChange={handleTwoFactorToggle} />
+            <Switch checked={twoFactorEnabled} onCheckedChange={handleTwoFactorToggle} disabled={true} />
           </div>
 
           {twoFactorEnabled && (
@@ -182,7 +182,7 @@ export function SecuritySettings() {
                   Receive security alerts and login notifications via email
                 </p>
               </div>
-              <Switch id="email-notifications" checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+              <Switch id="email-notifications" checked={emailNotifications} onCheckedChange={setEmailNotifications} disabled={true} />
             </div>
 
             <Separator />
@@ -192,7 +192,7 @@ export function SecuritySettings() {
                 <Label htmlFor="sms-notifications">SMS Notifications</Label>
                 <p className="text-sm text-muted-foreground">Receive critical security alerts via SMS</p>
               </div>
-              <Switch id="sms-notifications" checked={smsNotifications} onCheckedChange={setSmsNotifications} />
+              <Switch id="sms-notifications" checked={smsNotifications} onCheckedChange={setSmsNotifications} disabled={true} />
             </div>
           </div>
         </CardContent>

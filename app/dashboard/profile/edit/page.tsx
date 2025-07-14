@@ -26,8 +26,8 @@ export default function EditProfilePage() {
     name: user?.name || "",
     email: user?.email || "",
     bio: user?.bio || "",
-    location: "San Francisco, CA",
-    hourlyRate: "45",
+    location: user?.location || "",
+    hourlyRate: user?.hourlyRate?.toString() || "",
     skills: user?.skills || [],
   })
 
@@ -70,7 +70,7 @@ export default function EditProfilePage() {
         bio: formData.bio,
         skills: formData.skills,
         location: formData.location,
-        hourlyRate: Number.parseInt(formData.hourlyRate),
+        hourlyRate: Number.parseInt(formData.hourlyRate) || undefined,
         avatar: avatarUrl,
       })
 
@@ -145,12 +145,12 @@ export default function EditProfilePage() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={profileImagePreview || user.avatar || "/placeholder.svg"} alt={user.name} />
+                  <AvatarImage src={profileImagePreview || user?.avatar || "/placeholder.svg"} alt={user?.name || "User"} />
                   <AvatarFallback className="text-lg">
-                    {user.name
-                      .split(" ")
+                    {user?.name
+                      ?.split(" ")
                       .map((n) => n[0])
-                      .join("")}
+                      .join("") || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <Button

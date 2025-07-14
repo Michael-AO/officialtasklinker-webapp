@@ -1,16 +1,13 @@
 "use client"
 
-import type React from "react"
-import type { ReactNode } from "react"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import Link from "next/link"
-import { LayoutDashboard, Users, FileText, MessageSquare, Settings, LogOut, Menu, X, Shield } from "lucide-react"
+import { LayoutDashboard, Users, MessageSquare, FileText, HelpCircle, Settings, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import AdminSidebar from "@/components/admin-sidebar"
 
 interface AdminLayoutProps {
-  children: ReactNode
+  children: React.ReactNode
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
@@ -39,106 +36,84 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: FileText,
     },
     {
+      name: "Support",
+      href: "/admin/support",
+      icon: HelpCircle,
+    },
+    {
       name: "Settings",
       href: "/admin/settings",
       icon: Settings,
     },
   ]
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_session")
-    window.location.href = "/admin/login"
-  }
-
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setSidebarOpen(false)}>
-          <div className="absolute inset-0 bg-gray-600 opacity-75" />
-        </div>
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <div className="flex items-center justify-between h-16 px-4 bg-gray-800">
-          <div className="flex items-center gap-2">
-            <Shield className="h-8 w-8 text-blue-400" />
-            <span className="text-white font-bold text-lg">Admin Portal</span>
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile sidebar */}
+      <div className="lg:hidden">
+        <div className="fixed inset-0 z-50">
+          {sidebarOpen && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+          )}
+          <div
+            className={`fixed inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="flex items-center justify-between h-16 px-4 border-b">
+              <h1 className="text-lg font-semibold">Admin Panel</h1>
+              <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <AdminSidebar open={true} onClose={() => setSidebarOpen(false)} />
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="lg:hidden text-gray-400 hover:text-white"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="h-5 w-5" />
-          </Button>
         </div>
+      </div>
 
-        <nav className="mt-8 px-4">
-          <ul className="space-y-2">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white",
-                    )}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-
-        <div className="absolute bottom-4 left-4 right-4">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-300 hover:bg-gray-800 hover:text-white"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-5 w-5 mr-3" />
-            Sign Out
-          </Button>
+      {/* Desktop sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+          <div className="flex items-center h-16 px-4 border-b">
+            <h1 className="text-lg font-semibold">Admin Panel</h1>
+          </div>
+          <AdminSidebar open={true} onClose={() => {}} />
         </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-                <Menu className="h-5 w-5" />
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                {navigation.find((item) => item.href === pathname)?.name || "Admin"}
-              </h1>
-            </div>
+      <div className="lg:pl-64">
+        {/* Top bar */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+          <Button
+            type="button"
+            variant="ghost"
+            className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <span className="sr-only">Open sidebar</span>
+            <Menu className="h-6 w-6" />
+          </Button>
 
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-500">Welcome, Admin</div>
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            <div className="flex flex-1"></div>
+            <div className="flex items-center gap-x-4 lg:gap-x-6">
+              {/* Admin info */}
+              <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
+              <div className="flex items-center gap-x-2">
+                <span className="text-sm text-gray-700">
+                  Admin Panel
+                </span>
+              </div>
             </div>
           </div>
-        </header>
+        </div>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50">
-          <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+        <main className="py-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {children}
+          </div>
         </main>
       </div>
     </div>

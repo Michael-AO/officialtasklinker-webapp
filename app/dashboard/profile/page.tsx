@@ -7,11 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CalendarDays, MapPin, Star, Edit, Camera, ExternalLink, AlertCircle } from "lucide-react"
+import { CalendarDays, MapPin, Edit, Camera, ExternalLink, AlertCircle, FileText, Download, Plus } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { ProfileCompletionWizard } from "@/components/profile-completion-wizard"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabase"
 
 interface UserProfile {
   id: string
@@ -21,7 +27,6 @@ interface UserProfile {
   avatar_url?: string
   bio?: string
   location?: string
-  hourly_rate?: number
   skills: string[]
   rating: number
   completed_tasks: number
@@ -31,6 +36,7 @@ interface UserProfile {
   is_verified: boolean
   phone?: string
   portfolio?: PortfolioItem[]
+  profile_completion?: number
 }
 
 interface PortfolioItem {
@@ -39,19 +45,9 @@ interface PortfolioItem {
   description: string
   image_url?: string
   project_url?: string
+  file_url?: string
+  file_type?: string
   created_at: string
-}
-
-interface Review {
-  id: string
-  rating: number
-  comment: string
-  project_title?: string
-  created_at: string
-  reviewer: {
-    name: string
-    avatar_url?: string
-  }
 }
 
 interface ProfileStats {
@@ -63,18 +59,38 @@ interface ProfileStats {
 
 export default function ProfilePage() {
   const { user: authUser } = useAuth()
+  const { toast } = useToast()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([])
-  const [reviews, setReviews] = useState<Review[]>([])
   const [stats, setStats] = useState<ProfileStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [portfolioUploadModalOpen, setPortfolioUploadModalOpen] = useState(false)
+  const [newPortfolioItem, setNewPortfolioItem] = useState<PortfolioItem>({
+    id: "",
+    title: "",
+    description: "",
+    image_url: "",
+    project_url: "",
+    file_url: "",
+    file_type: "",
+    created_at: new Date().toISOString(),
+  })
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     if (authUser?.id) {
       fetchProfileData()
     }
-  }, [authUser?.id])
+  }, [authUser?.id, authUser?.bio, authUser?.skills, authUser?.location, refreshKey])
+
+  // Refresh portfolio data when user changes
+  useEffect(() => {
+    if (authUser?.id && portfolio.length === 0) {
+      console.log("🔄 Auto-refreshing portfolio data for user:", authUser.id)
+      fetchPortfolioData()
+    }
+  }, [authUser?.id, portfolio.length])
 
   const fetchProfileData = async () => {
     try {
@@ -122,12 +138,22 @@ export default function ProfilePage() {
           setPortfolio(profileData.data.portfolio)
         }
         console.log("✅ Profile set successfully")
+        console.log("🔍 Profile data debug:", {
+          bio: profileData.data.bio,
+          skills: profileData.data.skills,
+          location: profileData.data.location,
+          bioLength: profileData.data.bio?.length || 0,
+          skillsLength: profileData.data.skills?.length || 0
+        })
       } else {
         throw new Error(profileData.error || "Failed to load profile")
       }
 
+      // Fetch portfolio data separately to ensure it's always loaded
+      await fetchPortfolioData()
+      
       // Fetch optional data (reviews, stats) - don't fail if these don't work
-      await Promise.allSettled([fetchReviewsData(), fetchStatsData()])
+      await Promise.allSettled([fetchStatsData()])
     } catch (err) {
       console.error("❌ Error fetching profile data:", err)
       setError(err instanceof Error ? err.message : "Failed to load profile data")
@@ -136,19 +162,31 @@ export default function ProfilePage() {
     }
   }
 
-  const fetchReviewsData = async () => {
+  const fetchPortfolioData = async () => {
     try {
-      const reviewsResponse = await fetch(`/api/user/reviews`, {
-        headers: { "x-user-id": authUser!.id },
+      console.log("🔍 Fetching portfolio for user:", authUser!.id)
+      
+      const portfolioResponse = await fetch(`/api/user/portfolio`, {
+        method: "GET",
+        headers: {
+          "x-user-id": authUser!.id,
+          "Content-Type": "application/json",
+        },
       })
-      if (reviewsResponse.ok) {
-        const reviewsData = await reviewsResponse.json()
-        if (reviewsData.success) {
-          setReviews(reviewsData.data || [])
+
+      if (portfolioResponse.ok) {
+        const portfolioData = await portfolioResponse.json()
+        if (portfolioData.success) {
+          setPortfolio(portfolioData.data || [])
+          console.log("✅ Portfolio loaded:", portfolioData.data?.length || 0, "items")
+        } else {
+          console.warn("⚠️ Portfolio fetch failed:", portfolioData.error)
         }
+      } else {
+        console.warn("⚠️ Portfolio response not ok:", portfolioResponse.status)
       }
     } catch (err) {
-      console.log("ℹ️ Reviews not available:", err)
+      console.error("❌ Error fetching portfolio:", err)
     }
   }
 
@@ -168,22 +206,8 @@ export default function ProfilePage() {
     }
   }
 
-  // Calculate profile completion percentage
-  const calculateProfileCompletion = () => {
-    if (!profile) return 0
-
-    let completed = 0
-    const total = 4 // Core profile sections (excluding portfolio)
-
-    if (profile.bio && profile.bio.trim()) completed++
-    if (profile.skills && profile.skills.length > 0) completed++
-    if (profile.location && profile.location.trim()) completed++
-    if (profile.hourly_rate && profile.hourly_rate > 0) completed++
-
-    return Math.round((completed / total) * 100)
-  }
-
-  const profileCompletion = calculateProfileCompletion()
+  // Use stored profile completion or calculate fallback
+  const profileCompletion = profile?.profile_completion || 0
   const isProfileIncomplete = profileCompletion < 100
 
   if (!authUser) {
@@ -199,6 +223,22 @@ export default function ProfilePage() {
       </div>
     )
   }
+
+  // Debug logging
+  console.log("🔍 Profile page render debug:", {
+    profile: profile ? {
+      bio: profile.bio,
+      skills: profile.skills,
+      location: profile.location,
+      bioLength: profile.bio?.length || 0,
+      skillsLength: profile.skills?.length || 0
+    } : null,
+    authUser: authUser ? {
+      bio: authUser.bio,
+      skills: authUser.skills,
+      location: authUser.location
+    } : null
+  })
 
   if (loading) {
     return <ProfileSkeleton />
@@ -269,10 +309,11 @@ export default function ProfilePage() {
       {/* Profile Completion Wizard - Show if profile is incomplete */}
       {isProfileIncomplete && <ProfileCompletionWizard />}
 
-      {/* Profile Header */}
+      {/* Profile Header with Avatar, Name, Verified Badge, and Earning Summary */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6">
+            {/* Avatar and Name Section */}
             <div className="flex flex-col items-center md:items-start">
               <div className="relative">
                 <Avatar className="h-24 w-24">
@@ -298,67 +339,16 @@ export default function ProfilePage() {
                       Verified
                     </Badge>
                   )}
-                  <Badge
-                    variant="outline"
-                    className={
-                      profileCompletion === 100 ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"
-                    }
-                  >
-                    {profileCompletion}% Complete
-                  </Badge>
                 </div>
                 <p className="text-muted-foreground capitalize">{profile.user_type}</p>
-              </div>
-            </div>
-
-            <div className="flex-1 space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">{profile.completed_tasks}</div>
-                  <div className="text-sm text-muted-foreground">Tasks Completed</div>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <span className="text-2xl font-bold">{profile.rating.toFixed(1)}</span>
-                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  </div>
-                  <div className="text-sm text-muted-foreground">Rating</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">{stats?.completionRate ? `${stats.completionRate}%` : "N/A"}</div>
-                  <div className="text-sm text-muted-foreground">Success Rate</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {profile.hourly_rate ? formatCurrency(profile.hourly_rate) : "Not Set"}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Hourly Rate</div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.length > 0 ? (
-                  profile.skills.map((skill) => (
-                    <Badge key={skill} variant="outline">
-                      {skill}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-sm">No skills added yet</p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                {profile.location && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    {profile.location}
-                  </div>
-                )}
-                <div className="flex items-center gap-1">
-                  <CalendarDays className="h-4 w-4" />
-                  Joined {formatDate(profile.join_date)}
-                </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    profileCompletion === 100 ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"
+                  }
+                >
+                  {profileCompletion}% Complete
+                </Badge>
               </div>
             </div>
           </div>
@@ -369,10 +359,18 @@ export default function ProfilePage() {
         <TabsList>
           <TabsTrigger value="about">About</TabsTrigger>
           <TabsTrigger value="portfolio">Portfolio ({portfolio.length})</TabsTrigger>
-          <TabsTrigger value="reviews">Reviews ({reviews.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="about" className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">About</h3>
+            <Button variant="outline" onClick={() => {
+              setRefreshKey(prev => prev + 1)
+              fetchProfileData()
+            }}>
+              Refresh Profile
+            </Button>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>About Me</CardTitle>
@@ -397,19 +395,11 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               {profile.skills.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-wrap gap-2">
                   {profile.skills.map((skill) => (
-                    <div key={skill} className="flex items-center justify-between p-3 border rounded-lg">
-                      <span className="font-medium">{skill}</span>
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-4 w-4 ${i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                    <Badge key={skill} variant="outline">
+                      {skill}
+                    </Badge>
                   ))}
                 </div>
               ) : (
@@ -423,24 +413,73 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Earnings Summary */}
           <Card>
             <CardHeader>
-              <CardTitle>Earnings Summary</CardTitle>
+              <CardTitle>Contact Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Email:</span>
+                  <span className="text-muted-foreground">{profile.email}</span>
+                </div>
+                {profile.phone && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Phone:</span>
+                    <span className="text-muted-foreground">{profile.phone}</span>
+                  </div>
+                )}
+                {profile.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span className="text-muted-foreground">{profile.location}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  <span className="text-muted-foreground">Joined {formatDate(profile.join_date)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Last Active:</span>
+                  <span className="text-muted-foreground">{formatDate(profile.last_active)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Account Type:</span>
+                  <span className="text-muted-foreground capitalize">{profile.user_type}</span>
+                </div>
+                {profile.is_verified && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Status:</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      Verified Account
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold text-green-600">{formatCurrency(profile.total_earned)}</div>
                   <div className="text-sm text-muted-foreground">Total Earned</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold">{stats?.activeTasks || 0}</div>
-                  <div className="text-sm text-muted-foreground">Active Tasks</div>
+                  <div className="text-2xl font-bold">{profile.completed_tasks}</div>
+                  <div className="text-sm text-muted-foreground">Tasks Completed</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold">{stats?.pendingApplications || 0}</div>
-                  <div className="text-sm text-muted-foreground">Pending Applications</div>
+                  <div className="text-2xl font-bold">{profile.rating.toFixed(1)}</div>
+                  <div className="text-sm text-muted-foreground">Rating</div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold">{portfolio.length}</div>
+                  <div className="text-sm text-muted-foreground">Portfolio Items</div>
                 </div>
               </div>
             </CardContent>
@@ -448,16 +487,42 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="portfolio" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Portfolio</h3>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={fetchPortfolioData}>
+                Refresh
+              </Button>
+              <Button onClick={() => setPortfolioUploadModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Portfolio Item
+              </Button>
+            </div>
+          </div>
+          
           {portfolio.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {portfolio.map((item) => (
                 <Card key={item.id} className="overflow-hidden">
                   <div className="aspect-video bg-muted">
-                    <img
-                      src={item.image_url || "/placeholder.svg?height=200&width=300"}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
+                    {item.image_url ? (
+                      <img
+                        src={item.image_url}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : item.file_url ? (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-sm text-muted-foreground">{item.file_type || 'Document'}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-muted-foreground">No Preview</span>
+                      </div>
+                    )}
                   </div>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
@@ -466,13 +531,22 @@ export default function ProfilePage() {
                         <p className="text-sm text-muted-foreground">{item.description}</p>
                         <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
                       </div>
-                      {item.project_url && (
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href={item.project_url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      )}
+                      <div className="flex gap-1">
+                        {item.file_url && (
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={item.file_url} target="_blank" rel="noopener noreferrer" download>
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                        {item.project_url && (
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={item.project_url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -482,66 +556,230 @@ export default function ProfilePage() {
             <Card>
               <CardContent className="text-center py-12">
                 <p className="text-muted-foreground mb-4">No portfolio items yet</p>
-                <Button asChild variant="outline">
-                  <Link href="/dashboard/profile/edit">Add Portfolio Items</Link>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Add your best work to showcase your skills and attract more clients
+                </p>
+                <Button onClick={() => setPortfolioUploadModalOpen(true)} variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Portfolio Items
                 </Button>
               </CardContent>
             </Card>
           )}
         </TabsContent>
-
-        <TabsContent value="reviews" className="space-y-4">
-          {reviews.length > 0 ? (
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <Card key={review.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-4">
-                      <Avatar>
-                        <AvatarImage src={review.reviewer.avatar_url || "/placeholder.svg?height=40&width=40"} />
-                        <AvatarFallback>{getInitials(review.reviewer.name)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{review.reviewer.name}</p>
-                            {review.project_title && (
-                              <p className="text-sm text-muted-foreground">{review.project_title}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                            <span className="ml-2 text-sm text-muted-foreground">{formatDate(review.created_at)}</span>
-                          </div>
-                        </div>
-                        <p className="text-muted-foreground">{review.comment}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-12">
-                <p className="text-muted-foreground mb-4">No reviews yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Complete some tasks to start receiving reviews from clients
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
       </Tabs>
+
+      <Dialog open={portfolioUploadModalOpen} onOpenChange={setPortfolioUploadModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Portfolio Item</DialogTitle>
+            <DialogDescription>
+              Share your best work with potential clients. You can add images, documents, or links.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="title" className="text-right">
+                Title
+              </Label>
+              <Input
+                id="title"
+                value={newPortfolioItem.title}
+                onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, title: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                value={newPortfolioItem.description}
+                onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, description: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="image_url" className="text-right">
+                Image URL (optional)
+              </Label>
+              <Input
+                id="image_url"
+                value={newPortfolioItem.image_url}
+                onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, image_url: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="project_url" className="text-right">
+                Project URL (optional)
+              </Label>
+              <Input
+                id="project_url"
+                value={newPortfolioItem.project_url}
+                onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, project_url: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="file_upload" className="text-right">
+                Upload File
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  id="file_upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                  onChange={handleFileUpload}
+                  className="col-span-3"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="file_url" className="text-right">
+                File URL (optional)
+              </Label>
+              <Input
+                id="file_url"
+                value={newPortfolioItem.file_url}
+                onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, file_url: e.target.value })}
+                className="col-span-3"
+                placeholder="Or provide a direct URL to your file"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="file_type" className="text-right">
+                File Type (optional)
+              </Label>
+              <Input
+                id="file_type"
+                value={newPortfolioItem.file_type}
+                onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, file_type: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <Button onClick={handleAddPortfolioItem}>Add Portfolio Item</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   )
+
+  function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (file) {
+      // Check file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select a file smaller than 10MB.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Set file type
+      const fileType = file.type || file.name.split('.').pop()?.toUpperCase()
+      setNewPortfolioItem(prev => ({ 
+        ...prev, 
+        file_type: fileType || 'Unknown',
+        file_url: URL.createObjectURL(file) // Temporary URL for preview
+      }))
+    }
+  }
+
+  async function handleAddPortfolioItem() {
+    if (!authUser?.id) {
+      console.error("User not authenticated, cannot add portfolio item.")
+      return
+    }
+
+    try {
+      const { title, description, image_url, project_url, file_url, file_type } = newPortfolioItem
+
+      if (!title) {
+        toast({
+          title: "Title is required",
+          description: "Please enter a title for your portfolio item.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const newItem: PortfolioItem = {
+        id: "", // Will be generated by the backend
+        title,
+        description,
+        image_url,
+        project_url,
+        file_url,
+        file_type,
+        created_at: new Date().toISOString(),
+      }
+
+      const response = await fetch(`/api/user/portfolio`, {
+        method: "POST",
+        headers: {
+          "x-user-id": authUser.id,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newItem),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          toast({
+            title: "Portfolio item added",
+            description: `Portfolio item "${title}" added successfully.`,
+          })
+          setPortfolio([...portfolio, data.data])
+          setNewPortfolioItem({
+            id: "",
+            title: "",
+            description: "",
+            image_url: "",
+            project_url: "",
+            file_url: "",
+            file_type: "",
+            created_at: new Date().toISOString(),
+          })
+          setPortfolioUploadModalOpen(false)
+        } else {
+          toast({
+            title: "Failed to add portfolio item",
+            description: data.error || "Failed to add portfolio item.",
+            variant: "destructive",
+          })
+        }
+      } else {
+        const errorText = await response.text()
+        console.error("❌ Failed to add portfolio item:", errorText)
+        let errorData
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = { error: `HTTP ${response.status}: ${errorText}` }
+        }
+        toast({
+          title: "Failed to add portfolio item",
+          description: errorData.error || `Failed to add portfolio item: ${response.status}`,
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      console.error("❌ Error adding portfolio item:", err)
+      toast({
+        title: "Failed to add portfolio item",
+        description: err instanceof Error ? err.message : "Failed to add portfolio item.",
+        variant: "destructive",
+      })
+    }
+  }
 }
 
 function ProfileSkeleton() {

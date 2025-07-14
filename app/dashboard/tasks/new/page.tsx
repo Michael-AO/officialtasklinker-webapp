@@ -16,6 +16,7 @@ import { Plus, X, FileText, Save, Eye, Clock, CheckCircle, AlertCircle } from "l
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { isVerifiedEmail } from "@/lib/utils"
 import Link from "next/link"
 
 export default function NewTaskPage() {
@@ -94,6 +95,33 @@ export default function NewTaskPage() {
               log in
             </Link>{" "}
             to continue.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  // Check if user can post tasks
+  const canPostTasks = isVerifiedEmail(user.email)
+
+  // Show verification required message if not admin
+  if (!canPostTasks) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Post New Task</h1>
+            <p className="text-muted-foreground">Create a detailed task posting to find the right freelancer</p>
+          </div>
+        </div>
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Admin Access Required:</strong> Only admin accounts can post tasks. Your account ({user.email}) is not currently an admin account. Please contact support at{" "}
+            <a href="mailto:admin@tasklinkers.com" className="underline">
+              admin@tasklinkers.com
+            </a>{" "}
+            to request admin access.
           </AlertDescription>
         </Alert>
       </div>

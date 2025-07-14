@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Search, FileText, Users, MessageSquare, DollarSign, Clock, Star } from "lucide-react"
+import { Search, FileText, Users, MessageSquare, DollarSign, Clock } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 interface SearchResult {
@@ -209,9 +209,7 @@ export function GlobalSearch() {
                         {result.metadata.status && (
                           <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">{result.metadata.status}</span>
                         )}
-                        {result.metadata.rating && (
-                          <span className="flex items-center gap-1 text-yellow-600 text-xs"><Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />{result.metadata.rating}</span>
-                        )}
+
                       </div>
                     </div>
                   ))}

@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   MessageSquare,
   Eye,
+  EyeOff,
   Plus,
   Briefcase,
   XCircle,
@@ -29,6 +30,8 @@ import {
 import { useAuth } from "@/contexts/auth-context"
 import { useApplicationsReal } from "@/hooks/use-applications-real"
 import { formatNaira } from "@/lib/currency"
+import { VerifiedBadge } from "@/components/ui/verified-badge"
+import { isVerifiedEmail } from "@/lib/utils"
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -323,14 +326,6 @@ export default function ApplicationsPage() {
                       <div className="flex items-start justify-between">
                         <div className="space-y-2 flex-1">
                           <div className="flex items-center gap-2">
-                            <CardTitle className="text-xl">{application.task.title}</CardTitle>
-                            <Badge className={statusColors[application.status]}>
-                              {statusIcons[application.status]}
-                              <span className="ml-1">{application.status}</span>
-                            </Badge>
-                          </div>
-
-                          <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                               <AvatarImage src={application.task.client.avatar_url} />
                               <AvatarFallback>
@@ -343,22 +338,26 @@ export default function ApplicationsPage() {
                             <span className="text-sm text-muted-foreground">
                               Client: {application.task.client.name}
                             </span>
-                            <div className="flex items-center gap-1">
-                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              <span className="text-xs">
-                                {application.task.client.rating}
-                              </span>
-                            </div>
-                            {application.task.client.is_verified && (
-                              <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                            {application.task.client.email && isVerifiedEmail(application.task.client.email) && (
+                              <span className="text-xs text-muted-foreground">(Verified)</span>
                             )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-xl">{application.task.title}</CardTitle>
+                            {application.task.client.email && isVerifiedEmail(application.task.client.email) && (
+                              <VerifiedBadge size="sm" />
+                            )}
+                            <Badge className={statusColors[application.status]}>
+                              {statusIcons[application.status]}
+                              <span className="ml-1">{application.status}</span>
+                            </Badge>
                           </div>
                         </div>
                       </div>
                     </CardHeader>
 
                     <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Proposed Budget</p>
                           <p className="font-medium">{formatNaira(application.proposed_budget)}</p>
@@ -374,6 +373,22 @@ export default function ApplicationsPage() {
                         <div>
                           <p className="text-muted-foreground">Category</p>
                           <p className="font-medium">{application.task.category}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Viewed</p>
+                          <p className="font-medium flex items-center gap-1">
+                            {(application as any).viewed_by_client ? (
+                              <>
+                                <Eye className="h-3 w-3 text-green-600" />
+                                <span className="text-green-600">Yes</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-muted-foreground">No</span>
+                              </>
+                            )}
+                          </p>
                         </div>
                       </div>
 
@@ -405,7 +420,7 @@ export default function ApplicationsPage() {
 
                           {application.status === "accepted" && (
                             <Button size="sm" asChild>
-                              <Link href={`/dashboard/projects/${application.task_id}`}>View Project</Link>
+                              <Link href={`/dashboard/tasks/${application.task_id}`}>View Project</Link>
                             </Button>
                           )}
                         </div>

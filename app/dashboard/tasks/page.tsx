@@ -27,6 +27,8 @@ import { formatNaira } from "@/lib/currency"
 import { formatDate, getStatusColor, generateTaskCode } from "@/lib/api-utils"
 import { toast } from "@/hooks/use-toast"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { VerifiedBadge } from "@/components/ui/verified-badge"
+import { isVerifiedEmail } from "@/lib/utils"
 
 const categories = [
   "All Categories",
@@ -69,6 +71,10 @@ interface Task {
   deadline?: string
   urgency: "low" | "normal" | "high"
   location: string
+  client?: {
+    id: string
+    email: string
+  }
 }
 
 export default function MyTasksPage() {
@@ -350,11 +356,13 @@ export default function MyTasksPage() {
                     <Link href={`/dashboard/tasks/${task.id}`} className="hover:underline">
                       <CardTitle className="text-lg">{task.title}</CardTitle>
                     </Link>
+                    {task.client?.email && isVerifiedEmail(task.client.email) && (
+                      <VerifiedBadge size="sm" />
+                    )}
                     <Badge variant="outline" className="text-xs">
                       {generateTaskCode(task.id)}
                     </Badge>
                     {task.urgency === "high" && <Badge variant="destructive">Urgent</Badge>}
-                    <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">

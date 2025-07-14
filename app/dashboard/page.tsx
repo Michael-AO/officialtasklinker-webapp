@@ -179,8 +179,23 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Profile Completion - Restored to original position */}
-      <ProfileCompletionWizard />
+      {/* Profile Completion - Only show when profile is incomplete */}
+      {(() => {
+        // Calculate profile completion percentage
+        if (!user) return null
+        
+        let completed = 0
+        const total = 3 // Core profile sections (bio, skills, location)
+        
+        if (user.bio && user.bio.trim()) completed++
+        if (user.skills && user.skills.length > 0) completed++
+        if (user.location && user.location.trim()) completed++
+        
+        const profileCompletion = Math.round((completed / total) * 100)
+        const isProfileIncomplete = profileCompletion < 100
+        
+        return isProfileIncomplete ? <ProfileCompletionWizard /> : null
+      })()}
 
       {/* Two-column grid layout - Original structure restored */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -214,22 +229,11 @@ export default function DashboardPage() {
               <>
                 {myApplications.slice(0, 3).map((application: any) => (
                   <div key={application.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={application.task?.client?.avatar_url || "/placeholder.svg"} />
-                        <AvatarFallback>
-                          {application.task?.client?.name
-                            ?.split(" ")
-                            .map((n: string) => n[0])
-                            .join("") || "C"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{application.task?.title || "Task title"}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {application.task?.client?.name || "Client"} • {application.status}
-                        </p>
-                      </div>
+                    <div>
+                      <p className="font-medium">{application.task?.title || "Task title"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {application.task?.client?.name || "Client"} • {application.status}
+                      </p>
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => handleViewApplication(application.id)}>

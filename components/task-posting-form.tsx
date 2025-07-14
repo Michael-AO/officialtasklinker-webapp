@@ -11,8 +11,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
-import { Plus, X, Upload, FileText, DollarSign, Clock, CheckCircle, Lock, Info } from "lucide-react"
+import { Plus, X, Upload, FileText, DollarSign, Clock, CheckCircle, Lock, Info, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
+import { isVerifiedEmail } from "@/lib/utils"
 
 interface TaskFormData {
   title: string
@@ -33,11 +35,15 @@ interface TaskFormData {
 
 export function TaskPostingForm() {
   const router = useRouter()
+  const { user } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [newSkill, setNewSkill] = useState("")
   const [newRequirement, setNewRequirement] = useState("")
   const [isSubmitted, setIsSubmitted] = useState(false)
+
+  // Check if user can post tasks
+  const canPostTasks = user && isVerifiedEmail(user.email)
 
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",
@@ -273,6 +279,20 @@ export function TaskPostingForm() {
         <h1 className="text-2xl font-bold">Post a New Task</h1>
         <p className="text-gray-600">Create a detailed task posting to find the right freelancer</p>
       </div>
+
+      {/* Verification Notice */}
+      {!canPostTasks && (
+        <Alert className="mb-6 border-orange-200 bg-orange-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Admin Access Required:</strong> Only admin accounts can post tasks. Your account ({user?.email}) is not currently an admin account. Please contact support at{" "}
+            <a href="mailto:admin@tasklinkers.com" className="underline">
+              admin@tasklinkers.com
+            </a>{" "}
+            to request admin access.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Progress */}
       <Card className="mb-6">
@@ -700,14 +720,17 @@ export function TaskPostingForm() {
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  disabled={isSubmitting || !canProceedToNext()}
+                  disabled={isSubmitting || !canProceedToNext() || !canPostTasks}
                   className="bg-[#04A466] hover:bg-[#038855]"
+                  title={!canPostTasks ? "Only admin accounts can post tasks" : undefined}
                 >
                   {isSubmitting ? (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2 animate-spin" />
                       Posting Task...
                     </>
+                  ) : !canPostTasks ? (
+                    "Admin Access Required"
                   ) : (
                     "Post Task"
                   )}

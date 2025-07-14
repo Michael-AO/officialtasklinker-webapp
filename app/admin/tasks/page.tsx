@@ -39,6 +39,9 @@ import {
   MessageSquare,
   Settings,
   User,
+  AlertTriangle,
+  Edit,
+  Trash2,
 } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
 import { supabase } from "@/lib/supabase"
@@ -61,6 +64,7 @@ interface Task {
   }
   applications: {
     id: string
+    status: string
   }[]
 }
 
@@ -121,19 +125,24 @@ export default function AdminTasksPage() {
       // Get applications count for each task
       const tasksWithApplications = await Promise.all(
         (data || []).map(async (task) => {
-          const { count } = await supabase
+          // Get real applications for this task
+          const { data: applications, error: appsError } = await supabase
             .from("applications")
-            .select("*", { count: "exact", head: true })
+            .select("id, freelancer_id, status, created_at")
             .eq("task_id", task.id)
+
+          if (appsError) {
+            console.error("Error fetching applications for task", task.id, appsError)
+          }
 
           return {
             ...task,
             skills: task.skills_required || [],
             client: {
-              full_name: task.users?.name || "Unknown Client",
-              email: task.users?.email || "",
+              full_name: (task.users as any)?.name || "Unknown Client",
+              email: (task.users as any)?.email || "",
             },
-            applications: Array(count || 0).fill({ id: "dummy" }),
+            applications: applications || [],
           }
         }),
       )
@@ -192,22 +201,53 @@ export default function AdminTasksPage() {
   const handleDeleteTask = async (taskId: string) => {
     setIsDeleting(true)
     try {
-      const { error } = await supabase.from("tasks").delete().eq("id", taskId)
+      // Delete related data first (in order of dependencies)
+      
+      // 1. Delete applications
+      const { error: deleteAppsError } = await supabase
+        .from("applications")
+        .delete()
+        .eq("task_id", taskId)
 
-      if (error) throw error
+      if (deleteAppsError) {
+        console.error("Error deleting applications:", deleteAppsError)
+        // Continue anyway, but log the error
+      }
+
+      // 2. Delete escrow records (if any)
+      const { error: deleteEscrowError } = await supabase
+        .from("escrow")
+        .delete()
+        .eq("task_id", taskId)
+
+      if (deleteEscrowError) {
+        console.error("Error deleting escrow:", deleteEscrowError)
+        // Continue anyway, but log the error
+      }
+
+      // 3. Delete the task itself
+      const { error: deleteTaskError } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", taskId)
+
+      if (deleteTaskError) {
+        throw deleteTaskError
+      }
 
       toast({
         title: "Success",
-        description: "Task deleted successfully",
+        description: "Task and all related data deleted successfully",
       })
 
+      // Refresh the data
       fetchTasks()
       fetchStats()
     } catch (error) {
       console.error("Error deleting task:", error)
       toast({
         title: "Error",
-        description: "Failed to delete task",
+        description: error instanceof Error ? error.message : "Failed to delete task",
         variant: "destructive",
       })
     } finally {
@@ -247,6 +287,11 @@ export default function AdminTasksPage() {
       default:
         return <Clock className="h-4 w-4" />
     }
+  }
+
+  const canDeleteTask = (task: Task) => {
+    // Allow deletion of all tasks for now
+    return true
   }
 
   const filteredTasks = tasks.filter((task) => {
@@ -459,32 +504,49 @@ export default function AdminTasksPage() {
                           <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Task</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this task? This action cannot be undone and will also
-                                  delete all associated applications and escrow data.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteTask(task.id)}
-                                  disabled={isDeleting}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  {isDeleting ? "Deleting..." : "Delete Task"}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          {canDeleteTask(task) ? (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this task? This action will:
+                                    <br />• Delete the task permanently
+                                    <br />• Delete all applications for this task
+                                    <br />• Delete any associated escrow records
+                                    <br />• This action cannot be undone
+                                    <br /><br />
+                                    <strong>Note:</strong> All tasks can now be deleted, including those with accepted applications or active escrow.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteTask(task.id)}
+                                    disabled={isDeleting}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    {isDeleting ? "Deleting..." : "Delete Task"}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          ) : (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-gray-400 cursor-not-allowed" 
+                              disabled
+                              title="All tasks can now be deleted"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

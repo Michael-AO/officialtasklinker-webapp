@@ -50,7 +50,15 @@ export async function GET(request: NextRequest) {
         urgency,
         location,
         currency,
-        views_count
+        views_count,
+        client_id,
+        users!tasks_client_id_fkey (
+          name,
+          email,
+          rating,
+          completed_tasks,
+          is_verified
+        )
       `)
       .eq("client_id", userId)
       .order("created_at", { ascending: false })
@@ -95,6 +103,7 @@ export async function GET(request: NextRequest) {
             applications_count: count || 0,
             skills_required: task.skills_required || [],
             views_count: task.views_count || 0,
+            client: task.users || null,
           }
         } catch (err) {
           console.warn("Error processing task", task.id, err)
@@ -103,6 +112,7 @@ export async function GET(request: NextRequest) {
             applications_count: 0,
             skills_required: task.skills_required || [],
             views_count: task.views_count || 0,
+            client: task.users || null,
           }
         }
       }),

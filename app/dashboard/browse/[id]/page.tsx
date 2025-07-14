@@ -555,7 +555,7 @@ export default function TaskViewPage() {
           <CardHeader>
             <CardTitle>Task Description</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 max-h-[70vh] overflow-y-auto">
             <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
 
             {task.skills_required.length > 0 && (
@@ -1129,8 +1129,13 @@ export default function TaskViewPage() {
                     <p className="font-semibold capitalize">{task.urgency}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Total Applications</p>
-                    <p className="font-semibold">{task.applications_count}</p>
+                    <p className="text-muted-foreground">Your Application Status</p>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getApplicationStatusColor(myApplication.status)}>
+                        {getApplicationStatusIcon(myApplication.status)}
+                        <span className="ml-1 capitalize">{myApplication.status}</span>
+                      </Badge>
+                    </div>
                   </div>
                 </div>
 

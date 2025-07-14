@@ -58,7 +58,7 @@ export function PaymentSettings() {
           </h2>
           <p className="text-muted-foreground">Configure your payment preferences and escrow settings</p>
         </div>
-        <Button onClick={handleSave} disabled={isSaving}>
+        <Button onClick={handleSave} disabled={true}>
           <Save className="h-4 w-4 mr-2" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -85,6 +85,7 @@ export function PaymentSettings() {
               <Switch
                 checked={settings.autoAcceptEscrow}
                 onCheckedChange={(checked) => updateSetting("autoAcceptEscrow", checked)}
+                disabled={true}
               />
             </div>
 
@@ -98,6 +99,7 @@ export function PaymentSettings() {
               <Switch
                 checked={settings.autoReleaseEnabled}
                 onCheckedChange={(checked) => updateSetting("autoReleaseEnabled", checked)}
+                disabled={true}
               />
             </div>
 
@@ -111,6 +113,7 @@ export function PaymentSettings() {
                   max="30"
                   value={settings.autoReleaseDays}
                   onChange={(e) => updateSetting("autoReleaseDays", Number.parseInt(e.target.value) || 7)}
+                  disabled={true}
                 />
                 <p className="text-xs text-muted-foreground">Days after completion before automatic release</p>
               </div>
@@ -136,6 +139,7 @@ export function PaymentSettings() {
               <Switch
                 checked={settings.requirePinForWithdrawals}
                 onCheckedChange={(checked) => updateSetting("requirePinForWithdrawals", checked)}
+                disabled={true}
               />
             </div>
 
@@ -147,6 +151,7 @@ export function PaymentSettings() {
               <Switch
                 checked={settings.instantPaymentEnabled}
                 onCheckedChange={(checked) => updateSetting("instantPaymentEnabled", checked)}
+                disabled={true}
               />
             </div>
           </CardContent>
@@ -170,6 +175,7 @@ export function PaymentSettings() {
               <Switch
                 checked={settings.paymentNotifications}
                 onCheckedChange={(checked) => updateSetting("paymentNotifications", checked)}
+                disabled={true}
               />
             </div>
 
@@ -181,6 +187,7 @@ export function PaymentSettings() {
               <Switch
                 checked={settings.lowBalanceAlert}
                 onCheckedChange={(checked) => updateSetting("lowBalanceAlert", checked)}
+                disabled={true}
               />
             </div>
 
@@ -193,6 +200,7 @@ export function PaymentSettings() {
                   min="0"
                   value={settings.lowBalanceThreshold / 100}
                   onChange={(e) => updateSetting("lowBalanceThreshold", (Number.parseFloat(e.target.value) || 0) * 100)}
+                  disabled={true}
                 />
                 <p className="text-xs text-muted-foreground">Alert when balance falls below this amount</p>
               </div>

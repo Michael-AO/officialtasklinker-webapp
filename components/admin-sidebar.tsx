@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, FileText, MessageSquare, Settings, LogOut, Shield } from "lucide-react"
+import { LayoutDashboard, Users, FileText, MessageSquare, Settings, Shield, HelpCircle } from "lucide-react"
 
 interface AdminSidebarProps {
   open: boolean
@@ -37,71 +37,60 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open, onClose }) => {
       icon: FileText,
     },
     {
+      name: "Support",
+      href: "/admin/support",
+      icon: HelpCircle,
+    },
+    {
       name: "Settings",
       href: "/admin/settings",
       icon: Settings,
     },
   ]
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_session")
-    window.location.href = "/admin/login"
-  }
-
-  if (!open) return null
-
   return (
-    <>
-      {/* Mobile overlay */}
-      <div className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden" onClick={onClose} />
+    <div className="flex flex-col h-full">
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-6">
+        <ul className="space-y-2">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <li key={item.name}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isActive 
+                      ? "bg-blue-600 text-white" 
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  )}
+                  onClick={onClose}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.name}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
 
-      {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out lg:hidden">
-        <div className="flex items-center justify-between h-16 px-4 bg-gray-800">
-          <div className="flex items-center gap-2">
-            <Shield className="h-8 w-8 text-blue-400" />
-            <span className="text-white font-bold text-lg">Admin Panel</span>
+      {/* Admin info */}
+      <div className="border-t border-gray-200 p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-8 h-8 bg-blue-600 rounded-full">
+            <Shield className="h-4 w-4 text-white" />
           </div>
-          <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white" onClick={onClose}>
-            ×
-          </Button>
-        </div>
-
-        <nav className="mt-8 px-4">
-          <ul className="space-y-2">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white",
-                    )}
-                    onClick={onClose}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-
-        <div className="absolute bottom-4 left-4 right-4">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-300 hover:bg-gray-800 hover:text-white"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-5 w-5 mr-3" />
-            Sign Out
-          </Button>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              Admin Panel
+            </p>
+            <p className="text-xs text-gray-500">Tasklinkers</p>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

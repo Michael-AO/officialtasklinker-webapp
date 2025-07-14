@@ -1,19 +1,37 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, Eye, MessageSquare, Search, Star, TrendingUp, User } from "lucide-react"
-import Link from "next/link"
-import { Progress } from "@/components/ui/progress"
-import { useApplicationsReal } from "@/hooks/use-applications-real"
-import { formatCurrency } from "@/lib/currency"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
+import { VerifiedBadge } from "@/components/ui/verified-badge"
+import { isVerifiedEmail } from "@/lib/utils"
+import { useAuth } from "@/contexts/auth-context"
+import { formatNaira } from "@/lib/currency"
+import { ProgressTracking } from "@/components/progress-tracking"
+import {
+  ArrowLeft,
+  Clock,
+  Eye,
+  EyeOff,
+  MessageSquare,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  User,
+  Calendar,
+  MapPin,
+  DollarSign,
+  FileText,
+  Star,
+  TrendingUp,
+  Briefcase,
+} from "lucide-react"
+import Link from "next/link"
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -23,32 +41,94 @@ const statusColors = {
   withdrawn: "bg-gray-100 text-gray-800",
 }
 
-export default function ApplicationsPage() {
-  const { applications, loading, error, stats, isUsingRealData, withdrawApplication } = useApplicationsReal()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [categoryFilter, setCategoryFilter] = useState("all")
+const statusIcons = {
+  pending: <Clock className="h-4 w-4" />,
+  accepted: <CheckCircle2 className="h-4 w-4" />,
+  rejected: <XCircle className="h-4 w-4" />,
+  interviewing: <MessageSquare className="h-4 w-4" />,
+  withdrawn: <User className="h-4 w-4" />,
+}
 
-  const filteredApplications = applications.filter((app) => {
-    const matchesSearch =
-      app.task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.task.client.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || app.status === statusFilter
-    const matchesCategory = categoryFilter === "all" || app.task.category === categoryFilter
+const statusDescriptions = {
+  pending: "Your application is under review by the client",
+  accepted: "Congratulations! Your application has been accepted",
+  rejected: "Your application was not selected for this project",
+  interviewing: "The client wants to discuss the project with you",
+  withdrawn: "You withdrew your application for this project",
+}
 
-    return matchesSearch && matchesStatus && matchesCategory
-  })
+export default function ApplicationDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
+  const [application, setApplication] = useState<any>(null)
+  const [task, setTask] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const categories = Array.from(new Set(applications.map((app) => app.task.category)))
+  const applicationId = params.id as string
 
-  const handleWithdrawApplication = async (applicationId: string) => {
-    const result = await withdrawApplication(applicationId)
-    if (!result.success) {
-      alert(result.error || "Failed to withdraw application")
+  useEffect(() => {
+    const fetchApplicationDetails = async () => {
+      if (!user?.id || !applicationId) return
+
+      setLoading(true)
+      try {
+        // Fetch application details
+        const response = await fetch(`/api/applications/${applicationId}`, {
+          headers: {
+            "x-user-id": user.id,
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch application details")
+        }
+
+        const data = await response.json()
+        if (data.success) {
+          setApplication(data.application)
+          setTask(data.task)
+        } else {
+          throw new Error(data.error || "Failed to load application")
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchApplicationDetails()
+  }, [user?.id, applicationId])
+
+  const handleWithdrawApplication = async () => {
+    if (!application || application.status !== "pending") return
+
+    if (!confirm("Are you sure you want to withdraw your application? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/applications/${applicationId}/withdraw`, {
+        method: "POST",
+        headers: {
+          "x-user-id": user?.id || "",
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setApplication((prev: any) => ({ ...prev, status: "withdrawn" }))
+        }
+      }
+    } catch (err) {
+      console.error("Failed to withdraw application:", err)
     }
   }
 
-  const timeAgo = (dateString: string) => {
+  const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
@@ -64,57 +144,59 @@ export default function ApplicationsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-10 w-10" />
           <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-6 w-48 mb-2" />
+            <Skeleton className="h-4 w-32" />
           </div>
-          <Skeleton className="h-10 w-32" />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-3 w-20" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
 
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-          ))}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-1/2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-32 w-full" />
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
   }
 
-  if (error) {
+  if (error || !application) {
     return (
       <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
+
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-red-600">Error Loading Applications</h3>
-              <p className="text-muted-foreground">{error}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {isUsingRealData ? "Using fallback data" : "Please check your connection"}
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-red-600">Application Not Found</h3>
+              <p className="text-muted-foreground mt-2">
+                {error || "The application you're looking for doesn't exist or you don't have permission to view it."}
               </p>
+              <Button asChild className="mt-4">
+                <Link href="/dashboard/applications">Back to Applications</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -124,248 +206,203 @@ export default function ApplicationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
         <div>
-          <h1 className="text-3xl font-bold">My Applications</h1>
+          <h1 className="text-2xl font-bold">Application Details</h1>
           <p className="text-muted-foreground">
-            Track your job applications and their status
-            {!isUsingRealData && (
-              <Badge variant="outline" className="ml-2">
-                Demo Data
-              </Badge>
-            )}
+            Applied {formatTimeAgo(application.created_at)}
           </p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/browse">
-            <Search className="mr-2 h-4 w-4" />
-            Find More Jobs
-          </Link>
-        </Button>
       </div>
 
-      {/* Application Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.successRate}%</div>
-            <Progress value={stats.successRate} className="mt-2" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">Awaiting response</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Accepted</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.accepted}</div>
-            <p className="text-xs text-muted-foreground">Active projects</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
+      {/* Status Banner */}
+      <Card className={`border-l-4 border-l-${application.status === 'accepted' ? 'green' : application.status === 'rejected' ? 'red' : 'yellow'}-500`}>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search applications..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {statusIcons[application.status as keyof typeof statusIcons]}
+              <div>
+                <h3 className="font-semibold capitalize">{application.status}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {statusDescriptions[application.status as keyof typeof statusDescriptions]}
+                </p>
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="interviewing">Interviewing</SelectItem>
-                <SelectItem value="withdrawn">Withdrawn</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Badge className={statusColors[application.status as keyof typeof statusColors]}>
+              {application.status.toUpperCase()}
+            </Badge>
           </div>
         </CardContent>
       </Card>
 
-      {/* Application Tabs */}
-      <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
-          <TabsTrigger value="accepted">Accepted ({stats.accepted})</TabsTrigger>
-          <TabsTrigger value="interviewing">Interviewing ({stats.interviewing})</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected ({stats.rejected})</TabsTrigger>
-          <TabsTrigger value="withdrawn">Withdrawn ({stats.withdrawn})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={statusFilter} className="space-y-4">
-          {filteredApplications.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold">No applications found</h3>
-                  <p className="text-muted-foreground">
-                    {searchTerm || statusFilter !== "all" || categoryFilter !== "all"
-                      ? "Try adjusting your filters"
-                      : "Start applying to jobs to see them here"}
-                  </p>
-                  {!searchTerm && statusFilter === "all" && categoryFilter === "all" && (
-                    <Button asChild className="mt-4">
-                      <Link href="/dashboard/browse">
-                        <Search className="mr-2 h-4 w-4" />
-                        Browse Jobs
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {filteredApplications.map((application) => (
-                <Card key={application.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-xl">{application.task.title}</CardTitle>
-                          <Badge className={statusColors[application.status as keyof typeof statusColors]}>
-                            {application.status}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={application.task.client.avatar_url || "/placeholder.svg"} />
-                            <AvatarFallback>
-                              {application.task.client.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-muted-foreground">{application.task.client.name}</span>
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs">{application.task.client.rating}</span>
-                          </div>
-                          {application.task.client.is_verified && (
-                            <Badge variant="secondary" className="text-xs">
-                              Verified
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline">{application.task.category}</Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <p className="text-sm text-muted-foreground line-clamp-2">{application.cover_letter}</p>
-
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">
-                            {formatCurrency(application.proposed_budget, application.task.currency)}
-                            {application.budget_type === "hourly" ? "/hr" : ""}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span>{application.estimated_duration}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>Applied {timeAgo(application.applied_date)}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/browse/${application.task_id}`}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Task
-                            </Link>
-                          </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/messages?client=${application.task.client.name}`}>
-                              <MessageSquare className="mr-2 h-4 w-4" />
-                              Message Client
-                            </Link>
-                          </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/applications/${application.id}`}>View Details</Link>
-                          </Button>
-                        </div>
-
-                        {application.status === "pending" && (
-                          <Button variant="ghost" size="sm" onClick={() => handleWithdrawApplication(application.id)}>
-                            Withdraw Application
-                          </Button>
-                        )}
-
-                        {application.status === "accepted" && (
-                          <Button size="sm" asChild>
-                            <Link href={`/dashboard/projects/${application.task_id}`}>View Project</Link>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Project Details */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Project Details</CardTitle>
+              {task?.client?.is_verified && <VerifiedBadge />}
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-semibold text-lg">{task?.title}</h3>
+              <p className="text-muted-foreground">{task?.description}</p>
+            </div>
+
+            <div className="grid gap-3">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{formatNaira(task?.budget || 0)}</span>
+                <span className="text-sm text-muted-foreground">
+                  {task?.budget_type === 'fixed' ? 'Fixed Price' : 'Hourly Rate'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Posted {formatTimeAgo(task?.created_at)}
+                </span>
+              </div>
+
+              {task?.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">{task.location}</span>
+                </div>
+              )}
+
+              {task?.category && (
+                <div className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-muted-foreground" />
+                  <Badge variant="outline">{task.category}</Badge>
+                </div>
+              )}
+            </div>
+
+            {/* Client Information */}
+            <div className="border-t pt-4">
+              <h4 className="font-semibold mb-3">Client Information</h4>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={task?.client?.avatar_url || "/placeholder.svg"} />
+                  <AvatarFallback>
+                    {task?.client?.name?.split(" ").map((n: string) => n[0]).join("") || "C"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{task?.client?.name}</span>
+                    {task?.client?.is_verified && <VerifiedBadge />}
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>⭐ {task?.client?.rating || "New"}</span>
+                    <span>{task?.client?.completed_tasks || 0} projects completed</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Application Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Application</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-semibold mb-2">Proposed Budget</h4>
+              <p className="text-lg font-medium">{formatNaira(application.proposed_budget || 0)}</p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-2">Cover Letter</h4>
+              <div className="bg-muted p-3 rounded-lg">
+                <p className="text-sm">{application.cover_letter || "No cover letter provided"}</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Applied {formatTimeAgo(application.created_at)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {application.viewed_by_client ? (
+                  <>
+                    <Eye className="h-4 w-4 text-green-600" />
+                    <span className="text-sm text-green-600">Viewed by client</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Not viewed yet</span>
+                  </>
+                )}
+              </div>
+
+              {application.viewed_at && (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Viewed {formatTimeAgo(application.viewed_at)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Progress Tracking for accepted applications */}
+            {application.status === "accepted" && (
+              <div className="border-t pt-4">
+                <ProgressTracking
+                  applicationId={application.id}
+                  freelancerEmail={user?.email || ""}
+                  freelancerName={user?.name || ""}
+                  taskTitle={task?.title || "Task"}
+                  isClient={false}
+                />
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="border-t pt-4 space-y-2">
+              {application.status === "pending" && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleWithdrawApplication}
+                  className="w-full"
+                >
+                  Withdraw Application
+                </Button>
+              )}
+
+              {application.status === "accepted" && (
+                <Button asChild className="w-full">
+                  <Link href={`/dashboard/tasks/${task?.id}`}>
+                    View Project
+                  </Link>
+                </Button>
+              )}
+
+              <Button variant="outline" asChild className="w-full">
+                <Link href="/dashboard/applications">
+                  Back to Applications
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

@@ -61,7 +61,7 @@ export function DashboardPreferences() {
           </h2>
           <p className="text-muted-foreground">Customize your dashboard layout and display options</p>
         </div>
-        <Button onClick={handleSave} disabled={isSaving}>
+        <Button onClick={handleSave} disabled={true}>
           <Save className="h-4 w-4 mr-2" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -86,6 +86,7 @@ export function DashboardPreferences() {
               <Switch
                 checked={preferences.compactMode}
                 onCheckedChange={(checked) => updatePreference("compactMode", checked)}
+                disabled={true}
               />
             </div>
 
@@ -97,6 +98,7 @@ export function DashboardPreferences() {
               <Switch
                 checked={preferences.showWelcomeMessage}
                 onCheckedChange={(checked) => updatePreference("showWelcomeMessage", checked)}
+                disabled={true}
               />
             </div>
 
@@ -108,6 +110,7 @@ export function DashboardPreferences() {
               <Switch
                 checked={preferences.showNotifications}
                 onCheckedChange={(checked) => updatePreference("showNotifications", checked)}
+                disabled={true}
               />
             </div>
 
@@ -119,6 +122,7 @@ export function DashboardPreferences() {
               <Switch
                 checked={preferences.showQuickActions}
                 onCheckedChange={(checked) => updatePreference("showQuickActions", checked)}
+                disabled={true}
               />
             </div>
 
@@ -126,7 +130,7 @@ export function DashboardPreferences() {
 
             <div className="space-y-2">
               <Label htmlFor="defaultView">Default Dashboard View</Label>
-              <Select value={preferences.defaultView} onValueChange={(value) => updatePreference("defaultView", value)}>
+              <Select value={preferences.defaultView} onValueChange={(value) => updatePreference("defaultView", value)} disabled={true}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -159,6 +163,7 @@ export function DashboardPreferences() {
               <Switch
                 checked={preferences.autoRefresh}
                 onCheckedChange={(checked) => updatePreference("autoRefresh", checked)}
+                disabled={true}
               />
             </div>
 
@@ -168,6 +173,7 @@ export function DashboardPreferences() {
                 <Select
                   value={preferences.refreshInterval.toString()}
                   onValueChange={(value) => updatePreference("refreshInterval", Number.parseInt(value))}
+                  disabled={true}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -196,7 +202,7 @@ export function DashboardPreferences() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="dateFormat">Date Format</Label>
-              <Select value={preferences.dateFormat} onValueChange={(value) => updatePreference("dateFormat", value)}>
+              <Select value={preferences.dateFormat} onValueChange={(value) => updatePreference("dateFormat", value)} disabled={true}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -210,7 +216,7 @@ export function DashboardPreferences() {
 
             <div className="space-y-2">
               <Label htmlFor="timeFormat">Time Format</Label>
-              <Select value={preferences.timeFormat} onValueChange={(value) => updatePreference("timeFormat", value)}>
+              <Select value={preferences.timeFormat} onValueChange={(value) => updatePreference("timeFormat", value)} disabled={true}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -223,7 +229,7 @@ export function DashboardPreferences() {
 
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
-              <Select value={preferences.currency} onValueChange={(value) => updatePreference("currency", value)}>
+              <Select value={preferences.currency} onValueChange={(value) => updatePreference("currency", value)} disabled={true}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -238,7 +244,7 @@ export function DashboardPreferences() {
 
             <div className="space-y-2">
               <Label htmlFor="timezone">Timezone</Label>
-              <Select value={preferences.timezone} onValueChange={(value) => updatePreference("timezone", value)}>
+              <Select value={preferences.timezone} onValueChange={(value) => updatePreference("timezone", value)} disabled={true}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

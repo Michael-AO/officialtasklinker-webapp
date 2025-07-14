@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
-import { Sparkles, Clock, MapPin, Star, Target, Zap } from "lucide-react"
+import { Sparkles, Clock, MapPin, Target, Zap, CheckCircle, Calendar, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { NairaIcon } from "@/components/naira-icon"
+import { isVerifiedEmail } from "@/lib/utils"
 
 interface SmartMatch {
   id: string
@@ -20,6 +21,8 @@ interface SmartMatch {
   budget_max: number
   client: string
   client_id: string
+  client_email: string
+  client_avatar: string
   clientRating: number
   postedDate: string
   matchScore: number
@@ -33,10 +36,13 @@ interface SmartMatch {
   deadline: string | null
 }
 
+
+
 export function SmartTaskMatching() {
   const { user } = useAuth()
   const router = useRouter()
   const [matches, setMatches] = useState<SmartMatch[]>([])
+
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -51,23 +57,26 @@ export function SmartTaskMatching() {
         setIsLoading(true)
         setError(null)
 
-        const response = await fetch("/api/tasks/smart-matches", {
+        // Fetch smart matches
+        const matchesResponse = await fetch("/api/tasks/smart-matches", {
           headers: {
             "user-id": user.id.toString(),
           },
         })
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch matches: ${response.status}`)
+        if (!matchesResponse.ok) {
+          throw new Error(`Failed to fetch matches: ${matchesResponse.status}`)
         }
 
-        const data = await response.json()
+        const matchesData = await matchesResponse.json()
 
-        if (data.success) {
-          setMatches(data.matches || [])
+        if (matchesData.success) {
+          setMatches(matchesData.matches || [])
         } else {
-          throw new Error(data.error || "Failed to fetch matches")
+          throw new Error(matchesData.error || "Failed to fetch matches")
         }
+
+
       } catch (error) {
         console.error("Error fetching smart matches:", error)
         setError(error instanceof Error ? error.message : "Failed to fetch matches")
@@ -181,7 +190,7 @@ export function SmartTaskMatching() {
               <Sparkles className="h-5 w-5 text-green-600" />
               Smart Matches for You
             </CardTitle>
-            <CardDescription>AI-powered task recommendations based on your skills and preferences</CardDescription>
+            <CardDescription>Personalized task recommendations based on your skills</CardDescription>
           </div>
           <Badge variant="secondary" className="flex items-center gap-1">
             <Target className="h-3 w-3" />
@@ -191,49 +200,53 @@ export function SmartTaskMatching() {
       </CardHeader>
       <CardContent className="space-y-4">
         {matches.slice(0, 2).map((match) => (
-          <Card key={match.id} className="border-l-4 border-l-green-500">
-            <CardContent className="pt-4">
-              <div className="space-y-3">
-                {/* Header */}
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-lg">{match.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <NairaIcon className="h-4 w-4" />
-                        {formatCurrency(match.budget_max)}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {match.location}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {formatTimeAgo(match.postedDate)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right space-y-1">
-                    <div className={`text-2xl font-bold ${getMatchScoreColor(match.matchScore)}`}>
-                      {match.matchScore}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">Match Score</div>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <p className="text-muted-foreground text-sm line-clamp-2">{match.description}</p>
-
-                {/* Match Reasons */}
-                <div className="flex flex-wrap gap-1">
-                  {match.matchReasons.slice(0, 3).map((reason, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {reason}
+          <Card key={match.id} className="hover:shadow-md transition-shadow">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Link href={`/dashboard/browse/${match.id}`} className="hover:underline">
+                      <CardTitle className="text-lg">{match.title}</CardTitle>
+                    </Link>
+                    {isVerifiedEmail(match.client_email) && (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    )}
+                    <Badge variant="outline" className="text-xs">
+                      {match.id.slice(0, 8).toUpperCase()}
                     </Badge>
-                  ))}
+                    {match.urgency === "high" && <Badge variant="destructive">Urgent</Badge>}
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <NairaIcon className="h-4 w-4" />
+                      {formatCurrency(match.budget_max)}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      Flexible
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      {match.location}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {formatTimeAgo(match.postedDate)}
+                    </div>
+                  </div>
                 </div>
+                <div className="text-right space-y-1">
+                  <div className="text-2xl font-bold text-green-600">
+                    75%
+                  </div>
+                  <div className="text-xs text-muted-foreground">Match Score</div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground line-clamp-2">{match.description}</p>
 
-                {/* Skills */}
                 <div className="flex flex-wrap gap-2">
                   {match.skills.slice(0, 4).map((skill) => (
                     <Badge
@@ -252,29 +265,32 @@ export function SmartTaskMatching() {
                   )}
                 </div>
 
-                {/* Client Info & Actions */}
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                      <AvatarFallback>
-                        {match.client
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium">{match.client}</p>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs text-muted-foreground">{match.clientRating.toFixed(1)}</span>
-                      </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={match.client_avatar || "/placeholder.svg"} />
+                        <AvatarFallback>
+                          {match.client
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("") || "C"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{match.client}</span>
+                      {isVerifiedEmail(match.client_email) && (
+                        <span className="text-xs text-muted-foreground">(Verified)</span>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground">{match.applications_count} applications</div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        {match.applications_count}
+                      </div>
+                    </div>
                     <Button variant="outline" size="sm" onClick={() => handleViewDetails(match.id)}>
                       View Details
                     </Button>
@@ -294,7 +310,7 @@ export function SmartTaskMatching() {
 
         <div className="pt-4 border-t">
           <Button variant="outline" className="w-full" asChild>
-            <Link href="/dashboard/browse">View All Matches ({matches.length})</Link>
+            <Link href="/dashboard/browse">See More</Link>
           </Button>
         </div>
 

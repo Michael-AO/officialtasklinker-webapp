@@ -9,7 +9,13 @@ import { Toaster } from "@/components/ui/toaster"
 // Add the missing ThemeProvider import
 import { ThemeProvider } from "@/components/theme-provider"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+  fallback: ['system-ui', 'arial', 'sans-serif'],
+  preload: true,
+  adjustFontFallback: true
+})
 
 export const metadata: Metadata = {
   title: "Tasklinkers - Connect with Freelancers",

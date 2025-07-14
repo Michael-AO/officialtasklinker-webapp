@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { isVerifiedEmail } from "@/lib/utils"
 
 // Helper function to convert simple IDs to UUID format
 function convertToUUID(id: string): string {
@@ -24,6 +25,18 @@ export async function POST(request: NextRequest) {
     if (!user_data || !user_data.id) {
       console.error("No user data provided")
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
+    }
+
+    // Check if user email is admin (only admin emails can post tasks)
+    if (!user_data.email || !isVerifiedEmail(user_data.email)) {
+      console.error("User email not admin for task posting:", user_data.email)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "Only admin accounts can post tasks. Please contact support for admin access." 
+        }, 
+        { status: 403 }
+      )
     }
 
     // Convert user ID to UUID format
