@@ -360,11 +360,11 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
                           proposedAmount: e.target.value,
                         }))
                       }
-                      placeholder={`Fixed price: ₦${task.budget_max.toLocaleString()}`}
+                      placeholder={`Fixed price: ₦${(task.budget_max ?? 0).toLocaleString()}`}
                       required
                     />
                     <p className="text-xs text-muted-foreground">
-                      Fixed price: ₦{task.budget_max.toLocaleString()} | You can propose any amount
+                      Fixed price: ₦{(task.budget_max ?? 0).toLocaleString()} | You can propose any amount
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -485,7 +485,7 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total earned:</span>
-                  <span>₦{task.client.total_earned.toLocaleString()}</span>
+                  <span>₦{(task.client.total_earned ?? 0).toLocaleString()}</span>
                 </div>
               </div>
 

@@ -93,10 +93,6 @@ export function SmartTaskMatching() {
     router.push(`/dashboard/browse/${taskId}`)
   }
 
-  const handleApplyNow = (taskId: string) => {
-    router.push(`/dashboard/tasks/apply/${taskId}`)
-  }
-
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
       case "high":
@@ -297,9 +293,9 @@ export function SmartTaskMatching() {
                     <Button
                       size="sm"
                       className="bg-black hover:bg-gray-800"
-                      onClick={() => handleApplyNow(match.id)}
+                      asChild
                     >
-                      Apply Now
+                      <Link href={`/dashboard/browse/${match.id}`}>Apply Now</Link>
                     </Button>
                   </div>
                 </div>
