@@ -182,8 +182,8 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-8 w-8" />
-            <span className="text-xl font-bold">Tasklinkers</span>
+            <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-10 w-10 md:h-12 md:w-12" />
+            <span className="text-xl md:text-2xl font-bold">Tasklinkers</span>
           </div>
           <CardTitle className="text-2xl">Create your account</CardTitle>
           <CardDescription>Join thousands of freelancers and clients</CardDescription>

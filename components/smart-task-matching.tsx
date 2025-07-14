@@ -269,7 +269,7 @@ export function SmartTaskMatching() {
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src={match.client_avatar || "/placeholder.svg"} />
+                        <AvatarImage src={match.client_avatar} />
                         <AvatarFallback>
                           {match.client
                             ?.split(" ")

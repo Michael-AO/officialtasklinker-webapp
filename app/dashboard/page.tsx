@@ -276,7 +276,7 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={selectedApplication.freelancer?.avatar_url || "/placeholder.svg"} />
+                                          <AvatarImage src={selectedApplication.freelancer?.avatar_url} />
                   <AvatarFallback>
                     {selectedApplication.freelancer?.name
                       ?.split(" ")

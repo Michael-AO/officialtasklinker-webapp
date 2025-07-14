@@ -291,7 +291,7 @@ export default function ApplicationDetailPage() {
               <h4 className="font-semibold mb-3">Client Information</h4>
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={task?.client?.avatar_url || "/placeholder.svg"} />
+                                          <AvatarImage src={task?.client?.avatar_url} />
                   <AvatarFallback>
                     {task?.client?.name?.split(" ").map((n: string) => n[0]).join("") || "C"}
                   </AvatarFallback>

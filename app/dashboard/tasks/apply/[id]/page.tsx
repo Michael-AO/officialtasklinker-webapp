@@ -460,7 +460,7 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={task.client.avatar_url || "/placeholder.svg?height=40&width=40"} />
+                                          <AvatarImage src={task.client.avatar_url} />
                   <AvatarFallback>{task.client.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>

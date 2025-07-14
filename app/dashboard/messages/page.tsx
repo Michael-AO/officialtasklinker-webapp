@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useNotifications } from "@/contexts/notification-context"
 import { toast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
+import { getInitials } from "@/lib/utils"
 import {
   ActivityIcon as Attachment,
   MoreHorizontal,
@@ -377,12 +378,9 @@ export default function MessagesPage() {
                         <div className="flex items-start gap-3">
                           <div className="relative">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={conversation.participant.avatar || "/placeholder.svg"} />
+                              <AvatarImage src={conversation.participant.avatar || undefined} />
                               <AvatarFallback>
-                                {conversation.participant.name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
+                                {getInitials(conversation.participant.name)}
                               </AvatarFallback>
                             </Avatar>
                             {conversation.participant.online && (
@@ -435,15 +433,12 @@ export default function MessagesPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={selectedConversation.participant.avatar || "/placeholder.svg"} />
-                          <AvatarFallback>
-                            {selectedConversation.participant.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
+                                                    <Avatar className="h-10 w-10">
+                              <AvatarImage src={selectedConversation.participant.avatar || undefined} />
+                              <AvatarFallback>
+                                {getInitials(selectedConversation.participant.name)}
+                              </AvatarFallback>
+                            </Avatar>
                         {selectedConversation.participant.online && (
                           <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white" />
                         )}

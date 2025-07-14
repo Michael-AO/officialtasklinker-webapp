@@ -468,7 +468,7 @@ export default function BrowseTasksPage() {
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src={task.client?.avatar_url || "/placeholder.svg"} />
+                        <AvatarImage src={task.client?.avatar_url} />
                         <AvatarFallback>
                           {task.client?.name
                             ?.split(" ")

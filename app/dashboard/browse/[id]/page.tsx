@@ -41,6 +41,7 @@ import { NairaIcon } from "@/components/naira-icon"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getInitials } from "@/lib/utils"
 
 interface TaskData {
   id: string
@@ -618,13 +619,10 @@ export default function TaskViewPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
-                  {task.client.avatar_url ? (
-                    <AvatarImage src={task.client.avatar_url || "/placeholder.svg"} />
-                  ) : (
-                    <AvatarFallback className="bg-black text-white">
-                      <User className="h-6 w-6" />
-                    </AvatarFallback>
-                  )}
+                  <AvatarImage src={task.client.avatar_url} />
+                  <AvatarFallback className="bg-black text-white">
+                    {getInitials(task.client.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="font-medium">{task.client.name}</p>

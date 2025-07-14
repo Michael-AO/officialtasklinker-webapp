@@ -457,7 +457,7 @@ export default function TaskApplicationsPage() {
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={userApplication.freelancer_avatar || "/placeholder.svg"} />
+                                          <AvatarImage src={userApplication.freelancer_avatar} />
                   <AvatarFallback>
                     {userApplication.freelancer_name
                       .split(" ")
@@ -630,7 +630,7 @@ export default function TaskApplicationsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={application.freelancer_avatar || "/placeholder.svg"} />
+                                              <AvatarImage src={application.freelancer_avatar} />
                       <AvatarFallback>
                         {application.freelancer_name
                           .split(" ")

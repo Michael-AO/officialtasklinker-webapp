@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
 import { Camera, X, Plus } from "lucide-react"
+import { getInitials } from "@/lib/utils"
 
 export default function EditProfilePage() {
   const { user, updateProfile } = useAuth()
@@ -145,12 +146,9 @@ export default function EditProfilePage() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={profileImagePreview || user?.avatar || "/placeholder.svg"} alt={user?.name || "User"} />
+                  <AvatarImage src={profileImagePreview || user?.avatar} alt={user?.name || "User"} />
                   <AvatarFallback className="text-lg">
-                    {user?.name
-                      ?.split(" ")
-                      .map((n) => n[0])
-                      .join("") || "U"}
+                    {getInitials(user?.name)}
                   </AvatarFallback>
                 </Avatar>
                 <Button

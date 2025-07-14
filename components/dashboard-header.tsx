@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { NotificationDropdown } from "@/components/notification-dropdown"
 import { GlobalSearch } from "@/components/global-search"
 import Link from "next/link"
+import { getInitials } from "@/lib/utils"
 
 export function DashboardHeader() {
   const { user, logout } = useAuth()
@@ -52,9 +53,9 @@ export function DashboardHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatar || ""} alt={user.name} />
+                <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="bg-gray-900 text-white">
-                  <User className="h-4 w-4" />
+                  {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
             </Button>

@@ -66,6 +66,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [portfolioUploadModalOpen, setPortfolioUploadModalOpen] = useState(false)
+  const [showProfileWizard, setShowProfileWizard] = useState(false)
   const [newPortfolioItem, setNewPortfolioItem] = useState<PortfolioItem>({
     id: "",
     title: "",
@@ -317,7 +318,7 @@ export default function ProfilePage() {
             <div className="flex flex-col items-center md:items-start">
               <div className="relative">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile.avatar_url || "/placeholder.svg"} alt={profile.name} />
+                  <AvatarImage src={profile.avatar_url} alt={profile.name} />
                   <AvatarFallback className="text-lg">{getInitials(profile.name)}</AvatarFallback>
                 </Avatar>
                 <Button 
@@ -381,8 +382,8 @@ export default function ProfilePage() {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">No bio added yet</p>
-                  <Button asChild variant="outline">
-                    <Link href="/dashboard/profile/edit">Add Bio</Link>
+                  <Button variant="outline" onClick={() => setShowProfileWizard(true)}>
+                    Add Bio
                   </Button>
                 </div>
               )}
@@ -405,8 +406,8 @@ export default function ProfilePage() {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">No skills added yet</p>
-                  <Button asChild variant="outline">
-                    <Link href="/dashboard/profile/edit">Add Skills</Link>
+                  <Button variant="outline" onClick={() => setShowProfileWizard(true)}>
+                    Add Skills
                   </Button>
                 </div>
               )}
@@ -664,6 +665,26 @@ export default function ProfilePage() {
             </div>
           </div>
           <Button onClick={handleAddPortfolioItem}>Add Portfolio Item</Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Completion Wizard Dialog */}
+      <Dialog open={showProfileWizard} onOpenChange={setShowProfileWizard}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Complete Your Profile</DialogTitle>
+            <DialogDescription>
+              Add your bio, skills, and other details to complete your profile
+            </DialogDescription>
+          </DialogHeader>
+          <ProfileCompletionWizard 
+            isExpanded={true}
+            onComplete={() => {
+              setShowProfileWizard(false)
+              // Refresh profile data after completion
+              fetchProfileData()
+            }} 
+          />
         </DialogContent>
       </Dialog>
     </div>

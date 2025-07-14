@@ -4,7 +4,7 @@ import { DialogFooter } from "@/components/ui/dialog"
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress"
 import { Upload, X, FileText, ImageIcon, File, ExternalLink, Plus, Trash2, Eye, Shield, Camera, CheckCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
+import { getInitials } from "@/lib/utils"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -38,9 +39,14 @@ interface CompletionStatus {
   verification: boolean
 }
 
-export function ProfileCompletionWizard() {
+interface ProfileCompletionWizardProps {
+  onComplete?: () => void
+  isExpanded?: boolean
+}
+
+export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpanded = false }: ProfileCompletionWizardProps = {}) {
   const { user, updateProfile, refreshPortfolio } = useAuth()
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(initialExpanded)
   const [isLoading, setIsLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [previewItem, setPreviewItem] = useState<PortfolioItem | null>(null)
@@ -120,6 +126,7 @@ export function ProfileCompletionWizard() {
 
   const [newSkill, setNewSkill] = useState("")
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([])
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const profileImageInputRef = useRef<HTMLInputElement>(null)
@@ -400,6 +407,11 @@ export function ProfileCompletionWizard() {
           description: "Your profile has been successfully updated.",
         })
       }
+      
+      // Always call onComplete callback to refresh parent component
+      if (onComplete) {
+        onComplete()
+      }
       setIsExpanded(false)
     } catch (error) {
       console.error("Profile update error:", error)
@@ -476,11 +488,11 @@ export function ProfileCompletionWizard() {
                 <div className="relative">
                   <Avatar className="h-20 w-20">
                     <AvatarImage 
-                      src={profileImagePreview || user?.avatar || "/placeholder.svg"} 
+                      src={profileImagePreview || user?.avatar} 
                       alt={user?.name || "Profile"} 
                     />
                     <AvatarFallback className="text-lg">
-                      {user?.name?.split(" ").map((n) => n[0]).join("") || "U"}
+                      {getInitials(user?.name)}
                     </AvatarFallback>
                   </Avatar>
                   <Button

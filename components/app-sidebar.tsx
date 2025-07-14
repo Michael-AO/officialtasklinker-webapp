@@ -113,7 +113,7 @@ export function AppSidebar() {
     <Sidebar className="bg-black border-r border-gray-800">
       <SidebarHeader className="border-b border-gray-800 bg-black">
         <div className="flex items-center gap-2 px-2 py-2">
-          <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-6 w-6" />
+          <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-8 w-8" />
           <span className="text-lg font-bold text-white">Tasklinkers</span>
         </div>
       </SidebarHeader>
