@@ -22,38 +22,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Clean up Dojah scripts on page load
-              (function() {
-                console.log("🧹 Cleaning up existing Dojah scripts...");
-                
-                // Remove any existing Dojah scripts
-                const dojahScripts = document.querySelectorAll('script[src*="dojah"], script[src*="widget.js"]');
-                dojahScripts.forEach(script => {
-                  console.log("Removing Dojah script:", script.src);
-                  script.remove();
-                });
-                
-                // Remove any Dojah-related global variables
-                if (window.dojahSpinnerHtml) {
-                  delete window.dojahSpinnerHtml;
-                  console.log("Removed dojahSpinnerHtml from window");
-                }
-                
-                // Remove any Dojah-related elements
-                const dojahElements = document.querySelectorAll('[data-dojah-widget], [data-dojah-wrapper]');
-                dojahElements.forEach(el => {
-                  console.log("Removing Dojah element:", el);
-                  el.remove();
-                });
-                
-                console.log("✅ Dojah cleanup completed");
-              })();
-            `,
-          }}
-        />
         <script src="https://widget.dojah.io/widget.js" async></script>
       </head>
       <body className={inter.className}>

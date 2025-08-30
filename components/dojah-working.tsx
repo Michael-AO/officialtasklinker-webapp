@@ -75,14 +75,14 @@ export function DojahWorking({
       {/* Dojah Component */}
       {showDojah && (
         <Dojah
-          appID={process.env.NEXT_PUBLIC_DOJAH_APP_ID || "6875f7ffcb4d46700c74336e"}
-          publicKey={process.env.NEXT_PUBLIC_DOJAH_PUBLIC_KEY || "prod_pk_deSgNF4R6LJVWU29lSfZ41aW4"}
+          appID={process.env.NEXT_PUBLIC_DOJAH_APP_ID || "test_app_id"}
+          publicKey={process.env.NEXT_PUBLIC_DOJAH_PUBLIC_KEY || "test_pk_TNoLXCX4T96k0WdbLnFJGYipd"}
           type="custom"
           response={handleDojahResponse}
           config={{
-            debug: false,
+            debug: true,
             mobile: true,
-            environment: "production"
+            environment: "test"
           }}
         />
       )}
