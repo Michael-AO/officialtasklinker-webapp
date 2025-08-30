@@ -8,14 +8,14 @@ export function DojahDebug() {
   const [config, setConfig] = useState({
     appId: process.env.NEXT_PUBLIC_DOJAH_APP_ID || "test_app_id",
     publicKey: process.env.NEXT_PUBLIC_DOJAH_PUBLIC_KEY || "test_pk_TNoLXCX4T96k0WdbLnFJGYipd",
-    environment: process.env.NEXT_PUBLIC_DOJAH_ENVIRONMENT || "test"
+    environment: process.env.NEXT_PUBLIC_DOJAH_ENVIRONMENT || "sandbox"
   })
 
   const testAPI = async () => {
     try {
       console.log("🧪 Testing Dojah API...")
       
-      const response = await fetch('https://api.dojah.io/api/v1/kyc/nin_verify', {
+      const response = await fetch('https://sandbox-api.dojah.io/api/v1/kyc/nin_verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

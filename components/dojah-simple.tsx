@@ -28,7 +28,7 @@ export function DojahSimple({ onSuccess, onError }: DojahSimpleProps) {
             config: {
               debug: true,
               mobile: true,
-              environment: "test"
+              environment: "sandbox"
             },
             response: (status: string, data: any) => {
               console.log(`🔔 Dojah response: ${status}`, data)
