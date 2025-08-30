@@ -15,45 +15,63 @@ export function DojahSimple({ onSuccess, onError }: DojahSimpleProps) {
   const handleStartVerification = () => {
     setIsLoading(true)
     
-    // Simple direct Dojah initialization
-    if (typeof window !== 'undefined' && (window as any).Dojah) {
-      try {
-        console.log("🚀 Starting Dojah verification...")
-        
-        ;(window as any).Dojah.init({
-          appID: "test_app_id",
-          publicKey: "test_pk_TNoLXCX4T96k0WdbLnFJGYipd",
-          type: "modal", // Use modal type for direct widget
-          config: {
-            debug: true,
-            mobile: true,
-            environment: "test"
-          },
-          response: (status: string, data: any) => {
-            console.log(`🔔 Dojah response: ${status}`, data)
-            setIsLoading(false)
-            
-            if (status === 'success') {
-              console.log("✅ Verification successful:", data)
-              onSuccess?.(data)
-            } else if (status === 'error') {
-              console.error("❌ Verification failed:", data)
-              onError?.(data)
-            } else if (status === 'close') {
-              console.log("🔒 Widget closed")
+    // Function to initialize Dojah
+    const initDojah = () => {
+      if (typeof window !== 'undefined' && (window as any).Dojah) {
+        try {
+          console.log("🚀 Starting Dojah verification...")
+          
+          ;(window as any).Dojah.init({
+            appID: "test_app_id",
+            publicKey: "test_pk_TNoLXCX4T96k0WdbLnFJGYipd",
+            type: "modal", // Use modal type for direct widget
+            config: {
+              debug: true,
+              mobile: true,
+              environment: "test"
+            },
+            response: (status: string, data: any) => {
+              console.log(`🔔 Dojah response: ${status}`, data)
+              setIsLoading(false)
+              
+              if (status === 'success') {
+                console.log("✅ Verification successful:", data)
+                onSuccess?.(data)
+              } else if (status === 'error') {
+                console.error("❌ Verification failed:", data)
+                onError?.(data)
+              } else if (status === 'close') {
+                console.log("🔒 Widget closed")
+              }
             }
+          })
+        } catch (error) {
+          console.error("❌ Dojah initialization error:", error)
+          setIsLoading(false)
+          onError?.(error)
+        }
+      } else {
+        console.log("⏳ Dojah not ready yet, waiting...")
+        // Wait a bit and try again
+        setTimeout(() => {
+          if (isLoading) { // Only retry if still loading
+            initDojah()
           }
-        })
-      } catch (error) {
-        console.error("❌ Dojah initialization error:", error)
-        setIsLoading(false)
-        onError?.(error)
+        }, 1000)
       }
-    } else {
-      console.error("❌ Dojah not available")
-      setIsLoading(false)
-      onError?.("Dojah widget not loaded")
     }
+    
+    // Start initialization
+    initDojah()
+    
+    // Fallback: if Dojah doesn't load after 10 seconds
+    setTimeout(() => {
+      if (isLoading && !(window as any).Dojah) {
+        console.error("❌ Dojah failed to load after 10 seconds")
+        setIsLoading(false)
+        onError?.("Dojah widget failed to load")
+      }
+    }, 10000)
   }
 
   return (

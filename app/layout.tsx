@@ -23,6 +23,40 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script src="https://widget.dojah.io/widget.js" async></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Check if Dojah script loads
+              (function() {
+                console.log("🔍 Checking Dojah script loading...");
+                
+                // Check if script is already loaded
+                if (window.Dojah) {
+                  console.log("✅ Dojah already available");
+                  return;
+                }
+                
+                // Wait for script to load
+                let attempts = 0;
+                const checkDojah = () => {
+                  attempts++;
+                  console.log("⏳ Checking Dojah availability... (attempt " + attempts + ")");
+                  
+                  if (window.Dojah) {
+                    console.log("✅ Dojah loaded successfully");
+                  } else if (attempts < 20) {
+                    setTimeout(checkDojah, 500);
+                  } else {
+                    console.error("❌ Dojah failed to load after 10 seconds");
+                  }
+                };
+                
+                // Start checking after a short delay
+                setTimeout(checkDojah, 1000);
+              })();
+            `,
+          }}
+        />
       </head>
       <body className={inter.className}>
         <ThemeProvider
