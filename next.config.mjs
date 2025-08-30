@@ -26,7 +26,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.dojah.io",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://api.dojah.io https://*.dojah.io https://static.cloudflareinsights.com",
+              "connect-src 'self' https://api.dojah.io https://*.dojah.io https://static.cloudflareinsights.com https://*.supabase.co",
               "frame-src 'self' https://*.dojah.io",
               "object-src 'none'",
               "base-uri 'self'",
