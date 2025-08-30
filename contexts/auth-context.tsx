@@ -9,9 +9,10 @@ export interface User {
   id: string
   email: string
   name: string
-  userType: "freelancer" | "client"
+  userType: "freelancer" | "client" | "admin"
   avatar?: string
   isVerified: boolean
+  verification_type?: "identity" | "business" | "professional" | "admin"
   joinDate: string
   completedTasks: number
   rating: number
@@ -103,7 +104,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   skills: profile.skills || [],
                   bio: profile.bio || "",
                   location: profile.location || undefined,
-                  hourlyRate: profile.hourly_rate || undefined,
                 } : null)
               }
             }).catch(profileError => {
@@ -248,7 +248,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   skills: profile.skills || [],
                   bio: profile.bio || "",
                   location: profile.location || undefined,
-                  hourlyRate: profile.hourly_rate || undefined,
                 } : null)
               }
             } catch (profileError) {
@@ -331,7 +330,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout()
   }
 
-  const updateProfile = async (updates: Partial<User>) => {
+  const updateProfile = async (updates: Partial<User> & { verification_type?: string }) => {
     if (!user) return
 
     try {
@@ -348,9 +347,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: updates.name || user.name,
           bio: updates.bio || user.bio,
           location: updates.location || user.location,
-          hourly_rate: updates.hourlyRate || user.hourlyRate,
           skills: updates.skills || user.skills,
           avatar_url: updates.avatar || user.avatar,
+          // Pass is_verified and verification_type if present
+          ...(typeof updates.isVerified === "boolean" ? { is_verified: updates.isVerified } : {}),
+          ...(updates.verification_type ? { verification_type: updates.verification_type } : {}),
         }),
       })
 

@@ -44,6 +44,12 @@ interface ProfileCompletionWizardProps {
   isExpanded?: boolean
 }
 
+// Placeholder import for DojahModal (to be implemented)
+// import { DojahModal } from "@/components/dojah-modal"
+
+// Optionally add a prop for triggering ID verification in the future
+// export function ProfileCompletionWizard({ onComplete, onTriggerIDVerification }: ProfileCompletionWizardProps) { ... }
+
 export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpanded = false }: ProfileCompletionWizardProps = {}) {
   const { user, updateProfile, refreshPortfolio } = useAuth()
   const [isExpanded, setIsExpanded] = useState(initialExpanded)
@@ -95,7 +101,6 @@ export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpande
         bio: user.bio || "",
         skills: user.skills || [],
         location: user.location || "",
-        hourlyRate: user.hourlyRate?.toString() || "",
         portfolio: user.portfolio || [],
       })
       
@@ -120,7 +125,6 @@ export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpande
     bio: "",
     skills: [] as string[],
     location: "",
-    hourlyRate: "",
     portfolio: [] as any[],
   })
 
@@ -244,7 +248,7 @@ export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpande
     return {
       bio: !!formData.bio.trim(),
       skills: formData.skills.length > 0,
-      location: !!formData.location.trim() && !!formData.hourlyRate,
+      location: !!formData.location.trim(),
       portfolio: portfolioItems.length > 0,
       verification: false, // Always false since it's disabled
     }
@@ -384,7 +388,6 @@ export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpande
         bio: formData.bio,
         skills: formData.skills,
         location: formData.location,
-        hourlyRate: formData.hourlyRate ? Number(formData.hourlyRate) : undefined,
         avatar: avatarUrl,
       })
 
@@ -565,30 +568,18 @@ export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpande
               </div>
             </section>
 
-            {/* Location & Rates Section */}
+            {/* Location Section */}
             <section className="space-y-4">
-              <h3 className="text-xl font-semibold">Location & Rates</h3>
-              <p className="text-muted-foreground">Set your location and hourly rate</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    placeholder="City, Country"
-                    value={formData.location}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hourlyRate">Hourly Rate (₦)</Label>
-                  <Input
-                    id="hourlyRate"
-                    type="number"
-                    placeholder="5000"
-                    value={formData.hourlyRate}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, hourlyRate: e.target.value }))}
-                  />
-                </div>
+              <h3 className="text-xl font-semibold">Location</h3>
+              <p className="text-muted-foreground">Set your location</p>
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  placeholder="City, Country"
+                  value={formData.location}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
+                />
               </div>
             </section>
 

@@ -75,6 +75,16 @@ export async function PUT(request: NextRequest) {
       console.log("🖼️ Updating avatar URL:", updateData.avatar_url)
     }
 
+    // Handle is_verified and verification_type if provided
+    if (typeof updateData.is_verified === "boolean") {
+      updateObject.is_verified = updateData.is_verified
+      console.log("✅ Updating is_verified:", updateData.is_verified)
+    }
+    if (updateData.verification_type) {
+      updateObject.verification_type = updateData.verification_type
+      console.log("✅ Updating verification_type:", updateData.verification_type)
+    }
+
     console.log("📝 Final update object:", updateObject)
 
     // Create server-side client with service role key

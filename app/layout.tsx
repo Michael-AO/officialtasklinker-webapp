@@ -1,25 +1,17 @@
-import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { AuthProvider } from "@/contexts/auth-context"
-import { Toaster } from "@/components/ui/toaster"
-// import { DataComparisonDebug } from "@/components/data-comparison-debug"
-
-// Add the missing ThemeProvider import
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/contexts/auth-context"
+import { NotificationProvider } from "@/contexts/notification-context"
+import { EscrowProvider } from "@/contexts/escrow-context"
+import { Toaster } from "sonner"
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  display: 'swap',
-  fallback: ['system-ui', 'arial', 'sans-serif'],
-  preload: true,
-  adjustFontFallback: true
-})
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Tasklinkers - Connect with Freelancers",
-  description: "The best platform to find and hire talented freelancers",
+  title: "TaskLinker - Connect, Complete, Earn",
+  description: "A platform connecting freelancers with clients for task completion and secure payments",
 }
 
 export default function RootLayout({
@@ -28,14 +20,56 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Clean up Dojah scripts on page load
+              (function() {
+                console.log("🧹 Cleaning up existing Dojah scripts...");
+                
+                // Remove any existing Dojah scripts
+                const dojahScripts = document.querySelectorAll('script[src*="dojah"], script[src*="widget.js"]');
+                dojahScripts.forEach(script => {
+                  console.log("Removing Dojah script:", script.src);
+                  script.remove();
+                });
+                
+                // Remove any Dojah-related global variables
+                if (window.dojahSpinnerHtml) {
+                  delete window.dojahSpinnerHtml;
+                  console.log("Removed dojahSpinnerHtml from window");
+                }
+                
+                // Remove any Dojah-related elements
+                const dojahElements = document.querySelectorAll('[data-dojah-widget], [data-dojah-wrapper]');
+                dojahElements.forEach(el => {
+                  console.log("Removing Dojah element:", el);
+                  el.remove();
+                });
+                
+                console.log("✅ Dojah cleanup completed");
+              })();
+            `,
+          }}
+        />
+        <script src="https://widget.dojah.io/widget.js" async></script>
+      </head>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <AuthProvider>
-            {children}
-            <Toaster />
-            {/* Add debug component - remove in production */}
-            {/* <DataComparisonDebug /> */}
+            <NotificationProvider>
+              <EscrowProvider>
+                {children}
+                <Toaster />
+              </EscrowProvider>
+            </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

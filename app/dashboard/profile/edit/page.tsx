@@ -28,7 +28,6 @@ export default function EditProfilePage() {
     email: user?.email || "",
     bio: user?.bio || "",
     location: user?.location || "",
-    hourlyRate: user?.hourlyRate?.toString() || "",
     skills: user?.skills || [],
   })
 
@@ -71,8 +70,6 @@ export default function EditProfilePage() {
         bio: formData.bio,
         skills: formData.skills,
         location: formData.location,
-        hourlyRate: Number.parseInt(formData.hourlyRate) || undefined,
-        avatar: avatarUrl,
       })
 
       router.push("/dashboard/profile")
@@ -219,17 +216,6 @@ export default function EditProfilePage() {
                 value={formData.location}
                 onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
                 placeholder="City, Country"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="hourlyRate">Hourly Rate ($)</Label>
-              <Input
-                id="hourlyRate"
-                type="number"
-                value={formData.hourlyRate}
-                onChange={(e) => setFormData((prev) => ({ ...prev, hourlyRate: e.target.value }))}
-                placeholder="45"
               />
             </div>
 

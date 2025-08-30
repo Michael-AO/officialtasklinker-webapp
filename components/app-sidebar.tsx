@@ -14,6 +14,7 @@ import {
   Banknote,
   Shield,
   Scale,
+  CheckCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -210,6 +211,21 @@ export function AppSidebar() {
                   <Link href="/dashboard/profile">
                     <User className="h-4 w-4" />
                     <span>Profile</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive("/dashboard/verification")}
+                  className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
+                >
+                  <Link href="/dashboard/verification">
+                    <Shield className="h-4 w-4" />
+                    <span>Verification</span>
+                    {user?.isVerified && (
+                      <CheckCircle className="h-4 w-4 ml-auto text-green-500" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

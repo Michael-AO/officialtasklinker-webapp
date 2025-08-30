@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CalendarDays, MapPin, Edit, Camera, ExternalLink, AlertCircle, FileText, Download, Plus } from "lucide-react"
+import { CalendarDays, MapPin, Edit, Camera, ExternalLink, AlertCircle, FileText, Download, Plus, Shield } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
+import { VerifiedBadge } from "@/components/ui/verified-badge"
+import { DojahModal } from "@/components/dojah-modal"
 
 interface UserProfile {
   id: string
@@ -37,6 +39,7 @@ interface UserProfile {
   phone?: string
   portfolio?: PortfolioItem[]
   profile_completion?: number
+  verification_type?: string
 }
 
 interface PortfolioItem {
@@ -78,6 +81,7 @@ export default function ProfilePage() {
     created_at: new Date().toISOString(),
   })
   const [refreshKey, setRefreshKey] = useState(0)
+  const [showDojahModal, setShowDojahModal] = useState(false)
 
   useEffect(() => {
     if (authUser?.id) {
@@ -297,6 +301,150 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
+      {/* Profile header with avatar, name */}
+      {profile && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-x-16 items-center md:items-center">
+              {/* Avatar and Name Section */}
+              <div className="flex flex-col items-center md:items-start">
+                <div className="relative">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={profile.avatar_url} alt={profile.name} />
+                    <AvatarFallback className="text-lg">{getInitials(profile.name)}</AvatarFallback>
+                  </Avatar>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                    asChild
+                  >
+                    <Link href="/dashboard/profile/edit">
+                      <Camera className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+                <div className="mt-4 text-center md:text-left">
+                  <h2 className="text-2xl font-bold">{profile.name}</h2>
+                  <p className="text-muted-foreground capitalize">{profile.user_type}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Profile Completion & ID Verification - Side by side, matching dashboard UI */}
+      <div className="flex flex-col md:flex-row gap-4 items-stretch">
+        {(() => {
+          if (!profile) {
+            // No profile, render two empty columns
+            return <><div className="w-full md:w-1/2 flex-1" /><div className="w-full md:w-1/2 flex-1" /></>
+          }
+          let completed = 0
+          const total = 3
+          if (profile.bio && profile.bio.trim()) completed++
+          if (profile.skills && profile.skills.length > 0) completed++
+          if (profile.location && profile.location.trim()) completed++
+          const profileCompletion = Math.round((completed / total) * 100)
+          const isProfileIncomplete = profileCompletion < 100
+          if (isProfileIncomplete) {
+            // Profile incomplete: left = profile, right = ID verification (if not verified)
+            return <>
+              <div className="w-full md:w-1/2 flex-1 flex">
+                <div className="border rounded-lg p-6 bg-white shadow flex flex-row items-center justify-between min-h-[180px] w-full">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Complete Your Profile</h3>
+                    <p className="text-sm text-muted-foreground mb-0">Finish your profile to unlock all features.</p>
+                  </div>
+                  <ProfileCompletionWizard />
+                </div>
+              </div>
+              {!profile.is_verified && (
+                <div className="w-full md:w-1/2 flex-1 flex">
+                  <div className="border rounded-lg p-6 bg-white shadow flex flex-col justify-between min-h-[180px] w-full relative">
+                    <div className="absolute top-4 right-4 text-muted-foreground">
+                      <Shield className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">ID Verification</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {profile.user_type === "admin"
+                          ? "As an admin, please verify your identity to access admin features."
+                          : "Verify your identity to apply for jobs or post tasks."}
+                      </p>
+                      <Button className="w-full" onClick={() => setShowDojahModal(true)}>
+                        Start ID Verification
+                      </Button>
+                    </div>
+                    <DojahModal
+                      open={showDojahModal}
+                      onOpenChange={setShowDojahModal}
+                      onSuccess={async (result) => {
+                        let verificationType = profile.user_type === "admin" ? "admin" : "individual"
+                        if (result?.data?.verification_type === "business" || result?.data?.type === "business") {
+                          verificationType = "business"
+                        }
+                        // You may need to call your updateProfile logic here
+                        await fetchProfileData() // or updateProfile({ is_verified: true, verification_type: verificationType })
+                        toast({
+                          title: "ID Verified!",
+                          description: `Your identity has been verified as a ${verificationType}. You can now apply and post tasks.`,
+                        })
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          } else {
+            // Profile complete: left = ID verification (if not verified), right = empty
+            if (!profile.is_verified) {
+              return <>
+                <div className="w-full md:w-1/2 flex-1 flex">
+                  <div className="border rounded-lg p-6 bg-white shadow flex flex-col justify-between min-h-[180px] w-full relative">
+                    <div className="absolute top-4 right-4 text-muted-foreground">
+                      <Shield className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">ID Verification</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {profile.user_type === "admin"
+                          ? "As an admin, please verify your identity to access admin features."
+                          : "Verify your identity to apply for jobs or post tasks."}
+                      </p>
+                      <Button className="w-full" onClick={() => setShowDojahModal(true)}>
+                        Start ID Verification
+                      </Button>
+                    </div>
+                    <DojahModal
+                      open={showDojahModal}
+                      onOpenChange={setShowDojahModal}
+                      onSuccess={async (result) => {
+                        let verificationType = profile.user_type === "admin" ? "admin" : "individual"
+                        if (result?.data?.verification_type === "business" || result?.data?.type === "business") {
+                          verificationType = "business"
+                        }
+                        // You may need to call your updateProfile logic here
+                        await fetchProfileData() // or updateProfile({ is_verified: true, verification_type: verificationType })
+                        toast({
+                          title: "ID Verified!",
+                          description: `Your identity has been verified as a ${verificationType}. You can now apply and post tasks.`,
+                        })
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="w-full md:w-1/2 flex-1" />
+              </>
+            } else {
+              // Both profile and ID are complete/verified: show two empty columns
+              return <><div className="w-full md:w-1/2 flex-1" /><div className="w-full md:w-1/2 flex-1" /></>
+            }
+          }
+        })()}
+      </div>
+
       <div className="flex justify-between items-start">
         <h1 className="text-3xl font-bold">Profile</h1>
         <Button asChild>
@@ -307,54 +455,7 @@ export default function ProfilePage() {
         </Button>
       </div>
 
-      {/* Profile Completion Wizard - Show if profile is incomplete */}
-      {isProfileIncomplete && <ProfileCompletionWizard />}
-
-      {/* Profile Header with Avatar, Name, Verified Badge, and Earning Summary */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Avatar and Name Section */}
-            <div className="flex flex-col items-center md:items-start">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile.avatar_url} alt={profile.name} />
-                  <AvatarFallback className="text-lg">{getInitials(profile.name)}</AvatarFallback>
-                </Avatar>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-                  asChild
-                >
-                  <Link href="/dashboard/profile/edit">
-                    <Camera className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <div className="mt-4 text-center md:text-left">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-2xl font-bold">{profile.name}</h2>
-                  {profile.is_verified && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Verified
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-muted-foreground capitalize">{profile.user_type}</p>
-                <Badge
-                  variant="outline"
-                  className={
-                    profileCompletion === 100 ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"
-                  }
-                >
-                  {profileCompletion}% Complete
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Remove any extra/duplicate ProfileCompletionWizard below this point */}
 
       <Tabs defaultValue="about" className="space-y-4">
         <TabsList>

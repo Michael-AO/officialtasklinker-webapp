@@ -94,7 +94,6 @@ export default function LoginPage() {
             skills: [],
             bio: "",
             location: "",
-            hourly_rate: null,
           })
           .select()
           .single()

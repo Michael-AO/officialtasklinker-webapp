@@ -2,11 +2,9 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
-
   "engines": {
-  "node": "20.x"
-},
-
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -54,6 +52,7 @@
     "cmdk": "1.0.4",
     "crypto": "latest",
     "date-fns": "4.1.0",
+    "dojah-kyc-sdk-react": "^0.0.3",
     "embla-carousel-react": "8.5.1",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",

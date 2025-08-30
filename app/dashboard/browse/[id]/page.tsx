@@ -42,6 +42,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils"
+import { DojahModal } from "@/components/dojah-modal"
 
 interface TaskData {
   id: string
@@ -100,7 +101,7 @@ interface PortfolioItem {
 export default function TaskViewPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, updateProfile } = useAuth()
   const taskId = params.id as string
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -111,6 +112,7 @@ export default function TaskViewPage() {
   const [applying, setApplying] = useState(false)
   const [showApplicationForm, setShowApplicationForm] = useState(false)
   const [currentTab, setCurrentTab] = useState("proposal")
+  const [showDojahModal, setShowDojahModal] = useState(false)
 
   // Application form state
   const [proposedBudget, setProposedBudget] = useState("")
@@ -689,7 +691,18 @@ export default function TaskViewPage() {
               </CardHeader>
               <CardContent>
                 {!showApplicationForm ? (
-                  <Button className="w-full" onClick={() => setShowApplicationForm(true)}>
+                  <Button className="w-full" onClick={() => {
+                    if (!user?.isVerified) {
+                      setShowDojahModal(true)
+                      toast({
+                        title: "ID Verification Required",
+                        description: "You must verify your identity before applying for tasks.",
+                        variant: "destructive",
+                      })
+                      return
+                    }
+                    setShowApplicationForm(true)
+                  }}>
                     <Send className="h-4 w-4 mr-2" />
                     Submit Detailed Application
                   </Button>
@@ -1032,6 +1045,22 @@ export default function TaskViewPage() {
                     </DialogContent>
                   </Dialog>
                 )}
+                <DojahModal
+                  open={showDojahModal}
+                  onOpenChange={setShowDojahModal}
+                  onSuccess={async (result) => {
+                    // Determine verification type from Dojah result
+                    let verificationType = "individual"
+                    if (result?.data?.verification_type === "business" || result?.data?.type === "business") {
+                      verificationType = "business"
+                    }
+                    await updateProfile({ isVerified: true, verification_type: verificationType } as any)
+                    toast({
+                      title: "ID Verified!",
+                      description: `Your identity has been verified as a ${verificationType}. You can now apply for tasks.`,
+                    })
+                  }}
+                />
               </CardContent>
             </Card>
           )}
