@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export function DojahDebug() {
   const [config, setConfig] = useState({
     appId: process.env.NEXT_PUBLIC_DOJAH_APP_ID || "6875f7ffcb4d46700c74336e",
-    publicKey: process.env.NEXT_PUBLIC_DOJAH_PUBLIC_KEY || "test_pk_TNoLXCX4T96k0WdbLnFJGYipd",
-    environment: process.env.NEXT_PUBLIC_DOJAH_ENVIRONMENT || "not set"
+    publicKey: process.env.NEXT_PUBLIC_DOJAH_PUBLIC_KEY || "prod_pk_deSgNF4R6LJVWU29lSfZ41aW4",
+    environment: process.env.NEXT_PUBLIC_DOJAH_ENVIRONMENT || "production"
   })
 
   const testAPI = async () => {

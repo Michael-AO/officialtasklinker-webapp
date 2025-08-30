@@ -22,11 +22,11 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.dojah.io https://static.cloudflareinsights.com https://widget.dojah.io https://*.sentry.io",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.dojah.io https://static.cloudflareinsights.com https://widget.dojah.io https://*.sentry.io https://*.posthog.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.dojah.io https://fonts.gstatic.com https://identity.dojah.io",
               "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.dojah.io https://identity.dojah.io",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://api.dojah.io https://*.dojah.io https://static.cloudflareinsights.com https://*.supabase.co https://widget.dojah.io https://identity.dojah.io https://*.sentry.io",
+              "connect-src 'self' https://api.dojah.io https://*.dojah.io https://static.cloudflareinsights.com https://*.supabase.co https://widget.dojah.io https://identity.dojah.io https://*.sentry.io https://*.posthog.com",
               "frame-src 'self' https://*.dojah.io https://identity.dojah.io",
               "object-src 'none'",
               "base-uri 'self'",

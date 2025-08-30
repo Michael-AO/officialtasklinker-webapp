@@ -76,12 +76,13 @@ export function DojahWorking({
       {showDojah && (
         <Dojah
           appID={process.env.NEXT_PUBLIC_DOJAH_APP_ID || "6875f7ffcb4d46700c74336e"}
-          publicKey={process.env.NEXT_PUBLIC_DOJAH_PUBLIC_KEY || "test_pk_TNoLXCX4T96k0WdbLnFJGYipd"}
+          publicKey={process.env.NEXT_PUBLIC_DOJAH_PUBLIC_KEY || "prod_pk_deSgNF4R6LJVWU29lSfZ41aW4"}
           type="custom"
           response={handleDojahResponse}
           config={{
-            debug: true,
-            mobile: true
+            debug: false,
+            mobile: true,
+            environment: "production"
           }}
         />
       )}
