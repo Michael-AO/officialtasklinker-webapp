@@ -1,0 +1,24 @@
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_actual_supabase_url_here
+SUPABASE_SERVICE_ROLE_KEY=your_actual_service_role_key_here
+
+# Dojah Configuration Template
+# Copy this content to a file named .env.local in your project root
+
+# Test Environment (for development)
+NEXT_PUBLIC_DOJAH_APP_ID=test_pk_BCO0S9XBSiYV16z6OHrYLFl3F
+NEXT_PUBLIC_DOJAH_PUBLIC_KEY=test_pk_BCO0S9XBSiYV16z6OHrYLFl3F
+NEXT_PUBLIC_DOJAH_ENVIRONMENT=sandbox
+
+# Production Environment (uncomment and use for production)
+NEXT_PUBLIC_DOJAH_APP_ID=6875f7ffcb4d46700c74336e
+NEXT_PUBLIC_DOJAH_PUBLIC_KEY=prod_pk_deSgNF4R6LJVWU29lSfZ41aW4
+NEXT_PUBLIC_DOJAH_ENVIRONMENT=production
+
+# Note: 
+# - Use test keys for development and testing
+# - Use production keys only for production deployment
+# - Make sure your domain is whitelisted in the Dojah dashboard
+# - The NEXT_PUBLIC_ prefix makes these variables available in the browser
+# - Restart your development server after creating .env.local
+# - Production private key: prod_sk_Xo0EianDstC8hCXzTOshwrGPy (backend only)

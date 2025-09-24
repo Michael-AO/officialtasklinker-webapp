@@ -185,7 +185,7 @@ export function GlobalSearch() {
                   {results.map((result) => (
                     <div
                       key={result.id}
-                      className="bg-white border rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
+                      className="bg-background border rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => handleResultClick(result.url)}
                       tabIndex={0}
                       role="button"

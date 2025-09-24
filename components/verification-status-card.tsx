@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
+import { useDojahModal } from "@/contexts/dojah-modal-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -17,7 +18,7 @@ import {
   Info,
   FileText
 } from "lucide-react"
-import { DojahSdkModal } from "./dojah-sdk-modal"
+
 import { VerificationStatusBadge, type VerificationStatus } from "./verification-status-badge"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -29,7 +30,7 @@ interface VerificationStatusCardProps {
 
 export function VerificationStatusCard({ className, compact = false }: VerificationStatusCardProps) {
   const { user, updateProfile } = useAuth()
-  const [showDojahModal, setShowDojahModal] = useState(false)
+  const { openDojahModal, setVerificationType, setOnSuccess, setOnError } = useDojahModal()
   const [processing, setProcessing] = useState(false)
 
   const getVerificationType = () => {
@@ -71,6 +72,36 @@ export function VerificationStatusCard({ className, compact = false }: Verificat
     }
   }
 
+  const handleStartVerification = () => {
+    console.log("🚀 [VERIFICATION-CARD] Starting verification from verification status card...")
+    console.log("🚀 [VERIFICATION-CARD] User details:", {
+      id: user?.id,
+      userType: user?.userType,
+      isVerified: user?.isVerified,
+      dojahVerified: user?.dojahVerified
+    })
+    
+    // Set up the verification type and callbacks
+    const verificationType = getVerificationType() as 'identity' | 'business'
+    console.log("🚀 [VERIFICATION-CARD] Setting verification type to:", verificationType)
+    setVerificationType(verificationType)
+    
+    console.log("🚀 [VERIFICATION-CARD] Setting success callback:", handleVerificationSuccess.name)
+    setOnSuccess(handleVerificationSuccess)
+    
+    console.log("🚀 [VERIFICATION-CARD] Setting error callback")
+    setOnError((error) => {
+      console.error("❌ [VERIFICATION-CARD] Verification error callback triggered:", error)
+      toast.error("Verification failed. Please try again.")
+    })
+    
+    // Open the modal
+    console.log("🚀 [VERIFICATION-CARD] Opening Dojah modal...")
+    openDojahModal()
+    
+    console.log("🚀 [VERIFICATION-CARD] Verification setup complete")
+  }
+
   const currentStatus = getCurrentStatus()
 
   if (compact) {
@@ -97,7 +128,7 @@ export function VerificationStatusCard({ className, compact = false }: Verificat
                 {currentStatus !== "verified" && (
                   <Button
                     size="sm"
-                    onClick={() => setShowDojahModal(true)}
+                    onClick={handleStartVerification}
                     disabled={processing}
                   >
                     {processing ? (
@@ -111,13 +142,6 @@ export function VerificationStatusCard({ className, compact = false }: Verificat
             </div>
           </CardContent>
         </Card>
-
-        <DojahSdkModal
-          open={showDojahModal}
-          onOpenChange={setShowDojahModal}
-          verificationType={getVerificationType()}
-          onSuccess={handleVerificationSuccess}
-        />
       </>
     )
   }
@@ -166,47 +190,35 @@ export function VerificationStatusCard({ className, compact = false }: Verificat
           )}
 
           <div className="flex gap-3">
-            {currentStatus !== "verified" ? (
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              asChild
+            >
+              <Link href="/dashboard/verification">
+                <FileText className="h-4 w-4 mr-2" />
+                View Details
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Link>
+            </Button>
+            
+            {currentStatus !== "verified" && (
               <Button 
-                onClick={() => setShowDojahModal(true)}
+                onClick={handleStartVerification}
                 disabled={processing}
                 className="flex-1"
               >
                 {processing ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <>
-                    <Shield className="h-4 w-4 mr-2" />
-                    Start Dojah Verification
-                  </>
+                  <Shield className="h-4 w-4 mr-2" />
                 )}
-              </Button>
-            ) : (
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                asChild
-              >
-                <Link href="/dashboard/verification">
-                  <FileText className="h-4 w-4 mr-2" />
-                  View Details
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Link>
+                Start Verification
               </Button>
             )}
           </div>
         </CardContent>
       </Card>
-
-              <DojahSdkModal
-          open={showDojahModal}
-          onOpenChange={setShowDojahModal}
-          verificationType={getVerificationType()}
-          onSuccess={handleVerificationSuccess}
-        />
     </>
   )
 }

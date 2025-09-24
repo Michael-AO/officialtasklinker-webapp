@@ -12,6 +12,7 @@ export interface User {
   userType: "freelancer" | "client" | "admin"
   avatar?: string
   isVerified: boolean
+  dojahVerified?: boolean
   verification_type?: "identity" | "business" | "professional" | "admin"
   joinDate: string
   completedTasks: number
@@ -98,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   name: profile.name,
                   avatar: profile.avatar_url || prevUser.avatar,
                   isVerified: profile.is_verified,
+                  dojahVerified: profile.dojah_verified,
                   joinDate: profile.join_date,
                   completedTasks: profile.completed_tasks,
                   rating: profile.rating,

@@ -82,7 +82,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navigation */}
-      <header className="w-full fixed top-0 left-0 z-50 border-b bg-white/95 backdrop-blur shadow-sm">
+      <header className="w-full fixed top-0 left-0 z-50 border-b bg-background/95 backdrop-blur shadow-sm">
         <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-5 flex items-center min-h-[72px]">
           <Link className="flex items-center justify-center" href="/">
             <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-8 w-8 md:h-10 md:w-10" />
@@ -123,7 +123,7 @@ export default function HomePage() {
         <div className={`fixed top-0 right-0 z-50 h-full w-4/5 max-w-xs md:hidden transition-transform duration-200 ${mobileNavOpen ? 'translate-x-0' : 'translate-x-full'}`}
           style={{ willChange: 'transform', pointerEvents: mobileNavOpen ? 'auto' : 'none', backgroundColor: '#fff' }}
         >
-          <div className="flex flex-col h-full bg-white">
+          <div className="flex flex-col h-full bg-background">
             <div className="flex items-center justify-between px-4 py-4 border-b">
               <span className="text-xl font-bold">Menu</span>
               <Button variant="ghost" size="icon" className="p-2" onClick={() => setMobileNavOpen(false)} aria-label="Close menu">
@@ -171,7 +171,7 @@ export default function HomePage() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="bg-white text-black border-white hover:bg-gray-100"
+                  className="bg-background text-black border-white hover:bg-gray-100"
                   asChild
                 >
                   <Link href="/signup">Post a Task</Link>

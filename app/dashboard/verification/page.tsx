@@ -22,7 +22,7 @@ import {
   Lock,
   Unlock
 } from "lucide-react"
-import { DojahWorking } from "@/components/dojah-working"
+import DojahVerification from "@/components/DojahVerification"
 import { VerificationStatusBadge, type VerificationStatus } from "@/components/verification-status-badge"
 import { toast } from "sonner"
 
@@ -275,12 +275,14 @@ export default function VerificationPage() {
 
           {currentStatus !== "verified" && (
             <div className="flex gap-3">
-              <DojahWorking
-                verificationType={getVerificationType()}
+              <DojahVerification
                 onSuccess={handleVerificationSuccess}
                 onError={(error) => {
                   console.error("Verification error:", error)
                   toast.error("Verification failed. Please try again.")
+                }}
+                onClose={() => {
+                  console.log("User closed verification modal")
                 }}
               />
             </div>

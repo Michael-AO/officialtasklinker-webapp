@@ -12,14 +12,14 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <EscrowProvider>
         <NotificationProvider>
           <AppSidebar />
           <SidebarInset>
-            <div className="flex h-full w-full flex-col">
+            <div className="flex h-full w-full flex-col bg-background">
               <DashboardHeader />
-              <div className="flex-1 space-y-4 p-6 pt-6">{children}</div>
+              <div className="flex-1 space-y-4 p-6 pt-6 bg-background">{children}</div>
             </div> 
           </SidebarInset>
           <NotificationContainer />

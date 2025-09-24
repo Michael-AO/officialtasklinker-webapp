@@ -222,7 +222,7 @@ export class VerificationService {
         await supabase
           .from("users")
           .update({
-            is_verified: true,
+            dojah_verified: true,
             verification_type: request.verification_type
           })
           .eq("id", request.user_id)

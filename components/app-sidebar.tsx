@@ -46,6 +46,7 @@ const navigationItems = [
     title: "Browse Tasks",
     url: "/dashboard/browse",
     icon: Search,
+    requiresVerification: true,
   },
   {
     title: "My Tasks",
@@ -57,6 +58,7 @@ const navigationItems = [
     title: "Applications",
     url: "/dashboard/applications",
     icon: Users,
+    requiresVerification: true,
   },
 ]
 
@@ -65,11 +67,13 @@ const quickActions = [
     title: "Post New Task",
     url: "/dashboard/tasks/new",
     icon: Plus,
+    requiresVerification: true,
   },
   {
     title: "Find Work",
     url: "/dashboard/browse",
     icon: Briefcase,
+    requiresVerification: true,
   },
 ]
 
@@ -107,16 +111,27 @@ export function AppSidebar() {
     return pathname.startsWith(url)
   }
 
-  // Check if user can post tasks (only admin emails)
-  const canPostTasks = user && isVerifiedEmail(user.email)
-
   return (
-    <Sidebar className="bg-black border-r border-gray-800">
+    <Sidebar className="bg-black border-r border-gray-800 w-64 text-white">
       <SidebarHeader className="border-b border-gray-800 bg-black">
         <div className="flex items-center gap-2 px-2 py-2">
           <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-8 w-8" />
           <span className="text-lg font-bold text-white">Tasklinkers</span>
         </div>
+        {user && (
+          <div className="px-2 pb-2">
+            <div className="flex items-center gap-2 text-xs">
+              <div className={`w-2 h-2 rounded-full ${user.isVerified ? 'bg-green-500' : 'bg-yellow-500'}`} />
+              <span className="text-gray-400">
+                {user.isVerified ? 'Email ✓' : 'Email ✗'}
+              </span>
+              <div className={`w-2 h-2 rounded-full ${user.dojahVerified ? 'bg-green-500' : 'bg-yellow-500'}`} />
+              <span className="text-gray-400">
+                {user.dojahVerified ? 'ID ✓' : 'ID ✗'}
+              </span>
+            </div>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent className="bg-black">
@@ -125,20 +140,20 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => {
-                // Check if this is an admin-only item and user is not admin
-                const isAdminOnly = item.adminOnly
-                const shouldDisable = isAdminOnly && !canPostTasks
+                const isDisabled = item.requiresVerification && (!user?.isVerified || !user?.dojahVerified)
                 
                 return (
                   <SidebarMenuItem key={item.title}>
-                    {shouldDisable ? (
-                      <SidebarMenuButton 
-                        disabled 
-                        className="text-gray-500 cursor-not-allowed opacity-60"
-                        title="Only admin accounts can access this feature"
+                    {isDisabled ? (
+                      <SidebarMenuButton
+                        disabled
+                        className="text-gray-500 cursor-not-allowed opacity-50"
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
+                        <div className="ml-auto text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
+                          🔒
+                        </div>
                       </SidebarMenuButton>
                     ) : (
                       <SidebarMenuButton
@@ -164,20 +179,20 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {quickActions.map((item) => {
-                // Check if this is the "Post New Task" item and user is not admin
-                const isPostTask = item.title === "Post New Task"
-                const shouldDisable = isPostTask && !canPostTasks
+                const isDisabled = item.requiresVerification && (!user?.isVerified || !user?.dojahVerified)
                 
                 return (
                   <SidebarMenuItem key={item.title}>
-                    {shouldDisable ? (
-                      <SidebarMenuButton 
-                        disabled 
-                        className="text-gray-500 cursor-not-allowed opacity-60"
-                        title="Only admin accounts can post tasks"
+                    {isDisabled ? (
+                      <SidebarMenuButton
+                        disabled
+                        className="text-gray-500 cursor-not-allowed opacity-50"
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
+                        <div className="ml-auto text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
+                          🔒
+                        </div>
                       </SidebarMenuButton>
                     ) : (
                       <SidebarMenuButton

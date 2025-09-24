@@ -32,6 +32,7 @@ export class DatabaseService {
         user_type: authUser.user_metadata?.user_type || "freelancer",
         avatar_url: authUser.user_metadata?.avatar_url || null,
         is_verified: authUser.email_confirmed_at ? true : false,
+        dojah_verified: false,
         phone: authUser.user_metadata?.phone || null,
         bio: null,
         location: null,

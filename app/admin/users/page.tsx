@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, MoreHorizontal, Eye, Ban, CheckCircle, XCircle, Users, UserCheck, UserX, Clock } from "lucide-react"
+import { Search, MoreHorizontal, Eye, Ban, CheckCircle, XCircle, Users, UserCheck, UserX, Clock, Shield } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { toast } from "@/hooks/use-toast"
 
@@ -27,6 +27,8 @@ interface User {
   created_at: string
   last_active: string
   is_verified: boolean
+  dojah_verified?: boolean  // EMERGENCY: Add Dojah verification status
+  verification_type?: string
   avatar_url?: string
   bio?: string
   skills?: string[]
@@ -76,6 +78,8 @@ export default function AdminUsers() {
         created_at,
         last_active,
         is_verified,
+        dojah_verified,
+        verification_type,
         avatar_url,
         bio,
         skills,
@@ -148,13 +152,17 @@ export default function AdminUsers() {
 
   const handleVerifyUser = async (userId: string) => {
     try {
-      const { error } = await supabase.from("users").update({ is_verified: true }).eq("id", userId)
+      const { error } = await supabase.from("users").update({ 
+        is_verified: true,
+        dojah_verified: true,  // EMERGENCY: Bypass Dojah verification
+        verification_type: "manual_admin" 
+      }).eq("id", userId)
 
       if (error) throw error
 
       toast({
         title: "Success",
-        description: "User verified successfully",
+        description: "User fully verified (manual admin override)",
       })
 
       fetchUsers()
@@ -171,7 +179,10 @@ export default function AdminUsers() {
 
   const handleSuspendUser = async (userId: string) => {
     try {
-      const { error } = await supabase.from("users").update({ is_verified: false }).eq("id", userId)
+      const { error } = await supabase.from("users").update({ 
+        is_verified: false,
+        dojah_verified: false  // EMERGENCY: Reset Dojah verification
+      }).eq("id", userId)
 
       if (error) throw error
 
@@ -192,13 +203,42 @@ export default function AdminUsers() {
     }
   }
 
+  // EMERGENCY: Manual Dojah verification bypass
+  const handleManualDojahVerify = async (userId: string) => {
+    try {
+      const { error } = await supabase.from("users").update({ 
+        dojah_verified: true,
+        verification_type: "manual_admin_override"
+      }).eq("id", userId)
+
+      if (error) throw error
+
+      toast({
+        title: "Emergency Override",
+        description: "User Dojah verification bypassed - Full access granted",
+      })
+
+      fetchUsers()
+      fetchStats()
+    } catch (error) {
+      console.error("Error in manual Dojah verification:", error)
+      toast({
+        title: "Error",
+        description: "Failed to bypass Dojah verification",
+        variant: "destructive",
+      })
+    }
+  }
+
   const getStatusBadge = (user: User) => {
-    if (user.is_verified) {
-      return <Badge className="bg-green-100 text-green-800">Active</Badge>
-    } else if (user.email_confirmed_at) {
-      return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+    if (user.is_verified && user.dojah_verified) {
+      return <Badge className="bg-green-100 text-green-800">✅ Fully Verified</Badge>
+    } else if (user.is_verified && !user.dojah_verified) {
+      return <Badge className="bg-yellow-100 text-yellow-800">⚠️ Dojah Pending</Badge>
+    } else if (!user.is_verified && user.dojah_verified) {
+      return <Badge className="bg-blue-100 text-blue-800">🆔 ID Only</Badge>
     } else {
-      return <Badge className="bg-gray-100 text-gray-800">Unconfirmed</Badge>
+      return <Badge className="bg-gray-100 text-gray-800">❌ Not Verified</Badge>
     }
   }
 
@@ -341,6 +381,7 @@ export default function AdminUsers() {
                 <TableHead>User</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Verification</TableHead>
                 <TableHead>Joined</TableHead>
                 <TableHead>Last Active</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
@@ -369,6 +410,14 @@ export default function AdminUsers() {
                     </Badge>
                   </TableCell>
                   <TableCell>{getStatusBadge(user)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${user.is_verified ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span className="text-xs">Email</span>
+                      <div className={`w-2 h-2 rounded-full ${user.dojah_verified ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span className="text-xs">ID</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-sm text-gray-500">
                     {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
@@ -401,6 +450,14 @@ export default function AdminUsers() {
                             Suspend User
                           </DropdownMenuItem>
                         )}
+                        {/* EMERGENCY: Manual Dojah verification bypass */}
+                        <DropdownMenuItem 
+                          onClick={() => handleManualDojahVerify(user.id)}
+                          className="text-orange-600 font-semibold"
+                        >
+                          <Shield className="mr-2 h-4 w-4" />
+                          🚨 Bypass Dojah (Emergency)
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600">
                           <XCircle className="mr-2 h-4 w-4" />
                           Delete User

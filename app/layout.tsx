@@ -5,7 +5,10 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/contexts/auth-context"
 import { NotificationProvider } from "@/contexts/notification-context"
 import { EscrowProvider } from "@/contexts/escrow-context"
+import { DojahModalProvider } from "@/contexts/dojah-modal-context"
+import { DojahModal } from "@/components/dojah-modal"
 import { Toaster } from "sonner"
+
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,54 +25,23 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script src="https://widget.dojah.io/widget.js" async></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Check if Dojah script loads
-              (function() {
-                console.log("🔍 Checking Dojah script loading...");
-                
-                // Check if script is already loaded
-                if (window.Dojah) {
-                  console.log("✅ Dojah already available");
-                  return;
-                }
-                
-                // Wait for script to load
-                let attempts = 0;
-                const checkDojah = () => {
-                  attempts++;
-                  console.log("⏳ Checking Dojah availability... (attempt " + attempts + ")");
-                  
-                  if (window.Dojah) {
-                    console.log("✅ Dojah loaded successfully");
-                  } else if (attempts < 20) {
-                    setTimeout(checkDojah, 500);
-                  } else {
-                    console.error("❌ Dojah failed to load after 10 seconds");
-                  }
-                };
-                
-                // Start checking after a short delay
-                setTimeout(checkDojah, 1000);
-              })();
-            `,
-          }}
-        />
+        {/* Dojah SDK is now loaded dynamically by DojahModal */}
       </head>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <AuthProvider>
             <NotificationProvider>
               <EscrowProvider>
-                {children}
-                <Toaster />
+                <DojahModalProvider>
+                  {children}
+                  <DojahModal />
+                  <Toaster />
+                </DojahModalProvider>
               </EscrowProvider>
             </NotificationProvider>
           </AuthProvider>

@@ -9,6 +9,8 @@ export interface Database {
           user_type: "freelancer" | "client"
           avatar_url: string | null
           is_verified: boolean
+          dojah_verified: boolean
+          verification_type: string | null
           phone: string | null
           bio: string | null
           location: string | null
@@ -30,6 +32,8 @@ export interface Database {
           user_type: "freelancer" | "client"
           avatar_url?: string | null
           is_verified?: boolean
+          dojah_verified?: boolean
+          verification_type?: string | null
           phone?: string | null
           bio?: string | null
           location?: string | null
@@ -51,6 +55,8 @@ export interface Database {
           user_type?: "freelancer" | "client"
           avatar_url?: string | null
           is_verified?: boolean
+          dojah_verified?: boolean
+          verification_type?: string | null
           phone?: string | null
           bio?: string | null
           location?: string | null

@@ -37,6 +37,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open, onClose }) => {
       icon: FileText,
     },
     {
+      name: "Verification",
+      href: "/admin/verification",
+      icon: Shield,
+    },
+    {
       name: "Support",
       href: "/admin/support",
       icon: HelpCircle,

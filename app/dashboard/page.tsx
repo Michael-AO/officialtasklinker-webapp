@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CalendarDays, FileText, Users } from "lucide-react"
-import { Shield } from "lucide-react"
+import { CalendarDays, FileText, Users, Shield, CheckCircle, User, AlertTriangle } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
 import { ProfileCompletionWizard } from "@/components/profile-completion-wizard"
 import { SmartTaskMatching } from "@/components/smart-task-matching"
+import { useDojahModal } from "@/contexts/dojah-modal-context"
 import Link from "next/link"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
@@ -23,20 +23,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { formatNairaCompact } from "@/lib/currency"
-import { DojahSdkModal } from "@/components/dojah-sdk-modal"
-import { VerificationGate } from "@/components/verification-gate"
-import { VerifiedBadge } from "@/components/ui/verified-badge"
-import { VerificationStatusCard } from "@/components/verification-status-card"
-
+import { Progress } from "@/components/ui/progress"
 
 export default function DashboardPage() {
   const { user, isLoading, updateProfile } = useAuth()
   const router = useRouter()
   const { stats, applications, loading } = useRealDashboardData()
+  const { openDojahModal, setVerificationType, setOnSuccess, setOnError } = useDojahModal()
   const [selectedApplication, setSelectedApplication] = useState<any>(null)
   const [showAcceptDialog, setShowAcceptDialog] = useState(false)
   const [isAccepting, setIsAccepting] = useState(false)
-  const [showDojahModal, setShowDojahModal] = useState(false)
 
   // Filter applications to only show ones the current user has sent (as freelancer)
   const myApplications = (applications as any[]).filter(app => app.freelancer_id === user?.id)
@@ -121,8 +117,114 @@ export default function DashboardPage() {
     window.location.reload()
   }
 
-  // Fix: allow 'admin' as a possible userType for type check
-  let isAdmin = user?.userType === "admin";
+  // Calculate profile completion
+  const calculateProfileCompletion = () => {
+    if (!user) return 0
+    
+    let completed = 0
+    const total = 3
+    if (user.bio && user.bio.trim()) completed++
+    if (user.skills && user.skills.length > 0) completed++
+    if (user.location && user.location.trim()) completed++
+    return Math.round((completed / total) * 100)
+  }
+
+  const profileCompletion = calculateProfileCompletion()
+  const isProfileIncomplete = profileCompletion < 100
+
+  // Calculate verification status
+  const isFullyVerified = user.isVerified && user.dojahVerified
+  const needsEmailVerification = !user.isVerified
+  const needsIDVerification = user.isVerified && !user.dojahVerified
+
+  // Handle verification success
+  const handleVerificationSuccess = async (result: any) => {
+    try {
+      console.log("🎯 [DASHBOARD] Verification success handler called with result:", result)
+      console.log("🎯 [DASHBOARD] User before update:", {
+        id: user?.id,
+        isVerified: user?.isVerified,
+        dojahVerified: user?.dojahVerified,
+        verification_type: user?.verification_type
+      })
+      
+      // Determine verification type from Dojah result
+      let verificationType = "individual"
+      if (result?.data?.verification_type === "business" || result?.data?.type === "business") {
+        verificationType = "business"
+      }
+      
+      console.log("🎯 [DASHBOARD] Determined verification type:", verificationType)
+      console.log("🎯 [DASHBOARD] Calling updateProfile with:", {
+        isVerified: true,
+        dojahVerified: true,
+        verification_type: verificationType
+      })
+      
+      await updateProfile({ 
+        isVerified: true, 
+        dojahVerified: true,
+        verification_type: verificationType 
+      } as any)
+      
+      console.log("✅ [DASHBOARD] Profile updated successfully")
+      
+      toast({
+        title: "ID Verified! 🎉",
+        description: `Your identity has been verified as a ${verificationType}. You can now access all platform features.`,
+      })
+      
+      // Refresh the page to update the verification status
+      console.log("🔄 [DASHBOARD] Refreshing page to update verification status")
+      window.location.reload()
+      
+    } catch (error) {
+      console.error("❌ [DASHBOARD] Verification update failed:", error)
+      toast({
+        title: "Verification Update Failed",
+        description: "Verification was successful but failed to update your profile. Please contact support.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Handle verification error
+  const handleVerificationError = (error: any) => {
+    console.error("❌ [DASHBOARD] Verification error handler called with:", error)
+    toast({
+      title: "Verification Failed",
+      description: "Something went wrong during verification. Please try again.",
+      variant: "destructive",
+    })
+  }
+
+  // Handle starting ID verification
+  const handleStartIDVerification = () => {
+    console.log("🚀 [DASHBOARD] Starting ID verification...")
+    console.log("🚀 [DASHBOARD] User details:", {
+      id: user?.id,
+      userType: user?.userType,
+      isVerified: user?.isVerified,
+      dojahVerified: user?.dojahVerified
+    })
+    
+    // Set up the verification type and callbacks
+    const verificationType = "identity" // Always use individual ID verification
+    console.log("🚀 [DASHBOARD] Setting verification type to:", verificationType)
+    setVerificationType(verificationType)
+    
+    console.log("🚀 [DASHBOARD] Setting success callback:", handleVerificationSuccess.name)
+    setOnSuccess(handleVerificationSuccess)
+    
+    console.log("🚀 [DASHBOARD] Setting error callback:", handleVerificationError.name)
+    setOnError(handleVerificationError)
+    
+    // Open the modal
+    console.log("🚀 [DASHBOARD] Opening Dojah modal...")
+    openDojahModal()
+    
+    console.log("🚀 [DASHBOARD] ID verification setup complete")
+  }
 
   return (
     <div className="space-y-6">
@@ -189,276 +291,277 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-
-
-      {/* Verification Status Card */}
-      {!user.isVerified && (
-        <Card className="border-amber-200 bg-amber-50">
+      {/* Profile Completion and Verification Summary Cards - Side by Side */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Profile Completion Card */}
+        <Card className={isProfileIncomplete ? "border-gray-200 bg-gray-50" : "border-green-200 bg-green-50"}>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-amber-600" />
-              <CardTitle className="text-amber-800">Verification Required</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${isProfileIncomplete ? "bg-gray-100" : "bg-green-100"}`}>
+                  {isProfileIncomplete ? (
+                    <User className={`h-5 w-5 ${isProfileIncomplete ? "text-gray-600" : "text-green-600"}`} />
+                  ) : (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  )}
+                </div>
+                <div>
+                  <CardTitle className={isProfileIncomplete ? "text-gray-900" : "text-green-800"}>
+                    Profile Completion
+                  </CardTitle>
+                  <CardDescription className={isProfileIncomplete ? "text-gray-600" : "text-green-700"}>
+                    {isProfileIncomplete 
+                      ? "Complete your profile to unlock all features"
+                      : "Your profile is complete and ready to go!"
+                    }
+                  </CardDescription>
+                </div>
+              </div>
+              <div className={`text-xs px-2 py-1 rounded-full ${
+                isProfileIncomplete 
+                  ? "bg-gray-100 text-gray-800" 
+                  : "bg-green-100 text-green-800"
+              }`}>
+                {profileCompletion}%
+              </div>
             </div>
-            <CardDescription className="text-amber-700">
-              Complete verification to unlock all platform features
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Progress value={profileCompletion} className="h-2" />
+            
+            {isProfileIncomplete ? (
+              <div className="space-y-3">
+                <div className="text-sm text-gray-700">
+                  <p className="mb-2">Complete these sections to finish your profile:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    {!user.bio?.trim() && <li>Add your bio</li>}
+                    {(!user.skills || user.skills.length === 0) && <li>Add your skills</li>}
+                    {!user.location?.trim() && <li>Set your location</li>}
+                  </ul>
+                </div>
+                
+                <Button asChild className="w-full">
+                  <Link href="/dashboard/profile">
+                    Complete Profile
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="text-sm text-green-700">
+                <p>✅ All profile sections are complete!</p>
+                <p className="text-xs mt-1">Your profile is fully set up and ready to attract clients.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Verification Status Card */}
+        <Card className={isFullyVerified ? "border-green-200 bg-green-50" : "border-gray-200 bg-gray-50"}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${isFullyVerified ? "bg-green-100" : "bg-gray-100"}`}>
+                  {isFullyVerified ? (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <Shield className="h-5 w-5 text-gray-600" />
+                  )}
+                </div>
+                <div>
+                  <CardTitle className={isFullyVerified ? "text-green-800" : "text-gray-900"}>
+                    Verification Status
+                  </CardTitle>
+                  <CardDescription className={isFullyVerified ? "text-green-700" : "text-gray-600"}>
+                    {isFullyVerified 
+                      ? "Your account is fully verified"
+                      : needsEmailVerification
+                        ? "Email verification required"
+                        : "ID verification required"
+                    }
+                  </CardDescription>
+                </div>
+              </div>
+              <div className={`text-xs px-2 py-1 rounded-full ${
+                isFullyVerified 
+                  ? "bg-green-100 text-green-800" 
+                  : "bg-gray-100 text-gray-800"
+              }`}>
+                {isFullyVerified ? "Verified" : needsEmailVerification ? "Step 1/2" : "Step 2/2"}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isFullyVerified ? (
+              <div className="text-sm text-green-700">
+                <p>✅ Your account is fully verified!</p>
+                <p className="text-xs mt-1">You have access to all platform features.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="text-sm text-gray-700">
+                  <p className="mb-2">
+                    {needsEmailVerification 
+                      ? "Verify your email to unlock platform features"
+                      : "Complete ID verification to access all features"
+                    }
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    {needsEmailVerification ? (
+                      <>
+                        <li>Post tasks (clients)</li>
+                        <li>Apply to tasks (freelancers)</li>
+                        <li>Access full platform features</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Task posting (clients)</li>
+                        <li>Task applications (freelancers)</li>
+                        <li>All platform features</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+                
+                <div className="flex gap-2">
+                  {needsEmailVerification ? (
+                    <Button asChild className="flex-1">
+                      <Link href="/verify-email">
+                        📧 Verify Email
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={handleStartIDVerification}
+                      className="flex-1"
+                    >
+                      🆔 Complete ID Verification
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Debug Test Button */}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    console.log("🧪 [DEBUG] Test button clicked")
+                    console.log("🧪 [DEBUG] Current context state:", {
+                      isDojahModalOpen: false, // This will be updated by context
+                      verificationType: user?.userType === "client" ? "business" : "identity",
+                      userType: user?.userType,
+                      isVerified: user?.isVerified,
+                      dojahVerified: user?.dojahVerified
+                    })
+                    
+                    // Test opening modal directly
+                    setVerificationType(user?.userType === "client" ? "business" : "identity")
+                    setOnSuccess((result) => {
+                      console.log("🧪 [DEBUG] Test success callback triggered:", result)
+                      toast({
+                        title: "Test Success!",
+                        description: "Modal test callback working correctly",
+                      })
+                    })
+                    setOnError((error) => {
+                      console.log("🧪 [DEBUG] Test error callback triggered:", error)
+                      toast({
+                        title: "Test Error!",
+                        description: "Modal test error callback working correctly",
+                        variant: "destructive",
+                      })
+                    })
+                    
+                    console.log("🧪 [DEBUG] Opening test modal...")
+                    openDojahModal()
+                  }}
+                  className="w-full"
+                >
+                  🧪 Test Modal (Debug)
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Profile Completion Wizard - Only show if profile is incomplete */}
+      {isProfileIncomplete && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Complete Your Profile</CardTitle>
+            <CardDescription>
+              Finish your profile to unlock all features and improve your chances of getting hired.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-3">
-              <Button 
-                onClick={() => setShowDojahModal(true)}
-                className="flex-1"
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                Start Dojah Verification
-              </Button>
-              <Button 
-                variant="outline" 
-                asChild
-              >
-                <Link href="/dashboard/verification">
-                  View Details
-                </Link>
-              </Button>
-            </div>
+            <ProfileCompletionWizard />
           </CardContent>
         </Card>
       )}
 
-      {/* Profile Completion & ID Verification - Side by side, matching UI */}
-      <div className="flex flex-col md:flex-row gap-4 items-stretch">
-        {(() => {
-          if (!user) {
-            // No user, render two empty columns
-            return <><div className="w-full md:w-1/2 flex-1" /><div className="w-full md:w-1/2 flex-1" /></>
-          }
-          let completed = 0
-          const total = 3
-          if (user.bio && user.bio.trim()) completed++
-          if (user.skills && user.skills.length > 0) completed++
-          if (user.location && user.location.trim()) completed++
-          const profileCompletion = Math.round((completed / total) * 100)
-          const isProfileIncomplete = profileCompletion < 100
-          if (isProfileIncomplete) {
-            // Profile incomplete: left = profile, right = ID verification (if not verified)
-            return <>
-              <div className="w-full md:w-1/2 flex-1 flex">
-                <div className="border rounded-lg p-6 bg-white shadow flex flex-row items-center justify-between min-h-[180px] w-full">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Complete Your Profile</h3>
-                    <p className="text-sm text-muted-foreground mb-0">Finish your profile to unlock all features.</p>
-                  </div>
-                  <ProfileCompletionWizard />
-                </div>
-              </div>
-              {!user.isVerified && (
-                <div className="w-full md:w-1/2 flex-1 flex">
-                  <div className="border rounded-lg p-6 bg-white shadow flex flex-col justify-between min-h-[180px] w-full relative">
-                    <div className="absolute top-4 right-4 text-muted-foreground">
-                      <Shield className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">ID Verification</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {isAdmin
-                          ? "As an admin, please verify your identity to access admin features."
-                          : "Verify your identity to apply for jobs or post tasks."}
-                      </p>
-                      <Button className="w-full" onClick={() => setShowDojahModal(true)}>
-                        Start ID Verification
-                      </Button>
-                    </div>
-                    <DojahSdkModal
-                      open={showDojahModal}
-                      onOpenChange={setShowDojahModal}
-                      onSuccess={async (result: any) => {
-                        let verificationType = isAdmin ? "admin" : "individual";
-                        if (result?.data?.verification_type === "business" || result?.data?.type === "business") {
-                          verificationType = "business";
-                        }
-                        await updateProfile({ isVerified: true, verification_type: verificationType } as any);
-                        toast({
-                          title: "ID Verified!",
-                          description: `Your identity has been verified as a ${verificationType}. You can now apply and post tasks.`,
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          } else {
-            // Profile complete: left = ID verification (if not verified), right = empty
-            if (!user.isVerified) {
-              return <>
-                <div className="w-full md:w-1/2 flex-1 flex">
-                  <div className="border rounded-lg p-6 bg-white shadow flex flex-col justify-between min-h-[180px] w-full relative">
-                    <div className="absolute top-4 right-4 text-muted-foreground">
-                      <Shield className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">ID Verification</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {isAdmin
-                          ? "As an admin, please verify your identity to access admin features."
-                          : "Verify your identity to apply for jobs or post tasks."}
-                      </p>
-                      <Button className="w-full" onClick={() => setShowDojahModal(true)}>
-                        Start ID Verification
-                      </Button>
-                    </div>
-                    <DojahSdkModal
-                      open={showDojahModal}
-                      onOpenChange={setShowDojahModal}
-                      onSuccess={async (result: any) => {
-                        try {
-                          // Process the Dojah verification result
-                          const response = await fetch("/api/verification/process-dojah", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({ dojahResult: result }),
-                          })
-
-                          const verificationResult = await response.json()
-
-                          if (response.ok && verificationResult.success) {
-                            toast({
-                              title: "ID Verified!",
-                              description: `Your identity has been verified successfully. You can now apply and post tasks.`,
-                            });
-                            // Update user verification status
-                            await updateProfile({ isVerified: true, verification_type: verificationResult.data.verification_type })
-                          } else {
-                            toast({
-                              title: "Verification Failed",
-                              description: verificationResult.error || "Failed to process verification",
-                              variant: "destructive"
-                            });
-                          }
-                        } catch (error) {
-                          console.error("Verification error:", error)
-                          toast({
-                            title: "Verification Error",
-                            description: "Failed to process verification. Please try again.",
-                            variant: "destructive"
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="w-full md:w-1/2 flex-1" />
-              </>
-            } else {
-              // Both profile and ID are complete/verified: show two empty columns
-              return <><div className="w-full md:w-1/2 flex-1" /><div className="w-full md:w-1/2 flex-1" /></>
-            }
-          }
-        })()}
-      </div>
-
-      {/* Verification Status Banner */}
-      {!user?.isVerified && (
-        <Card className="border-amber-200 bg-amber-50 mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-full">
-                  <Shield className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-800">
-                    Complete ID Verification
-                  </h3>
-                  <p className="text-sm text-amber-700">
-                    {user?.userType === "client" 
-                      ? "Business verification required to post tasks"
-                      : "Identity verification required to apply to tasks"
-                    }
-                  </p>
-                </div>
-              </div>
-              <Button 
-                onClick={() => setShowDojahModal(true)}
-                size="sm"
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                Verify Now
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Two-column grid layout - Original structure restored */}
+      {/* Two-column grid layout - Original structure */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Smart Task Matching */}
-        <VerificationGate requiredAction="apply_tasks">
-          <SmartTaskMatching />
-        </VerificationGate>
+        <SmartTaskMatching />
 
-                {/* Recent Applications - Using real data */}
-        <VerificationGate requiredAction="apply_tasks">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Recent Applications</CardTitle>
-                  <CardDescription>Tasks you've applied to</CardDescription>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleRefreshApplications}
-                  disabled={loading}
-                >
-                  {loading ? "Loading..." : "Refresh"}
-                </Button>
+        {/* Recent Applications - Using real data */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Recent Applications</CardTitle>
+                <CardDescription>Tasks you've applied to</CardDescription>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                </div>
-              ) : myApplications.length > 0 ? (
-                <>
-                  {myApplications.slice(0, 3).map((application: any) => (
-                    <div key={application.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{application.task?.title || "Task title"}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {application.task?.client?.name || "Client"} • {application.status}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleViewApplication(application.id)}>
-                          View
-                        </Button>
-                      </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRefreshApplications}
+                disabled={loading}
+              >
+                {loading ? "Loading..." : "Refresh"}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+              </div>
+            ) : myApplications.length > 0 ? (
+              <>
+                {myApplications.slice(0, 3).map((application: any) => (
+                  <div key={application.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{application.task?.title || "Task title"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {application.task?.client?.name || "Client"} • {application.status}
+                      </p>
                     </div>
-                  ))}
-
-                  <div className="pt-4 border-t">
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link href="/dashboard/applications">View All Applications</Link>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleViewApplication(application.id)}>
+                        View
+                      </Button>
+                    </div>
                   </div>
-                </>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p className="font-medium">No applications yet</p>
-                  <p className="text-sm">Start applying to tasks to see your applications here</p>
-                  <Button asChild className="mt-2">
-                    <Link href="/dashboard/browse">Browse Tasks</Link>
+                ))}
+
+                <div className="pt-4 border-t">
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/dashboard/applications">View All Applications</Link>
                   </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </VerificationGate>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="font-medium">No applications yet</p>
+                <p className="text-sm">Start applying to tasks to see your applications here</p>
+                <Button asChild className="mt-2">
+                  <Link href="/dashboard/browse">Browse Tasks</Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Accept Application Dialog - Enhanced with real data */}
@@ -475,7 +578,7 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
                 <Avatar className="h-12 w-12">
-                                          <AvatarImage src={selectedApplication.freelancer?.avatar_url} />
+                  <AvatarImage src={selectedApplication.freelancer?.avatar_url} />
                   <AvatarFallback>
                     {selectedApplication.freelancer?.name
                       ?.split(" ")
@@ -529,48 +632,6 @@ export default function DashboardPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Dojah Modal */}
-      <DojahSdkModal
-        open={showDojahModal}
-        onOpenChange={setShowDojahModal}
-        verificationType={user?.userType === "client" ? "business" : "identity"}
-        onSuccess={async (result: any) => {
-          try {
-            const response = await fetch("/api/verification/process-dojah", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ dojahResult: result }),
-            })
-
-            const verificationResult = await response.json()
-
-            if (response.ok && verificationResult.success) {
-              toast({
-                title: "Verification Completed!",
-                description: "Your account has been verified successfully.",
-              })
-              await updateProfile({ 
-                isVerified: true, 
-                verification_type: verificationResult.data.verification_type 
-              })
-            } else {
-              toast({
-                title: "Verification Failed",
-                description: verificationResult.error || "Please try again.",
-                variant: "destructive",
-              })
-            }
-          } catch (error) {
-            console.error("Verification error:", error)
-            toast({
-              title: "Verification Error",
-              description: "Failed to process verification. Please try again.",
-              variant: "destructive",
-            })
-          }
-        }}
-      />
     </div>
   )
 }
