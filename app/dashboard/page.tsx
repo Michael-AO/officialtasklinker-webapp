@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CalendarDays, FileText, Users, Shield, CheckCircle, User, AlertTriangle } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
-import { ProfileCompletionWizard } from "@/components/profile-completion-wizard"
 import { SmartTaskMatching } from "@/components/smart-task-matching"
 import { useDojahModal } from "@/contexts/dojah-modal-context"
 import Link from "next/link"
@@ -484,20 +483,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Profile Completion Wizard - Only show if profile is incomplete */}
-      {isProfileIncomplete && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Complete Your Profile</CardTitle>
-            <CardDescription>
-              Finish your profile to unlock all features and improve your chances of getting hired.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ProfileCompletionWizard />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Two-column grid layout - Original structure */}
       <div className="grid gap-6 md:grid-cols-2">

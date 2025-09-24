@@ -11,7 +11,6 @@ import { CalendarDays, MapPin, Edit, Camera, ExternalLink, AlertCircle, FileText
 import { useAuth } from "@/contexts/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
-import { ProfileCompletionWizard } from "@/components/profile-completion-wizard"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -351,15 +350,6 @@ export default function ProfilePage() {
           if (isProfileIncomplete) {
             // Profile incomplete: left = profile, right = ID verification (if not verified)
             return <>
-              <div className="w-full md:w-1/2 flex-1 flex">
-                <div className="border rounded-lg p-6 bg-white shadow flex flex-row items-center justify-between min-h-[180px] w-full">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Complete Your Profile</h3>
-                    <p className="text-sm text-muted-foreground mb-0">Finish your profile to unlock all features.</p>
-                  </div>
-                  <ProfileCompletionWizard />
-                </div>
-              </div>
               {!profile.is_verified && (
                 <div className="w-full md:w-1/2 flex-1 flex">
                   <div className="border rounded-lg p-6 bg-white shadow flex flex-col justify-between min-h-[180px] w-full relative">

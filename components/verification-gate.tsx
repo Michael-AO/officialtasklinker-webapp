@@ -16,7 +16,7 @@ import {
   Mail
 } from "lucide-react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { DojahModal } from "./dojah-modal"
@@ -33,7 +33,7 @@ export function VerificationGate({
   requiredAction, 
   fallback 
 }: VerificationGateProps) {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, refreshUserVerification } = useAuth()
   const [processing, setProcessing] = useState(false)
   const [showDojahModal, setShowDojahModal] = useState(false)
   const [showManualVerification, setShowManualVerification] = useState(false)
@@ -55,6 +55,21 @@ export function VerificationGate({
   const getVerificationType = () => {
     return user?.userType === "client" ? "business" : "identity"
   }
+
+  // Set up periodic verification status refresh
+  useEffect(() => {
+    if (!user || (user.isVerified && user.dojahVerified)) {
+      return // No need to refresh if user is fully verified
+    }
+
+    // Refresh verification status every 30 seconds when user is not fully verified
+    const interval = setInterval(() => {
+      console.log("🔄 Periodic verification status refresh...")
+      refreshUserVerification()
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [user, refreshUserVerification])
 
   // If user is fully verified (email + Dojah), show the content
   if (user?.isVerified && user?.dojahVerified) {
@@ -333,8 +348,8 @@ export function VerificationGate({
                 onSuccess={() => {
                   setShowManualVerification(false)
                   toast.success("Documents submitted for manual review!")
-                  // Refresh the page to show updated verification status
-                  window.location.reload()
+                  // Refresh verification status to check if approved
+                  refreshUserVerification()
                 }}
                 onCancel={() => setShowManualVerification(false)}
               />

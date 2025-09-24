@@ -38,6 +38,7 @@ interface AuthContextType {
   signOut: () => void
   updateProfile: (updates: Partial<User>) => Promise<void>
   refreshPortfolio: () => Promise<void>
+  refreshUserVerification: () => Promise<void>
   isLoading: boolean
 }
 
@@ -429,8 +430,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const refreshUserVerification = async () => {
+    if (!user) return
+
+    try {
+      console.log("🔄 Refreshing user verification status...")
+      
+      // Get fresh user data from database
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('is_verified, dojah_verified, verification_type')
+        .eq('id', user.id)
+        .single()
+
+      if (error) {
+        console.error("❌ Error fetching verification status:", error)
+        return
+      }
+
+      if (profile) {
+        console.log("✅ Verification status refreshed:", profile)
+        
+        setUser(prevUser => prevUser ? {
+          ...prevUser,
+          isVerified: profile.is_verified || false,
+          dojahVerified: profile.dojah_verified || false,
+          verification_type: profile.verification_type as any
+        } : null)
+      }
+    } catch (error) {
+      console.error("❌ Verification refresh error:", error)
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, signOut, updateProfile, refreshPortfolio, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, signOut, updateProfile, refreshPortfolio, refreshUserVerification, isLoading }}>
       {children}
     </AuthContext.Provider>
   )

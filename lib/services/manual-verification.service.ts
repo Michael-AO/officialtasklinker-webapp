@@ -281,7 +281,20 @@ export class ManualVerificationService {
     try {
       console.log(`🔄 Approving verification ${submissionId} by admin ${adminId}`)
 
-      const { error } = await supabase
+      // First, get the user_id from the submission
+      const { data: submission, error: fetchError } = await supabase
+        .from('manual_verification_submissions')
+        .select('user_id')
+        .eq('id', submissionId)
+        .single()
+
+      if (fetchError || !submission) {
+        console.error('❌ Error fetching submission:', fetchError)
+        throw new Error(`Failed to fetch submission: ${fetchError?.message}`)
+      }
+
+      // Update the submission status
+      const { error: updateError } = await supabase
         .from('manual_verification_submissions')
         .update({
           status: 'approved',
@@ -292,12 +305,27 @@ export class ManualVerificationService {
         })
         .eq('id', submissionId)
 
-      if (error) {
-        console.error('❌ Error approving verification:', error)
-        throw new Error(`Failed to approve verification: ${error.message}`)
+      if (updateError) {
+        console.error('❌ Error approving verification:', updateError)
+        throw new Error(`Failed to approve verification: ${updateError.message}`)
       }
 
-      console.log(`✅ Verification ${submissionId} approved`)
+      // Update the user's verification status
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({
+          dojah_verified: true,
+          verification_type: 'manual_admin',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', submission.user_id)
+
+      if (userUpdateError) {
+        console.error('❌ Error updating user verification status:', userUpdateError)
+        throw new Error(`Failed to update user verification: ${userUpdateError.message}`)
+      }
+
+      console.log(`✅ Verification ${submissionId} approved and user ${submission.user_id} verified`)
 
     } catch (error) {
       console.error('❌ Approval error:', error)
