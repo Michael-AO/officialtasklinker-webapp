@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle, AlertTriangle, Info, Shield, UserCheck, Building2, FileText, Camera } from 'lucide-react'
 import { EnhancedIdVerification } from '@/components/enhanced-id-verification'
-import { DojahModal } from '@/components/dojah-modal'
+// import { DojahModal } from '@/components/dojah-modal' // Removed - using manual verification
 
 export default function EnhancedVerificationDemoPage() {
-  const [showDojahModal, setShowDojahModal] = useState(false)
+  // const [showDojahModal, setShowDojahModal] = useState(false) // Removed - using manual verification
   const [verificationType, setVerificationType] = useState<'identity' | 'business'>('identity')
   const [activeTab, setActiveTab] = useState('demo')
 
@@ -298,14 +298,7 @@ NEXT_PUBLIC_DOJAH_ENVIRONMENT=production`}
         </TabsContent>
       </Tabs>
 
-      {/* Dojah Modal */}
-      <DojahModal
-        open={showDojahModal}
-        onOpenChange={setShowDojahModal}
-        verificationType={verificationType}
-        onSuccess={handleVerificationSuccess}
-        onError={handleVerificationError}
-      />
+      {/* DojahModal removed - using manual verification */}
     </div>
   )
 }

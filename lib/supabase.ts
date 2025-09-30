@@ -19,3 +19,6 @@ export const createServerClient = () => {
 export function getClient() {
   return supabase
 }
+
+// Export createClient for API routes
+export { createClient }
