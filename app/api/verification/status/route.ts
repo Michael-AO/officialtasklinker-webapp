@@ -1,60 +1,58 @@
 import { NextRequest, NextResponse } from "next/server"
-import { VerificationService } from "@/lib/verification-service"
 import { supabase } from "@/lib/supabase"
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("🔍 Verification status API called")
-    
-    // Get the current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    console.log("🔍 Auth check result:", {
-      hasUser: !!user,
-      userId: user?.id,
-      authError: authError?.message
-    })
-    
-    if (authError || !user) {
-      console.log("❌ Authentication failed:", authError?.message || "No user found")
-      return NextResponse.json(
-        { error: "Unauthorized", details: authError?.message || "No user found" },
-        { status: 401 }
-      )
+    // Get user ID from headers
+    const userId = request.headers.get("x-user-id")
+
+    if (!userId) {
+      return NextResponse.json({ error: "User authentication required" }, { status: 401 })
     }
 
-    console.log("✅ User authenticated:", user.id)
+    // Get user verification status
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('is_verified, verification_type, updated_at')
+      .eq('id', userId)
+      .single()
 
-    // Get user's verification status
-    const isVerified = await VerificationService.isUserVerified(user.id)
-    
+    if (userError) {
+      return NextResponse.json({ error: "Failed to get user status" }, { status: 500 })
+    }
+
     // Get latest verification request
-    const latestRequest = await VerificationService.getLatestVerificationRequest(user.id)
-    
-    // Get all verification requests for the user
-    const allRequests = await VerificationService.getUserVerificationRequests(user.id)
+    const { data: latestRequest, error: requestError } = await supabase
+      .from('manual_verification_requests')
+      .select('status, submitted_at, reviewed_at')
+      .eq('user_id', userId)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .single()
 
-    console.log("📊 Verification data:", {
-      isVerified,
-      requestCount: allRequests.length,
-      latestRequest: latestRequest?.status
-    })
+    let status = "unverified"
+    let lastUpdated = user.updated_at
+
+    if (user.is_verified) {
+      status = "verified"
+    } else if (latestRequest) {
+      status = latestRequest.status
+      lastUpdated = latestRequest.reviewed_at || latestRequest.submitted_at
+    }
 
     return NextResponse.json({
       success: true,
-      data: {
-        isVerified,
-        latestRequest,
-        allRequests,
-        verificationCount: allRequests.length
+      status: {
+        status,
+        type: user.verification_type || "identity",
+        last_updated: lastUpdated
       }
     })
 
   } catch (error) {
-    console.error("❌ Error getting verification status:", error)
-    return NextResponse.json(
-      { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    )
+    console.error('Verification status error:', error)
+    return NextResponse.json({ 
+      error: "Internal server error" 
+    }, { status: 500 })
   }
 }

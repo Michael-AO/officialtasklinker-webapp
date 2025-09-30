@@ -5,8 +5,6 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/contexts/auth-context"
 import { NotificationProvider } from "@/contexts/notification-context"
 import { EscrowProvider } from "@/contexts/escrow-context"
-import { DojahModalProvider } from "@/contexts/dojah-modal-context"
-import { DojahModal } from "@/components/dojah-modal"
 import { Toaster } from "sonner"
 
 
@@ -25,7 +23,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Dojah SDK is now loaded dynamically by DojahModal */}
       </head>
       <body className={inter.className}>
         <ThemeProvider
@@ -37,11 +34,8 @@ export default function RootLayout({
           <AuthProvider>
             <NotificationProvider>
               <EscrowProvider>
-                <DojahModalProvider>
-                  {children}
-                  <DojahModal />
-                  <Toaster />
-                </DojahModalProvider>
+                {children}
+                <Toaster />
               </EscrowProvider>
             </NotificationProvider>
           </AuthProvider>

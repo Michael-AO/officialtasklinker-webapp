@@ -18,7 +18,6 @@ import { useAuth } from "@/contexts/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { isVerifiedEmail } from "@/lib/utils"
 import Link from "next/link"
-import { DojahModal } from "@/components/dojah-modal"
 import { VerificationGate } from "@/components/verification-gate"
 import { ArrowLeft } from "lucide-react"
 
@@ -52,7 +51,6 @@ export default function NewTaskPage() {
   const [newSkill, setNewSkill] = useState("")
   const [newQuestion, setNewQuestion] = useState("")
   const [newRequirement, setNewRequirement] = useState("")
-  const [showDojahModal, setShowDojahModal] = useState(false)
 
   const categories = [
     "Web Development",
@@ -108,31 +106,6 @@ export default function NewTaskPage() {
   // Check if user can post tasks
   const canPostTasks = isVerifiedEmail(user.email)
 
-  return (
-    <div className="container mx-auto py-8 max-w-4xl">
-      <div className="mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        
-        <h1 className="text-3xl font-bold mb-2">Create New Task</h1>
-        <p className="text-muted-foreground">
-          Post a new task for freelancers to apply to.
-        </p>
-      </div>
-
-      <VerificationGate requiredAction="post_tasks">
-        <div className="space-y-6">
-          {/* Original form content will be here */}
-        </div>
-      </VerificationGate>
-    </div>
-  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -396,26 +369,30 @@ export default function NewTaskPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Post New Task</h1>
-          <p className="text-muted-foreground">Create a detailed task posting to find the right freelancer</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Logged in as: {user.name} ({user.email})
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" disabled={isSubmitting}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Draft
-          </Button>
-          <Button variant="outline" disabled={isSubmitting}>
-            <Eye className="h-4 w-4 mr-2" />
-            Preview
-          </Button>
-        </div>
+    <div className="container mx-auto py-8 max-w-4xl">
+      <div className="mb-8">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        
       </div>
+
+      <VerificationGate requiredAction="post_tasks">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Post New Task</h1>
+              <p className="text-muted-foreground">Create a detailed task posting to find the right freelancer</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Logged in as: {user.name} ({user.email})
+              </p>
+            </div>
+          </div>
 
       {/* Progress Steps */}
       <div className="flex items-center justify-center space-x-4">
@@ -829,6 +806,8 @@ export default function NewTaskPage() {
           </div>
         </div>
       </form>
+        </div>
+      </VerificationGate>
     </div>
   )
 }

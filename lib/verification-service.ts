@@ -113,36 +113,24 @@ export class VerificationService {
     }
   }
 
-  // Process Dojah verification result
-  static async processDojahVerification(
+  // Process manual verification result
+  static async processManualVerification(
     userId: string,
-    dojahResult: any
+    verificationData: any
   ): Promise<DojahVerificationResult> {
     try {
-      console.log("Processing Dojah verification result:", dojahResult)
-
-      // Extract verification data from Dojah result
-      const verificationData = this.extractDojahData(dojahResult)
-      
-      // Determine verification type based on Dojah data
-      const verificationType = verificationData.businessInfo ? "business" : "identity"
+      console.log("Processing manual verification result:", verificationData)
 
       // Create verification request
       const verificationRequest = await this.createVerificationRequest(
         userId,
-        verificationType,
+        "identity",
         verificationData.documents || [],
         verificationData
       )
 
       if (!verificationRequest) {
         throw new Error("Failed to create verification request")
-      }
-
-      // If Dojah verification was successful, auto-approve for now
-      // In production, you might want to add additional checks
-      if (dojahResult.event === "successful") {
-        await this.approveVerification(verificationRequest.id, userId, "Auto-approved via Dojah")
       }
 
       return {
@@ -156,7 +144,7 @@ export class VerificationService {
         }
       }
     } catch (error) {
-      console.error("Error processing Dojah verification:", error)
+      console.error("Error processing manual verification:", error)
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error"
@@ -164,31 +152,29 @@ export class VerificationService {
     }
   }
 
-  // Extract and format data from Dojah result
-  private static extractDojahData(dojahResult: any): VerificationData {
-    const data = dojahResult.data || {}
-    
+  // Extract and format data from manual verification
+  private static extractManualData(verificationData: any): VerificationData {
     return {
-      firstName: data.first_name || data.firstName || "",
-      lastName: data.last_name || data.lastName || "",
-      dateOfBirth: data.date_of_birth || data.dateOfBirth || "",
-      nationality: data.nationality || "",
+      firstName: verificationData.firstName || "",
+      lastName: verificationData.lastName || "",
+      dateOfBirth: verificationData.dateOfBirth || "",
+      nationality: verificationData.nationality || "",
       address: {
-        street: data.address?.street || "",
-        city: data.address?.city || "",
-        state: data.address?.state || "",
-        country: data.address?.country || "",
-        postalCode: data.address?.postal_code || data.address?.postalCode || ""
+        street: verificationData.address?.street || "",
+        city: verificationData.address?.city || "",
+        state: verificationData.address?.state || "",
+        country: verificationData.address?.country || "",
+        postalCode: verificationData.address?.postalCode || ""
       },
-      phoneNumber: data.phone_number || data.phoneNumber || "",
-      businessInfo: data.business ? {
-        businessName: data.business.name || "",
-        businessType: data.business.type || "",
-        registrationNumber: data.business.registration_number || data.business.registrationNumber || "",
-        taxId: data.business.tax_id || data.business.taxId || "",
-        address: data.business.address || ""
+      phoneNumber: verificationData.phoneNumber || "",
+      businessInfo: verificationData.businessInfo ? {
+        businessName: verificationData.businessInfo.businessName || "",
+        businessType: verificationData.businessInfo.businessType || "",
+        registrationNumber: verificationData.businessInfo.registrationNumber || "",
+        taxId: verificationData.businessInfo.taxId || "",
+        address: verificationData.businessInfo.address || ""
       } : undefined,
-      documents: data.documents || []
+      documents: verificationData.documents || []
     }
   }
 

@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import { VerifiedBadge } from "@/components/ui/verified-badge"
-import { DojahModal } from "@/components/dojah-modal"
+import { ProfileCompletionWizard } from "@/components/profile-completion-wizard"
 
 interface UserProfile {
   id: string
@@ -80,7 +80,6 @@ export default function ProfilePage() {
     created_at: new Date().toISOString(),
   })
   const [refreshKey, setRefreshKey] = useState(0)
-  const [showDojahModal, setShowDojahModal] = useState(false)
 
   useEffect(() => {
     if (authUser?.id) {
@@ -363,26 +362,12 @@ export default function ProfilePage() {
                           ? "As an admin, please verify your identity to access admin features."
                           : "Verify your identity to apply for jobs or post tasks."}
                       </p>
-                      <Button className="w-full" onClick={() => setShowDojahModal(true)}>
-                        Start ID Verification
+                      <Button className="w-full" asChild>
+                        <Link href="/dashboard/verification">
+                          Start Manual Verification
+                        </Link>
                       </Button>
                     </div>
-                    <DojahModal
-                      open={showDojahModal}
-                      onOpenChange={setShowDojahModal}
-                      onSuccess={async (result) => {
-                        let verificationType = profile.user_type === "admin" ? "admin" : "individual"
-                        if (result?.data?.verification_type === "business" || result?.data?.type === "business") {
-                          verificationType = "business"
-                        }
-                        // You may need to call your updateProfile logic here
-                        await fetchProfileData() // or updateProfile({ is_verified: true, verification_type: verificationType })
-                        toast({
-                          title: "ID Verified!",
-                          description: `Your identity has been verified as a ${verificationType}. You can now apply and post tasks.`,
-                        })
-                      }}
-                    />
                   </div>
                 </div>
               )}
@@ -403,26 +388,12 @@ export default function ProfilePage() {
                           ? "As an admin, please verify your identity to access admin features."
                           : "Verify your identity to apply for jobs or post tasks."}
                       </p>
-                      <Button className="w-full" onClick={() => setShowDojahModal(true)}>
-                        Start ID Verification
+                      <Button className="w-full" asChild>
+                        <Link href="/dashboard/verification">
+                          Start Manual Verification
+                        </Link>
                       </Button>
                     </div>
-                    <DojahModal
-                      open={showDojahModal}
-                      onOpenChange={setShowDojahModal}
-                      onSuccess={async (result) => {
-                        let verificationType = profile.user_type === "admin" ? "admin" : "individual"
-                        if (result?.data?.verification_type === "business" || result?.data?.type === "business") {
-                          verificationType = "business"
-                        }
-                        // You may need to call your updateProfile logic here
-                        await fetchProfileData() // or updateProfile({ is_verified: true, verification_type: verificationType })
-                        toast({
-                          title: "ID Verified!",
-                          description: `Your identity has been verified as a ${verificationType}. You can now apply and post tasks.`,
-                        })
-                      }}
-                    />
                   </div>
                 </div>
                 <div className="w-full md:w-1/2 flex-1" />

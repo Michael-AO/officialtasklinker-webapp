@@ -118,20 +118,6 @@ export function AppSidebar() {
           <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-8 w-8" />
           <span className="text-lg font-bold text-white">Tasklinkers</span>
         </div>
-        {user && (
-          <div className="px-2 pb-2">
-            <div className="flex items-center gap-2 text-xs">
-              <div className={`w-2 h-2 rounded-full ${user.isVerified ? 'bg-green-500' : 'bg-yellow-500'}`} />
-              <span className="text-gray-400">
-                {user.isVerified ? 'Email ✓' : 'Email ✗'}
-              </span>
-              <div className={`w-2 h-2 rounded-full ${user.dojahVerified ? 'bg-green-500' : 'bg-yellow-500'}`} />
-              <span className="text-gray-400">
-                {user.dojahVerified ? 'ID ✓' : 'ID ✗'}
-              </span>
-            </div>
-          </div>
-        )}
       </SidebarHeader>
 
       <SidebarContent className="bg-black">
@@ -140,7 +126,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => {
-                const isDisabled = item.requiresVerification && (!user?.isVerified || !user?.dojahVerified)
+                const isDisabled = item.requiresVerification && !user?.isVerified
                 
                 return (
                   <SidebarMenuItem key={item.title}>
@@ -152,7 +138,7 @@ export function AppSidebar() {
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                         <div className="ml-auto text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
-                          🔒
+                          Verify
                         </div>
                       </SidebarMenuButton>
                     ) : (
@@ -179,7 +165,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {quickActions.map((item) => {
-                const isDisabled = item.requiresVerification && (!user?.isVerified || !user?.dojahVerified)
+                const isDisabled = item.requiresVerification && !user?.isVerified
                 
                 return (
                   <SidebarMenuItem key={item.title}>
@@ -191,7 +177,7 @@ export function AppSidebar() {
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                         <div className="ml-auto text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
-                          🔒
+                          Verify
                         </div>
                       </SidebarMenuButton>
                     ) : (
@@ -236,7 +222,6 @@ export function AppSidebar() {
                   className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
                 >
                   <Link href="/dashboard/verification">
-                    <Shield className="h-4 w-4" />
                     <span>Verification</span>
                     {user?.isVerified && (
                       <CheckCircle className="h-4 w-4 ml-auto text-green-500" />

@@ -19,7 +19,6 @@ import {
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
-import { DojahModal } from "./dojah-modal"
 import { ManualVerificationFlow } from "./verification/manual-verification-flow"
 
 interface VerificationGateProps {
@@ -35,7 +34,6 @@ export function VerificationGate({
 }: VerificationGateProps) {
   const { user, updateProfile, refreshUserVerification } = useAuth()
   const [processing, setProcessing] = useState(false)
-  const [showDojahModal, setShowDojahModal] = useState(false)
   const [showManualVerification, setShowManualVerification] = useState(false)
 
   // Helper function to get action text
@@ -58,7 +56,7 @@ export function VerificationGate({
 
   // Set up periodic verification status refresh
   useEffect(() => {
-    if (!user || (user.isVerified && user.dojahVerified)) {
+    if (!user || user.isVerified) {
       return // No need to refresh if user is fully verified
     }
 
@@ -71,8 +69,8 @@ export function VerificationGate({
     return () => clearInterval(interval)
   }, [user, refreshUserVerification])
 
-  // If user is fully verified (email + Dojah), show the content
-  if (user?.isVerified && user?.dojahVerified) {
+  // If user is fully verified, show the content
+  if (user?.isVerified) {
     return <>{children}</>
   }
 
@@ -122,7 +120,7 @@ export function VerificationGate({
             <AlertDescription>
               <strong>Email Verification:</strong> You need to verify your email address before you can {getActionText()}.
               <br />
-              <strong>Next Step:</strong> After email verification, you'll need to complete ID verification via Dojah.
+              <strong>Next Step:</strong> After email verification, you'll need to complete ID verification.
             </AlertDescription>
           </Alert>
 
@@ -150,7 +148,7 @@ export function VerificationGate({
               <strong>How it works:</strong> 
               <ol className="list-decimal list-inside mt-1 space-y-1">
                 <li>Verify your email address (current step)</li>
-                <li>Complete ID verification via Dojah (next step)</li>
+                <li>Complete ID verification (next step)</li>
                 <li>Start posting tasks or applying to jobs</li>
               </ol>
             </div>
@@ -179,44 +177,27 @@ export function VerificationGate({
         
         // Update user verification status directly
         await updateProfile({ 
-          isVerified: true, // Keep email verification
-          dojahVerified: true, // Add Dojah verification
+          isVerified: true,
           verification_type: result.data.verification_type || 'identity'
         })
         
         toast.success("ID verification completed successfully!")
-        setShowDojahModal(false)
         
         // Refresh the page to show updated dashboard
         window.location.reload()
         return
       }
       
-      // Process the Dojah verification result via API
-      console.log("📡 Calling verification API...")
-      const response = await fetch("/api/verification/process-dojah", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ dojahResult: result }),
+      // Process the verification result
+      console.log("📡 Processing verification result...")
+      
+      // Update user verification status
+      await updateProfile({ 
+        isVerified: true,
+        verification_type: result.data.verification_type || 'identity'
       })
-
-      const verificationResult = await response.json()
-      console.log("📡 API response:", verificationResult)
-
-      if (response.ok && verificationResult.success) {
-        toast.success("ID verification completed successfully!")
-        // Update user verification status - keep email verification but add Dojah verification
-        await updateProfile({ 
-          isVerified: true, // Keep email verification
-          dojahVerified: true, // Add Dojah verification
-          verification_type: verificationResult.data.verification_type 
-        })
-      } else {
-        console.error("❌ API error:", verificationResult.error)
-        toast.error(verificationResult.error || "Verification failed")
-      }
+      
+      toast.success("ID verification completed successfully!")
     } catch (error) {
       console.error("❌ Verification error:", error)
       toast.error("Failed to process verification")
@@ -253,7 +234,7 @@ export function VerificationGate({
             <AlertDescription>
               <strong>✅ Email Verified:</strong> Your email address has been confirmed.
               <br />
-              <strong>🔒 Required:</strong> {getVerificationType()} verification via Dojah to {getActionText()}
+              <strong>🔒 Required:</strong> {getVerificationType()} verification to {getActionText()}
             </AlertDescription>
           </Alert>
 
@@ -275,13 +256,12 @@ export function VerificationGate({
 
 
             <div className="text-xs text-amber-600 bg-amber-100 p-3 rounded">
-              <strong>How it works:</strong> Dojah will guide you through document upload and identity verification. 
-              The process typically takes 2-5 minutes and is secure and confidential.
+              <strong>How it works:</strong> Submit your documents for verification.
             </div>
 
             <div className="flex gap-2">
               <Button 
-                onClick={() => setShowDojahModal(true)}
+                onClick={() => setShowManualVerification(true)}
                 disabled={processing}
                 className="flex-1"
               >
@@ -293,18 +273,9 @@ export function VerificationGate({
                 ) : (
                   <>
                     <Shield className="h-4 w-4 mr-2" />
-                    Start Dojah Verification
+                    Start Manual Verification
                   </>
                 )}
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setShowManualVerification(true)}
-                disabled={processing}
-                className="flex-1"
-              >
-                <User className="h-4 w-4 mr-2" />
-                Manual Upload
               </Button>
             </div>
           </div>
@@ -317,17 +288,6 @@ export function VerificationGate({
         </CardContent>
       </Card>
 
-      {/* Dojah Modal */}
-      <DojahModal
-        open={showDojahModal}
-        onOpenChange={setShowDojahModal}
-        verificationType={getVerificationType() as 'identity' | 'business'}
-        onSuccess={handleVerificationSuccess}
-        onError={(error) => {
-          console.error("❌ Dojah verification error:", error)
-          toast.error("Verification failed. Please try again.")
-        }}
-      />
 
       {/* Manual Verification Flow */}
       {showManualVerification && (

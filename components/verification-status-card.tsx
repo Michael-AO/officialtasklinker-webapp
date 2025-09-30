@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
-import { useDojahModal } from "@/contexts/dojah-modal-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -30,7 +29,6 @@ interface VerificationStatusCardProps {
 
 export function VerificationStatusCard({ className, compact = false }: VerificationStatusCardProps) {
   const { user, updateProfile } = useAuth()
-  const { openDojahModal, setVerificationType, setOnSuccess, setOnError } = useDojahModal()
   const [processing, setProcessing] = useState(false)
 
   const getVerificationType = () => {
@@ -47,23 +45,13 @@ export function VerificationStatusCard({ className, compact = false }: Verificat
     try {
       setProcessing(true)
       
-      const response = await fetch("/api/verification/process-dojah", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dojahResult: result }),
+      // Update user verification status directly
+      await updateProfile({ 
+        isVerified: true, 
+        verification_type: result.data?.verification_type || 'identity'
       })
-
-      const verificationResult = await response.json()
-
-      if (response.ok && verificationResult.success) {
-        toast.success("Verification completed successfully!")
-        await updateProfile({ 
-          isVerified: true, 
-          verification_type: verificationResult.data.verification_type 
-        })
-      } else {
-        toast.error(verificationResult.error || "Verification failed")
-      }
+      
+      toast.success("Verification completed successfully!")
     } catch (error) {
       console.error("Verification error:", error)
       toast.error("Failed to process verification")
@@ -77,29 +65,11 @@ export function VerificationStatusCard({ className, compact = false }: Verificat
     console.log("🚀 [VERIFICATION-CARD] User details:", {
       id: user?.id,
       userType: user?.userType,
-      isVerified: user?.isVerified,
-      dojahVerified: user?.dojahVerified
+      isVerified: user?.isVerified
     })
     
-    // Set up the verification type and callbacks
-    const verificationType = getVerificationType() as 'identity' | 'business'
-    console.log("🚀 [VERIFICATION-CARD] Setting verification type to:", verificationType)
-    setVerificationType(verificationType)
-    
-    console.log("🚀 [VERIFICATION-CARD] Setting success callback:", handleVerificationSuccess.name)
-    setOnSuccess(handleVerificationSuccess)
-    
-    console.log("🚀 [VERIFICATION-CARD] Setting error callback")
-    setOnError((error) => {
-      console.error("❌ [VERIFICATION-CARD] Verification error callback triggered:", error)
-      toast.error("Verification failed. Please try again.")
-    })
-    
-    // Open the modal
-    console.log("🚀 [VERIFICATION-CARD] Opening Dojah modal...")
-    openDojahModal()
-    
-    console.log("🚀 [VERIFICATION-CARD] Verification setup complete")
+    // Redirect to verification page
+    window.location.href = "/dashboard/verification"
   }
 
   const currentStatus = getCurrentStatus()

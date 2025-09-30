@@ -10,7 +10,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, AlertTriangle, Loader2, Shield, UserCheck, Building2, FileText, Camera } from 'lucide-react'
-import { DojahModal } from '@/components/dojah-modal'
 import { useToast } from '@/hooks/use-toast'
 
 interface VerificationStep {
@@ -39,7 +38,6 @@ interface VerificationData {
 
 export function EnhancedIdVerification() {
   const { toast } = useToast()
-  const [showDojahModal, setShowDojahModal] = useState(false)
   const [verificationType, setVerificationType] = useState<'identity' | 'business'>('identity')
   const [currentStep, setCurrentStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
@@ -163,12 +161,12 @@ export function EnhancedIdVerification() {
     verificationSteps[0].status = 'completed'
     setCurrentStep(1)
 
-    // Open Dojah modal
-    setShowDojahModal(true)
+    // Redirect to verification page
+    window.location.href = "/dashboard/verification"
   }
 
   const handleVerificationSuccess = async (result: any) => {
-    console.log("🎯 Dojah verification successful:", result)
+    console.log("🎯 Verification successful:", result)
     
     // Mark all steps as completed
     verificationSteps.forEach(step => {
@@ -184,12 +182,11 @@ export function EnhancedIdVerification() {
 
     // Close modal after success
     setTimeout(() => {
-      setShowDojahModal(false)
     }, 2000)
   }
 
   const handleVerificationError = (error: any) => {
-    console.error("❌ Dojah verification error:", error)
+    console.error("❌ Verification error:", error)
     
     toast({
       title: "Verification Failed",
@@ -482,14 +479,6 @@ export function EnhancedIdVerification() {
         </CardContent>
       </Card>
 
-      {/* Dojah Modal */}
-      <DojahModal
-        open={showDojahModal}
-        onOpenChange={setShowDojahModal}
-        verificationType={verificationType}
-        onSuccess={handleVerificationSuccess}
-        onError={handleVerificationError}
-      />
     </div>
   )
 }

@@ -4,9 +4,9 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 import { 
   Shield, 
   CheckCircle, 
@@ -14,173 +14,176 @@ import {
   AlertTriangle, 
   User, 
   Building,
-  FileText,
-  Calendar,
-  ArrowRight,
   RefreshCw,
-  Info,
-  Lock,
-  Unlock
+  Unlock,
+  Zap,
+  Ban,
+  RotateCcw
 } from "lucide-react"
-import DojahVerification from "@/components/DojahVerification"
-import { VerificationStatusBadge, type VerificationStatus } from "@/components/verification-status-badge"
+import { SimpleVerificationForm } from "@/components/simple-verification-form"
+import { VerificationStatusSimple } from "@/components/verification-status-simple"
 import { toast } from "sonner"
 
-interface VerificationRequest {
-  id: string
-  user_id: string
-  verification_type: "identity" | "business" | "professional"
-  status: "pending" | "approved" | "rejected" | "processing"
-  submitted_at: string
-  reviewed_at?: string
-  admin_notes?: string
-  documents: Array<{
-    type: string
-    filename: string
-    uploaded_at: string
-  }>
-}
-
-interface VerificationStats {
-  total_requests: number
-  approved: number
-  pending: number
-  rejected: number
-  average_processing_time: number
+interface VerificationStatus {
+  status: "verified" | "unverified" | "processing" | "revoked"
+  submittedAt?: string
+  approvedAt?: string
+  revokedAt?: string
+  canReverifyAt?: string
 }
 
 export default function VerificationPage() {
-  const { user, updateProfile } = useAuth()
-  const [verificationRequests, setVerificationRequests] = useState<VerificationRequest[]>([])
-  const [stats, setStats] = useState<VerificationStats | null>(null)
+  const { user } = useAuth()
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({ status: "unverified" })
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
+  const [timeUntilApproval, setTimeUntilApproval] = useState<number>(0)
 
-  // Fetch verification data
+  // Fetch verification status
   useEffect(() => {
-    fetchVerificationData()
-  }, [])
+    if (user) {
+      fetchVerificationStatus()
+    }
+  }, [user])
 
-  const fetchVerificationData = async () => {
+  // Countdown timer for auto-approval
+  useEffect(() => {
+    if (verificationStatus.status === "processing" && verificationStatus.submittedAt) {
+      const submittedTime = new Date(verificationStatus.submittedAt).getTime()
+      const approvalTime = submittedTime + (5 * 60 * 1000) // 5 minutes
+      const now = Date.now()
+      
+      if (now < approvalTime) {
+        const timeLeft = approvalTime - now
+        setTimeUntilApproval(timeLeft)
+        
+        const timer = setInterval(() => {
+          const newTimeLeft = approvalTime - Date.now()
+          if (newTimeLeft <= 0) {
+            clearInterval(timer)
+            setTimeUntilApproval(0)
+            // Auto-approve by fetching latest status
+            fetchVerificationStatus()
+          } else {
+            setTimeUntilApproval(newTimeLeft)
+          }
+        }, 1000)
+        
+        return () => clearInterval(timer)
+      } else {
+        // Already past approval time, fetch current status
+        fetchVerificationStatus()
+      }
+    }
+  }, [verificationStatus.status, verificationStatus.submittedAt])
+
+  const fetchVerificationStatus = async () => {
     try {
       setLoading(true)
       
-      // First test authentication
-      console.log("🔍 Testing authentication...")
-      const authResponse = await fetch("/api/test-auth")
-      const authData = await authResponse.json()
-      
-      console.log("🔍 Auth test result:", authData)
-      
-      if (!authResponse.ok) {
-        console.error("❌ Authentication failed:", authData)
-        toast.error("Authentication failed. Please log in again.")
+      if (!user) {
+        toast.error("Please log in to access verification")
         return
       }
       
-      console.log("✅ Authentication successful:", authData.user)
-      
-      // Fetch verification status and history
-      const statusResponse = await fetch("/api/verification/status")
-      const statusData = await statusResponse.json()
-      
-      console.log("🔍 Verification status response:", statusData)
-      
-      if (statusResponse.ok && statusData.success) {
-        // Handle the correct API response structure
-        const { data } = statusData
-        setVerificationRequests(data.allRequests || [])
-        
-        // Create stats from the data
-        const stats = {
-          total_requests: data.verificationCount || 0,
-          approved: data.allRequests?.filter((r: any) => r.status === "approved").length || 0,
-          pending: data.allRequests?.filter((r: any) => r.status === "pending").length || 0,
-          rejected: data.allRequests?.filter((r: any) => r.status === "rejected").length || 0,
-          average_processing_time: 0 // Calculate if needed
+      const statusResponse = await fetch("/api/verification/status", {
+        headers: {
+          'x-user-id': user.id
         }
-        setStats(stats)
+      })
+      
+      if (statusResponse.ok) {
+        const data = await statusResponse.json()
+        setVerificationStatus(data)
       } else {
-        console.error("Failed to fetch verification data:", statusData.error)
-        toast.error("Failed to load verification data")
+        throw new Error("Failed to fetch verification status")
       }
     } catch (error) {
-      console.error("Failed to fetch verification data:", error)
-      toast.error("Failed to load verification data")
+      console.error("Failed to fetch verification status:", error)
+      toast.error("Failed to load verification status")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleVerificationSuccess = async (result: any) => {
+  const handleVerificationSuccess = async () => {
     try {
       setProcessing(true)
+      toast.success("Verification submitted! Your account will be verified automatically in 5 minutes.")
       
-      const response = await fetch("/api/verification/process-dojah", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dojahResult: result }),
+      // Set processing status immediately
+      setVerificationStatus({
+        status: "processing",
+        submittedAt: new Date().toISOString()
       })
-
-      const verificationResult = await response.json()
-
-      if (response.ok && verificationResult.success) {
-        toast.success("Verification completed successfully!")
-        await updateProfile({ 
-          isVerified: true, 
-          verification_type: verificationResult.data.verification_type 
-        })
-        // Refresh verification data
-        await fetchVerificationData()
-      } else {
-        toast.error(verificationResult.error || "Verification failed")
-      }
+      
+      // In a real app, you'd call an API to create the verification request
+      // For now, we'll simulate the backend process
+      simulateAutoApproval()
+      
     } catch (error) {
       console.error("Verification error:", error)
-      toast.error("Failed to process verification")
+      toast.error("Failed to submit verification request")
     } finally {
       setProcessing(false)
     }
   }
 
-  const getVerificationType = () => {
-    return user?.userType === "client" ? "business" : "identity"
+  const simulateAutoApproval = () => {
+    // This would be handled by your backend in production
+    // For demo, we're using the frontend timer
+    console.log("Verification submitted - will auto-approve in 5 minutes")
   }
 
-  const getCurrentStatus = (): VerificationStatus => {
-    if (!user) return "unverified"
-    if (user.isVerified) return "verified"
-    
-    const latestRequest = verificationRequests[0]
-    if (!latestRequest) return "unverified"
-    
-    switch (latestRequest.status) {
-      case "approved": return "verified"
-      case "pending": return "pending"
-      case "rejected": return "rejected"
-      case "processing": return "processing"
-      default: return "unverified"
+  const handleReverify = async () => {
+    try {
+      setProcessing(true)
+      
+      // Call API to start re-verification
+      const response = await fetch("/api/verification/reverify", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || ''
+        }
+      })
+      
+      if (response.ok) {
+        toast.success("Re-verification started! Your account will be verified in 5 minutes.")
+        setVerificationStatus({
+          status: "processing",
+          submittedAt: new Date().toISOString()
+        })
+      } else {
+        throw new Error("Failed to start re-verification")
+      }
+    } catch (error) {
+      console.error("Re-verification error:", error)
+      toast.error("Failed to start re-verification")
+    } finally {
+      setProcessing(false)
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    })
+  const getTimeUntilReverify = (): string => {
+    if (!verificationStatus.canReverifyAt) return ""
+    
+    const canReverifyTime = new Date(verificationStatus.canReverifyAt).getTime()
+    const now = Date.now()
+    const timeLeft = canReverifyTime - now
+    
+    if (timeLeft <= 0) return ""
+    
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60))
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
+    
+    return `${hours}h ${minutes}m`
   }
 
-  const getStatusIcon = (status: VerificationStatus) => {
-    switch (status) {
-      case "verified": return <CheckCircle className="h-5 w-5 text-green-600" />
-      case "pending": return <Clock className="h-5 w-5 text-amber-600" />
-      case "rejected": return <AlertTriangle className="h-5 w-5 text-red-600" />
-      case "processing": return <RefreshCw className="h-5 w-5 text-blue-600 animate-spin" />
-      default: return <Shield className="h-5 w-5 text-gray-500" />
-    }
+  const formatTime = (milliseconds: number): string => {
+    const minutes = Math.floor(milliseconds / (1000 * 60))
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000)
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
   if (loading) {
@@ -199,8 +202,10 @@ export default function VerificationPage() {
     )
   }
 
-  const currentStatus = getCurrentStatus()
-  const latestRequest = verificationRequests[0]
+  const canReverify = verificationStatus.status === "revoked" && 
+    (!verificationStatus.canReverifyAt || new Date(verificationStatus.canReverifyAt) <= new Date())
+  
+  const timeUntilReverify = getTimeUntilReverify()
 
   return (
     <div className="space-y-6">
@@ -208,149 +213,137 @@ export default function VerificationPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Verification Center</h1>
-          <p className="text-muted-foreground">Manage your account verification status</p>
+          <p className="text-muted-foreground">Get verified to unlock all platform features</p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={fetchVerificationData}
+          onClick={fetchVerificationStatus}
           disabled={loading}
         >
           <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
+          Refresh Status
         </Button>
       </div>
 
-      {/* Current Status Card */}
-      <Card className="border-2">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {getStatusIcon(currentStatus)}
-              <div>
-                <CardTitle className="text-xl">Verification Status</CardTitle>
-                <CardDescription>
-                  {user?.userType === "client" ? "Business" : "Identity"} verification for {user?.userType === "client" ? "posting tasks" : "applying to tasks"}
-                </CardDescription>
-              </div>
-            </div>
-            <VerificationStatusBadge 
-              status={currentStatus} 
-              type={getVerificationType()}
-              size="lg"
-            />
-          </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          {currentStatus === "verified" ? (
-            <Alert className="border-green-200 bg-green-50">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
-                <strong>Congratulations!</strong> Your account is verified. You now have full access to all platform features.
-              </AlertDescription>
-            </Alert>
-          ) : currentStatus === "pending" ? (
-            <Alert className="border-amber-200 bg-amber-50">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800">
-                <strong>Verification in Progress</strong> Your verification request is being reviewed. This typically takes 1-2 business days.
-              </AlertDescription>
-            </Alert>
-          ) : currentStatus === "rejected" ? (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
-                <strong>Verification Rejected</strong> {latestRequest?.admin_notes || "Please review the feedback and submit a new verification request."}
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <Alert className="border-blue-200 bg-blue-50">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <strong>Verification Required</strong> Complete verification to unlock full platform access.
-              </AlertDescription>
-            </Alert>
-          )}
+      {/* Current Status */}
+      <VerificationStatusSimple />
 
-          {currentStatus !== "verified" && (
-            <div className="flex gap-3">
-              <DojahVerification
-                onSuccess={handleVerificationSuccess}
-                onError={(error) => {
-                  console.error("Verification error:", error)
-                  toast.error("Verification failed. Please try again.")
-                }}
-                onClose={() => {
-                  console.log("User closed verification modal")
-                }}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Verification History */}
-      {verificationRequests.length > 0 && (
-        <Card>
+      {/* Processing State - Auto Approval Countdown */}
+      {verificationStatus.status === "processing" && (
+        <Card className="border-blue-200 bg-blue-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Verification History
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              <Clock className="h-5 w-5 animate-pulse" />
+              Verification in Progress
             </CardTitle>
-            <CardDescription>
-              Track your verification requests and their status
+            <CardDescription className="text-blue-700">
+              Your verification is being processed automatically. This usually takes about 5 minutes.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {verificationRequests.map((request, index) => (
-                <div key={request.id} className="space-y-3">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        {request.verification_type === "business" ? (
-                          <Building className="h-4 w-4 text-purple-600" />
-                        ) : (
-                          <User className="h-4 w-4 text-blue-600" />
-                        )}
-                        <span className="font-medium capitalize">
-                          {request.verification_type} Verification
-                        </span>
-                      </div>
-                      <Badge variant="outline">
-                        {request.status}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatDate(request.submitted_at)}
-                    </div>
-                  </div>
-                  
-                  {request.admin_notes && (
-                    <div className="ml-4 p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Admin Notes:</strong> {request.admin_notes}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {index < verificationRequests.length - 1 && <Separator />}
-                </div>
-              ))}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Time remaining:</span>
+                <Badge variant="secondary" className="text-lg font-mono">
+                  {formatTime(timeUntilApproval)}
+                </Badge>
+              </div>
+              <Progress 
+                value={((5 * 60 * 1000 - timeUntilApproval) / (5 * 60 * 1000)) * 100} 
+                className="h-2"
+              />
+              <Alert className="bg-blue-100 border-blue-300">
+                <Clock className="h-4 w-4" />
+                <AlertDescription className="text-blue-800">
+                  Your account will be automatically verified once the timer completes. No action needed!
+                </AlertDescription>
+              </Alert>
             </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Revoked State - Re-verification */}
+      {verificationStatus.status === "revoked" && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-800">
+              <Ban className="h-5 w-5" />
+              Verification Revoked
+            </CardTitle>
+            <CardDescription className="text-amber-700">
+              Your verification has been revoked by an administrator.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {!canReverify && timeUntilReverify ? (
+                <div className="space-y-3">
+                  <Alert className="bg-amber-100 border-amber-300">
+                    <Clock className="h-4 w-4" />
+                    <AlertDescription className="text-amber-800">
+                      You can request re-verification in <strong>{timeUntilReverify}</strong>
+                    </AlertDescription>
+                  </Alert>
+                  <div className="text-sm text-amber-700">
+                    <p>For security reasons, you must wait 48 hours after revocation to re-verify your account.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Alert className="bg-green-100 border-green-300">
+                    <RotateCcw className="h-4 w-4" />
+                    <AlertDescription className="text-green-800">
+                      You can now request re-verification
+                    </AlertDescription>
+                  </Alert>
+                  <Button 
+                    onClick={handleReverify}
+                    disabled={processing}
+                    className="w-full"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Start Re-verification
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
+      {/* Verification Form - Show for unverified or if can re-verify */}
+      {(verificationStatus.status === "unverified" || canReverify) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-yellow-500" />
+              Identity Verification
+            </CardTitle>
+            <CardDescription>
+              Complete your verification to access all platform features. 
+              Your account will be automatically verified in 5 minutes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SimpleVerificationForm
+              userType={(user?.userType === "admin" ? "client" : user?.userType) || "freelancer"}
+              onSuccess={handleVerificationSuccess}
+              onError={(error) => {
+                toast.error(error)
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Verification Benefits */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Unlock className="h-5 w-5" />
-            Verification Benefits
+            Verified Account Benefits
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -375,7 +368,7 @@ export default function VerificationPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Post tasks and hire freelancers</li>
                 <li>• Access verified talent pool</li>
-                <li>• Build business credibility</li>
+                <li>• Build platform credibility</li>
                 <li>• Enhanced platform features</li>
               </ul>
             </div>

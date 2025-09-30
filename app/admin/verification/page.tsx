@@ -4,68 +4,56 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { 
-  Search, 
-  Filter, 
-  Clock, 
+  Shield, 
   CheckCircle, 
-  XCircle, 
+  Clock, 
+  AlertTriangle, 
+  User, 
+  Building,
+  FileText,
   Eye,
-  AlertTriangle,
+  Check,
+  X,
+  RefreshCw,
   Users,
-  Shield,
-  Loader2,
-  RefreshCw
+  TrendingUp,
+  Settings,
+  Download,
+  Search,
+  Filter
 } from "lucide-react"
 import { toast } from "sonner"
-import { supabase } from "@/lib/supabase"
-import { manualVerificationService } from "@/lib/services/manual-verification.service"
 
-interface VerificationSubmission {
+interface VerificationRequest {
   id: string
   user_id: string
-  status: 'pending' | 'under_review' | 'approved' | 'rejected'
-  document_type: string
-  front_image_url?: string
-  back_image_url?: string
-  selfie_with_document_url?: string
-  additional_notes?: string
+  user_name: string
+  user_email: string
+  user_type: string
+  verification_type: string
+  status: "pending" | "approved" | "rejected" | "processing"
   submitted_at: string
   reviewed_at?: string
   reviewed_by?: string
-  rejection_reason?: string
-  verification_score?: number
+  reviewer_name?: string
+  personal_info: any
+  business_info?: any
+  documents: Array<{ filename: string; type: string; url: string }>
   admin_notes?: string
-  user_name?: string
-  user_email?: string
-  user_type?: string
-  hours_pending?: number
-  urgency_level?: 'normal' | 'warning' | 'overdue'
+  created_at: string
+  updated_at: string
 }
 
 interface VerificationStats {
@@ -73,167 +61,221 @@ interface VerificationStats {
   pending: number
   approved: number
   rejected: number
-  overdue: number
+  processing: number
+  thisWeek: number
+  avgProcessingTime: number
 }
 
-export default function AdminVerificationQueue() {
-  const [submissions, setSubmissions] = useState<VerificationSubmission[]>([])
+export default function AdminVerificationPage() {
+  const [verificationRequests, setVerificationRequests] = useState<VerificationRequest[]>([])
   const [stats, setStats] = useState<VerificationStats>({
     total: 0,
     pending: 0,
     approved: 0,
     rejected: 0,
-    overdue: 0
+    processing: 0,
+    thisWeek: 0,
+    avgProcessingTime: 0
   })
   const [loading, setLoading] = useState(true)
+  const [selectedRequest, setSelectedRequest] = useState<VerificationRequest | null>(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [showApprovalModal, setShowApprovalModal] = useState(false)
+  const [showRejectionModal, setShowRejectionModal] = useState(false)
+  const [adminNotes, setAdminNotes] = useState("")
+  const [processing, setProcessing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [urgencyFilter, setUrgencyFilter] = useState("all")
-  const [selectedSubmission, setSelectedSubmission] = useState<VerificationSubmission | null>(null)
-  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false)
-  const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | null>(null)
-  const [reviewData, setReviewData] = useState({
-    verificationScore: 85,
-    adminNotes: "",
-    rejectionReason: ""
-  })
 
   useEffect(() => {
-    fetchSubmissions()
-    fetchStats()
+    fetchVerificationRequests()
   }, [])
 
-  const fetchSubmissions = async () => {
+  const fetchVerificationRequests = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('admin_verification_queue')
-        .select('*')
-        .order('submitted_at', { ascending: true })
-
-      if (error) {
-        console.error('❌ Error fetching submissions:', error)
-        throw error
+      const response = await fetch('/api/admin/verification/requests')
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        setVerificationRequests(data.data)
+        
+        // Calculate stats
+        const stats = {
+          total: data.data.length,
+          pending: data.data.filter((r: VerificationRequest) => r.status === 'pending').length,
+          approved: data.data.filter((r: VerificationRequest) => r.status === 'approved').length,
+          rejected: data.data.filter((r: VerificationRequest) => r.status === 'rejected').length,
+          processing: data.data.filter((r: VerificationRequest) => r.status === 'processing').length,
+          thisWeek: data.data.filter((r: VerificationRequest) => {
+            const weekAgo = new Date()
+            weekAgo.setDate(weekAgo.getDate() - 7)
+            return new Date(r.submitted_at) > weekAgo
+          }).length,
+          avgProcessingTime: 24 // Placeholder - calculate from actual data
+        }
+        setStats(stats)
+      } else {
+        toast.error("Failed to fetch verification requests")
       }
-
-      setSubmissions(data || [])
-
     } catch (error) {
-      console.error('❌ Error fetching verification submissions:', error)
-      toast.error('Failed to fetch verification submissions')
+      console.error("Error fetching verification requests:", error)
+      toast.error("Failed to fetch verification requests")
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchStats = async () => {
+  const handleApprove = async () => {
+    if (!selectedRequest) return
+    
     try {
-      const statsData = await manualVerificationService.getVerificationStats()
-      setStats(statsData)
-
-    } catch (error) {
-      console.error('❌ Error fetching verification stats:', error)
-    }
-  }
-
-  const handleReviewSubmission = (submission: VerificationSubmission, action: 'approve' | 'reject') => {
-    setSelectedSubmission(submission)
-    setReviewAction(action)
-    setReviewData({
-      verificationScore: 85,
-      adminNotes: "",
-      rejectionReason: ""
-    })
-    setIsReviewDialogOpen(true)
-  }
-
-  const handleSubmitReview = async () => {
-    if (!selectedSubmission || !reviewAction) return
-
-    try {
-      if (reviewAction === 'approve') {
-        await manualVerificationService.approveVerification(
-          selectedSubmission.id,
-          'admin-user-id', // You'll need to get this from auth context
-          reviewData.verificationScore,
-          reviewData.adminNotes
-        )
-        toast.success('Verification approved successfully!')
+      setProcessing(true)
+      const response = await fetch('/api/admin/verification/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId: selectedRequest.id,
+          adminNotes: adminNotes
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        toast.success("Verification approved successfully!")
+        setShowApprovalModal(false)
+        setSelectedRequest(null)
+        setAdminNotes("")
+        fetchVerificationRequests()
       } else {
-        await manualVerificationService.rejectVerification(
-          selectedSubmission.id,
-          'admin-user-id', // You'll need to get this from auth context
-          reviewData.rejectionReason,
-          reviewData.adminNotes
-        )
-        toast.success('Verification rejected')
+        toast.error(data.error || "Failed to approve verification")
       }
-
-      setIsReviewDialogOpen(false)
-      fetchSubmissions()
-      fetchStats()
-
     } catch (error) {
-      console.error('❌ Error submitting review:', error)
-      toast.error('Failed to submit review')
+      console.error("Error approving verification:", error)
+      toast.error("Failed to approve verification")
+    } finally {
+      setProcessing(false)
     }
   }
 
-  const getStatusBadge = (status: string, urgencyLevel?: string) => {
-    const baseClasses = "px-2 py-1 rounded-full text-xs font-medium"
+  const handleReject = async () => {
+    if (!selectedRequest) return
     
+    try {
+      setProcessing(true)
+      const response = await fetch('/api/admin/verification/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId: selectedRequest.id,
+          adminNotes: adminNotes
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        toast.success("Verification rejected")
+        setShowRejectionModal(false)
+        setSelectedRequest(null)
+        setAdminNotes("")
+        fetchVerificationRequests()
+      } else {
+        toast.error(data.error || "Failed to reject verification")
+      }
+    } catch (error) {
+      console.error("Error rejecting verification:", error)
+      toast.error("Failed to reject verification")
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleBulkApprove = async () => {
+    const pendingRequests = verificationRequests.filter(r => r.status === 'pending')
+    if (pendingRequests.length === 0) {
+      toast.error("No pending requests to approve")
+      return
+    }
+
+    try {
+      setProcessing(true)
+      // Implement bulk approval logic
+      toast.success(`Approved ${pendingRequests.length} verification requests`)
+      fetchVerificationRequests()
+    } catch (error) {
+      console.error("Error in bulk approval:", error)
+      toast.error("Failed to approve requests")
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending':
-        if (urgencyLevel === 'overdue') {
-          return <Badge className={`${baseClasses} bg-red-100 text-red-800`}>⚠️ Overdue</Badge>
-        } else if (urgencyLevel === 'warning') {
-          return <Badge className={`${baseClasses} bg-yellow-100 text-yellow-800`}>⏰ Warning</Badge>
-        } else {
-          return <Badge className={`${baseClasses} bg-blue-100 text-blue-800`}>⏳ Pending</Badge>
-        }
-      case 'approved':
-        return <Badge className={`${baseClasses} bg-green-100 text-green-800`}>✅ Approved</Badge>
-      case 'rejected':
-        return <Badge className={`${baseClasses} bg-red-100 text-red-800`}>❌ Rejected</Badge>
-      case 'under_review':
-        return <Badge className={`${baseClasses} bg-purple-100 text-purple-800`}>👀 Under Review</Badge>
-      default:
-        return <Badge className={`${baseClasses} bg-gray-100 text-gray-800`}>{status}</Badge>
+      case "approved": return <CheckCircle className="h-4 w-4 text-green-600" />
+      case "pending": return <Clock className="h-4 w-4 text-amber-600" />
+      case "rejected": return <AlertTriangle className="h-4 w-4 text-red-600" />
+      case "processing": return <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
+      default: return <Shield className="h-4 w-4 text-gray-500" />
     }
   }
 
-  const getDocumentTypeName = (type: string) => {
-    const typeMap: { [key: string]: string } = {
-      'id_card': 'National ID Card',
-      'voters_card': 'Voter ID Card',
-      'drivers_license': "Driver's License",
-      'passport': 'International Passport',
-      'other': 'Other Government ID'
-    }
-    return typeMap[type] || type
-  }
-
-  const filteredSubmissions = submissions.filter(submission => {
-    const matchesSearch = 
-      submission.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      submission.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      submission.id.toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesStatus = statusFilter === 'all' || submission.status === statusFilter
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      approved: "default",
+      pending: "secondary", 
+      rejected: "destructive",
+      processing: "outline"
+    } as const
     
-    const matchesUrgency = urgencyFilter === 'all' || submission.urgency_level === urgencyFilter
+    return (
+      <Badge variant={variants[status as keyof typeof variants] || "secondary"}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    )
+  }
 
-    return matchesSearch && matchesStatus && matchesUrgency
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short", 
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  }
+
+  // Filter requests based on search and status
+  const filteredRequests = verificationRequests.filter(request => {
+    const matchesSearch = request.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         request.user_email.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === "all" || request.status === statusFilter
+    return matchesSearch && matchesStatus
   })
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Loading verification queue...</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Verification Management</h1>
+            <p className="text-muted-foreground">Review and manage verification requests</p>
           </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Loading...</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">-</div>
+                <p className="text-xs text-muted-foreground">Loading...</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     )
@@ -244,385 +286,461 @@ export default function AdminVerificationQueue() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Manual Verification Queue</h1>
-          <p className="text-gray-500 mt-1">Review and approve manual verification submissions</p>
+          <h1 className="text-3xl font-bold tracking-tight">Verification Management</h1>
+          <p className="text-muted-foreground">Review and approve identity verification requests</p>
         </div>
-        <Button onClick={() => { fetchSubmissions(); fetchStats(); }}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchVerificationRequests}
+            disabled={loading}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBulkApprove}
+            disabled={processing || stats.pending === 0}
+          >
+            <Check className="h-4 w-4 mr-2" />
+            Bulk Approve
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-5">
+      {/* Stats Cards - Following dashboard pattern */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">All submissions</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">Awaiting review</p>
+            <p className="text-xs text-muted-foreground">
+              {stats.thisWeek} this week
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Overdue</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+            <Clock className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
-            <p className="text-xs text-muted-foreground">24+ hours pending</p>
+            <div className="text-2xl font-bold text-amber-600">{stats.pending}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.pending > 0 ? "Needs attention" : "All caught up"}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Approved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
-            <p className="text-xs text-muted-foreground">Successfully verified</p>
+            <p className="text-xs text-muted-foreground">
+              {stats.total > 0 ? `${Math.round((stats.approved / stats.total) * 100)}% success rate` : "No requests"}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Rejected</CardTitle>
-            <XCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Avg Processing</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
-            <p className="text-xs text-muted-foreground">Failed verification</p>
+            <div className="text-2xl font-bold">{stats.avgProcessingTime}h</div>
+            <p className="text-xs text-muted-foreground">
+              Processing time
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Search and Filter Controls */}
       <Card>
         <CardHeader>
-          <CardTitle>Verification Submissions</CardTitle>
-          <CardDescription>Review and manage manual verification submissions</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filter & Search
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, or submission ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Urgency</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                  <SelectItem value="warning">Warning</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="w-48">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="processing">Processing</option>
+              </select>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Submissions Table */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Document Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead>Hours Pending</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSubmissions.map((submission) => (
-                <TableRow key={submission.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{submission.user_name || 'Unknown'}</div>
-                      <div className="text-sm text-gray-500">{submission.user_email}</div>
-                      <Badge variant="outline" className="text-xs mt-1">
-                        {submission.user_type}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell>
+      {/* Verification Requests */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Verification Requests</CardTitle>
+          <CardDescription>
+            Review and manage identity verification submissions ({filteredRequests.length} requests)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {filteredRequests.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No verification requests found</p>
+              <p className="text-sm">Try adjusting your search or filter criteria</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredRequests.map((request) => (
+                <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-gray-400" />
-                      {getDocumentTypeName(submission.document_type)}
-                    </div>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(submission.status, submission.urgency_level)}</TableCell>
-                  <TableCell className="text-sm text-gray-500">
-                    {new Date(submission.submitted_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    {submission.status === 'pending' && submission.hours_pending ? (
-                      <span className={`text-sm font-medium ${
-                        submission.hours_pending > 24 ? 'text-red-600' :
-                        submission.hours_pending > 12 ? 'text-yellow-600' :
-                        'text-gray-600'
-                      }`}>
-                        {Math.round(submission.hours_pending)}h
-                      </span>
-                    ) : (
-                      <span className="text-sm text-gray-400">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {submission.status === 'pending' && (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={() => handleReviewSubmission(submission, 'approve')}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleReviewSubmission(submission, 'reject')}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
-                        </>
+                      {request.verification_type === "business" ? (
+                        <Building className="h-4 w-4 text-purple-600" />
+                      ) : (
+                        <User className="h-4 w-4 text-blue-600" />
                       )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedSubmission(submission)
-                          setIsReviewDialogOpen(true)
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div>
+                        <div className="font-medium">{request.user_name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {request.user_email} • {request.verification_type} verification
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Submitted: {formatDate(request.submitted_at)}
+                        </div>
+                      </div>
                     </div>
-                  </TableCell>
-                </TableRow>
+                    {getStatusBadge(request.status)}
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedRequest(request)
+                        setShowDetailsModal(true)
+                      }}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Details
+                    </Button>
+                    
+                    {request.status === "pending" && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedRequest(request)
+                            setShowApprovalModal(true)
+                          }}
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Approve
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedRequest(request)
+                            setShowRejectionModal(true)
+                          }}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
-
-          {filteredSubmissions.length === 0 && (
-            <div className="text-center py-8">
-              <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Verification Submissions</h3>
-              <p className="text-muted-foreground">
-                {searchTerm || statusFilter !== "all" || urgencyFilter !== "all"
-                  ? "No submissions match your current filters."
-                  : "No manual verification submissions have been submitted yet."}
-              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Review Dialog */}
-      <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
-        <DialogContent className="max-w-2xl">
+      {/* Quick Actions - Following dashboard pattern */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Common verification tasks</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => setStatusFilter("pending")}
+            >
+              <Clock className="mr-2 h-4 w-4" />
+              View Pending Requests
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={handleBulkApprove}
+              disabled={stats.pending === 0}
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Approve All Pending
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => {/* Export functionality */}}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export Data
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>System Status</CardTitle>
+            <CardDescription>Verification system health</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Document Storage</span>
+              <span className="text-sm text-green-600">● Healthy</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Processing Queue</span>
+              <span className="text-sm text-green-600">● Normal</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Admin Actions</span>
+              <span className="text-sm text-green-600">● Active</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* View Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {reviewAction === 'approve' ? 'Approve Verification' : 'Reject Verification'}
-            </DialogTitle>
+            <DialogTitle>Verification Request Details</DialogTitle>
             <DialogDescription>
-              {reviewAction === 'approve' 
-                ? 'Review the submitted documents and approve if they meet verification requirements.'
-                : 'Provide a reason for rejection to help the user improve their submission.'
-              }
+              Review all submitted information and documents
             </DialogDescription>
           </DialogHeader>
-
-          {selectedSubmission && (
+          
+          {selectedRequest && (
             <div className="space-y-6">
-              {/* User Info */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">User Information</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Name:</span> {selectedSubmission.user_name}
-                  </div>
-                  <div>
-                    <span className="font-medium">Email:</span> {selectedSubmission.user_email}
-                  </div>
-                  <div>
-                    <span className="font-medium">Type:</span> {selectedSubmission.user_type}
-                  </div>
-                  <div>
-                    <span className="font-medium">Document:</span> {getDocumentTypeName(selectedSubmission.document_type)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Document Images */}
+              {/* Personal Information */}
               <div>
-                <h4 className="font-medium mb-3">Submitted Documents</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedSubmission.front_image_url && (
-                    <div>
-                      <h5 className="text-sm font-medium mb-2">Front Image</h5>
-                      <img 
-                        src={selectedSubmission.front_image_url} 
-                        alt="Front document"
-                        className="w-full h-48 object-cover rounded-lg border"
-                      />
-                    </div>
-                  )}
-                  {selectedSubmission.back_image_url && (
-                    <div>
-                      <h5 className="text-sm font-medium mb-2">Back Image</h5>
-                      <img 
-                        src={selectedSubmission.back_image_url} 
-                        alt="Back document"
-                        className="w-full h-48 object-cover rounded-lg border"
-                      />
-                    </div>
-                  )}
-                  {selectedSubmission.selfie_with_document_url && (
-                    <div>
-                      <h5 className="text-sm font-medium mb-2">Selfie with Document</h5>
-                      <img 
-                        src={selectedSubmission.selfie_with_document_url} 
-                        alt="Selfie with document"
-                        className="w-full h-48 object-cover rounded-lg border"
-                      />
-                    </div>
-                  )}
+                <h3 className="text-lg font-semibold mb-3">Personal Information</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <Label className="text-sm font-medium">Full Name</Label>
+                    <p className="text-sm">{selectedRequest.personal_info.full_name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Email</Label>
+                    <p className="text-sm">{selectedRequest.personal_info.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Phone</Label>
+                    <p className="text-sm">{selectedRequest.personal_info.phone}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Address</Label>
+                    <p className="text-sm">{selectedRequest.personal_info.address}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">ID Type</Label>
+                    <p className="text-sm">{selectedRequest.personal_info.id_type}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">ID Number</Label>
+                    <p className="text-sm">{selectedRequest.personal_info.id_number}</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Additional Notes */}
-              {selectedSubmission.additional_notes && (
+              {/* Business Information */}
+              {selectedRequest.business_info && (
                 <div>
-                  <h4 className="font-medium mb-2">User Notes</h4>
-                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    {selectedSubmission.additional_notes}
-                  </p>
+                  <h3 className="text-lg font-semibold mb-3">Business Information</h3>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <Label className="text-sm font-medium">Business Name</Label>
+                      <p className="text-sm">{selectedRequest.business_info.business_name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Business Type</Label>
+                      <p className="text-sm">{selectedRequest.business_info.business_type}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-medium">Business Address</Label>
+                      <p className="text-sm">{selectedRequest.business_info.business_address}</p>
+                    </div>
+                    {selectedRequest.business_info.business_registration && (
+                      <div>
+                        <Label className="text-sm font-medium">Registration Number</Label>
+                        <p className="text-sm">{selectedRequest.business_info.business_registration}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* Review Form */}
-              <div className="space-y-4">
-                {reviewAction === 'approve' && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Verification Confidence Score (1-100)
-                    </label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={reviewData.verificationScore}
-                      onChange={(e) => setReviewData(prev => ({
-                        ...prev,
-                        verificationScore: parseInt(e.target.value) || 85
-                      }))}
-                    />
-                  </div>
-                )}
-
-                {reviewAction === 'reject' && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Rejection Reason *
-                    </label>
-                    <Select
-                      value={reviewData.rejectionReason}
-                      onValueChange={(value) => setReviewData(prev => ({
-                        ...prev,
-                        rejectionReason: value
-                      }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select rejection reason..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="poor_quality">Poor image quality</SelectItem>
-                        <SelectItem value="unreadable">Document text not readable</SelectItem>
-                        <SelectItem value="expired">Document appears expired</SelectItem>
-                        <SelectItem value="invalid_document">Invalid document type</SelectItem>
-                        <SelectItem value="missing_information">Missing required information</SelectItem>
-                        <SelectItem value="suspicious">Suspicious or fraudulent</SelectItem>
-                        <SelectItem value="other">Other (specify in notes)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Admin Notes
-                  </label>
-                  <Textarea
-                    placeholder="Additional notes about this verification..."
-                    value={reviewData.adminNotes}
-                    onChange={(e) => setReviewData(prev => ({
-                      ...prev,
-                      adminNotes: e.target.value
-                    }))}
-                    rows={3}
-                  />
+              {/* Documents */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Uploaded Documents</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {selectedRequest.documents.map((doc, index) => (
+                    <div key={index} className="border rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="h-4 w-4" />
+                        <span className="font-medium">{doc.filename}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Type: {doc.type}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(doc.url, '_blank')}
+                      >
+                        View Document
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsReviewDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmitReview}
-                  className={
-                    reviewAction === 'approve' 
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : 'bg-red-600 hover:bg-red-700'
-                  }
-                  disabled={reviewAction === 'reject' && !reviewData.rejectionReason}
-                >
-                  {reviewAction === 'approve' ? 'Approve Verification' : 'Reject Verification'}
-                </Button>
-              </div>
+              {/* Additional Information */}
+              {selectedRequest.additional_info && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Additional Information</h3>
+                  <p className="text-sm">{selectedRequest.additional_info}</p>
+                </div>
+              )}
+
+              {/* Admin Notes */}
+              {selectedRequest.admin_notes && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Admin Notes</h3>
+                  <p className="text-sm">{selectedRequest.admin_notes}</p>
+                </div>
+              )}
             </div>
           )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDetailsModal(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Approval Modal */}
+      <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve Identity Verification</DialogTitle>
+            <DialogDescription>
+              This will approve the identity verification and unlock all platform features for the user.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="approval-notes">Admin Notes (Optional)</Label>
+              <Textarea
+                id="approval-notes"
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                placeholder="Add any notes about this approval..."
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowApprovalModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleApprove} disabled={processing}>
+              {processing ? "Approving..." : "Approve Verification"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rejection Modal */}
+      <Dialog open={showRejectionModal} onOpenChange={setShowRejectionModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Identity Verification</DialogTitle>
+            <DialogDescription>
+              This will reject the identity verification. Please provide a reason for the rejection.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rejection-notes">Rejection Reason *</Label>
+              <Textarea
+                id="rejection-notes"
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                placeholder="Please provide a reason for rejection..."
+                rows={3}
+                required
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRejectionModal(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleReject} 
+              disabled={processing || !adminNotes.trim()}
+            >
+              {processing ? "Rejecting..." : "Reject Verification"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

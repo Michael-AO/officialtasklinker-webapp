@@ -1,7 +1,9 @@
--- Manual Verification System Database Schema
--- This script creates the necessary tables and storage bucket for manual verification
+-- STEP-BY-STEP: Manual Verification Database Setup
+-- Run this in your Supabase SQL Editor
 
--- Create storage bucket for verification documents
+-- =====================================================
+-- STEP 1: Create Storage Bucket for Documents
+-- =====================================================
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'verification-documents',
@@ -11,7 +13,9 @@ VALUES (
   ARRAY['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
 ) ON CONFLICT (id) DO NOTHING;
 
--- Create manual verification requests table
+-- =====================================================
+-- STEP 2: Create Manual Verification Requests Table
+-- =====================================================
 CREATE TABLE IF NOT EXISTS manual_verification_requests (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -29,14 +33,22 @@ CREATE TABLE IF NOT EXISTS manual_verification_requests (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create indexes for better performance
+-- =====================================================
+-- STEP 3: Create Indexes for Performance
+-- =====================================================
 CREATE INDEX IF NOT EXISTS idx_manual_verification_user_id ON manual_verification_requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_manual_verification_status ON manual_verification_requests(status);
 CREATE INDEX IF NOT EXISTS idx_manual_verification_type ON manual_verification_requests(verification_type);
 CREATE INDEX IF NOT EXISTS idx_manual_verification_submitted_at ON manual_verification_requests(submitted_at);
 
--- Create RLS policies for manual verification requests
+-- =====================================================
+-- STEP 4: Enable Row Level Security
+-- =====================================================
 ALTER TABLE manual_verification_requests ENABLE ROW LEVEL SECURITY;
+
+-- =====================================================
+-- STEP 5: Create RLS Policies
+-- =====================================================
 
 -- Users can view their own verification requests
 CREATE POLICY "Users can view own verification requests" ON manual_verification_requests
@@ -70,7 +82,11 @@ CREATE POLICY "Admins can update all verification requests" ON manual_verificati
     )
   );
 
--- Create function to update updated_at timestamp
+-- =====================================================
+-- STEP 6: Create Helper Functions
+-- =====================================================
+
+-- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_manual_verification_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -79,13 +95,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for updated_at
-CREATE TRIGGER update_manual_verification_updated_at
-  BEFORE UPDATE ON manual_verification_requests
-  FOR EACH ROW
-  EXECUTE FUNCTION update_manual_verification_updated_at();
-
--- Create function to handle verification approval
+-- Function to handle verification approval
 CREATE OR REPLACE FUNCTION handle_verification_approval()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -125,13 +135,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for verification approval
-CREATE TRIGGER handle_verification_approval_trigger
-  AFTER UPDATE ON manual_verification_requests
-  FOR EACH ROW
-  EXECUTE FUNCTION handle_verification_approval();
-
--- Create function to handle verification rejection
+-- Function to handle verification rejection
 CREATE OR REPLACE FUNCTION handle_verification_rejection()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -163,19 +167,39 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for verification rejection
+-- =====================================================
+-- STEP 7: Create Triggers
+-- =====================================================
+
+-- Trigger for updated_at
+CREATE TRIGGER update_manual_verification_updated_at
+  BEFORE UPDATE ON manual_verification_requests
+  FOR EACH ROW
+  EXECUTE FUNCTION update_manual_verification_updated_at();
+
+-- Trigger for verification approval
+CREATE TRIGGER handle_verification_approval_trigger
+  AFTER UPDATE ON manual_verification_requests
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_verification_approval();
+
+-- Trigger for verification rejection
 CREATE TRIGGER handle_verification_rejection_trigger
   AFTER UPDATE ON manual_verification_requests
   FOR EACH ROW
   EXECUTE FUNCTION handle_verification_rejection();
 
--- Grant necessary permissions
+-- =====================================================
+-- STEP 8: Grant Permissions
+-- =====================================================
 GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT ALL ON manual_verification_requests TO authenticated;
 GRANT USAGE ON SCHEMA storage TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON storage.objects TO authenticated;
 
--- Create view for admin dashboard
+-- =====================================================
+-- STEP 9: Create Admin Dashboard View
+-- =====================================================
 CREATE OR REPLACE VIEW admin_verification_dashboard AS
 SELECT 
   mvr.id,
@@ -203,6 +227,29 @@ ORDER BY mvr.submitted_at DESC;
 -- Grant access to admin view
 GRANT SELECT ON admin_verification_dashboard TO authenticated;
 
--- Create indexes for admin dashboard performance
+-- =====================================================
+-- STEP 10: Create Performance Indexes
+-- =====================================================
 CREATE INDEX IF NOT EXISTS idx_admin_verification_dashboard_status ON manual_verification_requests(status, submitted_at);
 CREATE INDEX IF NOT EXISTS idx_admin_verification_dashboard_type ON manual_verification_requests(verification_type, status);
+
+-- =====================================================
+-- VERIFICATION: Check if everything was created successfully
+-- =====================================================
+SELECT 'Schema setup complete!' as status;
+
+-- Check if table exists
+SELECT 
+  CASE 
+    WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'manual_verification_requests') 
+    THEN '✅ manual_verification_requests table created'
+    ELSE '❌ manual_verification_requests table NOT created'
+  END as table_status;
+
+-- Check if storage bucket exists
+SELECT 
+  CASE 
+    WHEN EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'verification-documents') 
+    THEN '✅ verification-documents bucket created'
+    ELSE '❌ verification-documents bucket NOT created'
+  END as bucket_status;
