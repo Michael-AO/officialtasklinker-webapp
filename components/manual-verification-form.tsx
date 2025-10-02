@@ -139,17 +139,17 @@ export function ManualVerificationForm({ userType, onSuccess, onError }: ManualV
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Manual Verification
+            AI Verification
           </CardTitle>
           <CardDescription>
-            Submit your documents for manual verification review
+            Submit your documents for AI verification review
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Manual Verification Process:</strong>
+              <strong>AI Verification Process:</strong>
               <ul className="mt-2 space-y-1 text-sm">
                 <li>• Submit required documents and information</li>
                 <li>• Our team will review your submission within 30 minutes</li>
@@ -160,7 +160,7 @@ export function ManualVerificationForm({ userType, onSuccess, onError }: ManualV
           </Alert>
           
           <Button onClick={() => setShowForm(true)} className="w-full">
-            Begin Manual Verification
+            Begin AI Verification
           </Button>
         </CardContent>
       </Card>
@@ -172,7 +172,7 @@ export function ManualVerificationForm({ userType, onSuccess, onError }: ManualV
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Manual Verification Form
+          AI Verification Form
         </CardTitle>
         <CardDescription>
           Complete the form below to submit your verification request

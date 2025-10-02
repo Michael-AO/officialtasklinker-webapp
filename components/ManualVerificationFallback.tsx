@@ -3,7 +3,7 @@
 export default function ManualVerificationFallback() {
   return (
     <div className="p-4 bg-yellow-100 border border-yellow-400 rounded">
-      <h3 className="font-bold text-yellow-800">Manual Verification Required</h3>
+      <h3 className="font-bold text-yellow-800">AI Verification Required</h3>
       <p className="text-yellow-600 mb-4">
         Our automated verification system is temporarily unavailable. 
         Please contact support to complete your verification manually.

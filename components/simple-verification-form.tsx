@@ -139,10 +139,10 @@ export function SimpleVerificationForm({ userType, onSuccess, onError }: SimpleV
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Manual Verification
+            AI Verification
           </CardTitle>
           <CardDescription>
-            Submit your documents for manual verification review
+            Submit your documents for AI verification review
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

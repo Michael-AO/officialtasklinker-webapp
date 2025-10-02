@@ -282,7 +282,7 @@ export function VerificationStatus({ showActions = true, compact = false }: Veri
                     onClick={() => window.location.href = "/dashboard/verification/manual"}
                   >
                     <FileText className="h-4 w-4 mr-2" />
-                    Manual Verification
+                    AI Verification
                   </Button>
                 </div>
               )}

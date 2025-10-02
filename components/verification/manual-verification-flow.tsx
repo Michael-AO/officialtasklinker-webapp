@@ -299,7 +299,7 @@ export function ManualVerificationFlow({ onSuccess, onCancel }: ManualVerificati
       <Alert>
         <Clock className="h-4 w-4" />
         <AlertDescription>
-          <strong>Processing Time:</strong> Manual verification typically takes 24-48 hours. 
+          <strong>Processing Time:</strong> AI verification typically takes 5-10 minutes. 
           You'll receive an email notification once your documents are reviewed.
         </AlertDescription>
       </Alert>
