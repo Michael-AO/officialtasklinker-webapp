@@ -1,4 +1,4 @@
-export interface Database {
+deloy export interface Database {
   public: {
     Tables: {
       users: {
