@@ -15,10 +15,9 @@ import { Progress } from "@/components/ui/progress"
 import { Upload, X, FileText, ImageIcon, File, ExternalLink, Plus, Trash2, Eye, Shield, Camera, CheckCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
-import { getInitials } from "@/lib/utils"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 
 interface PortfolioItem {
   id: string
@@ -489,15 +488,15 @@ export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpande
               <p className="text-muted-foreground">Add a professional photo to build trust with clients</p>
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage 
-                      src={profileImagePreview || user?.avatar} 
-                      alt={user?.name || "Profile"} 
-                    />
-                    <AvatarFallback className="text-lg">
-                      {getInitials(user?.name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar 
+                    user={{
+                      id: user?.id || "",
+                      name: user?.name,
+                      avatar: profileImagePreview || user?.avatar
+                    }}
+                    className="h-20 w-20"
+                    fallbackClassName="text-lg"
+                  />
                   <Button
                     size="sm"
                     variant="outline"

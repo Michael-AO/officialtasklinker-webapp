@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { getDefaultAvatar } from "@/lib/avatar-utils"
 
 // Helper function to validate UUID format
 function isValidUUID(str: string): boolean {
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
           hourly_rate: null,
           skills: [],
           phone: null,
-          avatar_url: null,
+          avatar_url: getDefaultAvatar(userId),
           profile_completion: 0,
         }
 

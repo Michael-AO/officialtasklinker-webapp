@@ -1,5 +1,6 @@
 import { supabase } from "./supabase"
 import type { Database } from "@/types/supabase"
+import { getDefaultAvatar } from "./avatar-utils"
 
 type Tables = Database["public"]["Tables"]
 type User = Tables["users"]["Row"]
@@ -30,8 +31,8 @@ export class DatabaseService {
           `${authUser.user_metadata?.first_name || ""} ${authUser.user_metadata?.last_name || ""}`.trim() ||
           authUser.email.split("@")[0],
         user_type: authUser.user_metadata?.user_type || "freelancer",
-        avatar_url: authUser.user_metadata?.avatar_url || null,
-        is_verified: authUser.email_confirmed_at ? true : false,
+        avatar_url: authUser.user_metadata?.avatar_url || getDefaultAvatar(authUser.id),
+        is_verified: false, // Always start as unverified, require email confirmation
         dojah_verified: false,
         phone: authUser.user_metadata?.phone || null,
         bio: null,

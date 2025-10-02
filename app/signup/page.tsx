@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { supabase } from "@/lib/supabase"
+import { getDefaultAvatar } from "@/lib/avatar-utils"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
@@ -85,15 +86,15 @@ export default function SignupPage() {
     console.log("Starting signup process...")
 
     try {
-      // 1. Create user in Supabase (with default email confirmation enabled)
+      // 1. Create user in Supabase (with email confirmation required)
       console.log("Creating user in Supabase...")
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/verify-email/callback`,
           data: {
             user_type: formData.userType,
-            // You can still store first/last name in metadata if you want
             first_name: formData.firstName,
             last_name: formData.lastName,
           },
@@ -124,7 +125,7 @@ export default function SignupPage() {
         email: authData.user.email!,
         name: fullName || authData.user.email!.split("@")[0],
         user_type: formData.userType,
-        avatar_url: null,
+        avatar_url: getDefaultAvatar(authData.user.id),
         is_verified: false,
         phone: null,
         bio: null,

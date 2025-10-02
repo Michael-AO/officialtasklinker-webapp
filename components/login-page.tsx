@@ -7,6 +7,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Zap } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { getDefaultAvatar } from "@/lib/avatar-utils"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -85,6 +86,7 @@ export default function LoginPage() {
               ? `${authData.user.user_metadata.first_name} ${authData.user.user_metadata.last_name}`
               : authData.user.email!.split("@")[0],
             user_type: authData.user.user_metadata?.user_type || "client",
+            avatar_url: authData.user.user_metadata?.avatar_url || getDefaultAvatar(authData.user.id),
             is_verified: authData.user.email_confirmed_at ? true : false,
             rating: 0,
             completed_tasks: 0,
