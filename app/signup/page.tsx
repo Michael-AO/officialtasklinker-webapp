@@ -156,18 +156,37 @@ export default function SignupPage() {
         
         if (userCreateError) {
           console.error("❌ Error creating user record:", userCreateError)
-          // Check if it's a 409 conflict (duplicate key)
+          // Check if it's a duplicate key error (user already exists)
           if (userCreateError.code === '23505' || userCreateError.message?.includes('duplicate key')) {
-            console.log("User record already exists (409 conflict), continuing...")
+            console.log("✅ User record already exists (duplicate key), continuing with signup...")
+            // This is actually fine - the user exists, we can continue
           } else {
-            console.warn("User record creation failed, but auth user was created. User ID:", authData.user.id)
+            console.warn("⚠️ User record creation failed, but auth user was created. User ID:", authData.user.id)
+            // Don't throw error, just continue with the flow
           }
         } else {
           console.log("✅ User record created successfully")
         }
       }
 
-      // 3. Send verification email with confirmation link using our Brevo service
+      // 3. Check if user is already verified, if not send verification email
+      console.log("Checking user verification status...")
+      const { data: userData } = await supabase
+        .from("users")
+        .select("is_verified")
+        .eq("email", formData.email)
+        .single()
+
+      if (userData && userData.is_verified) {
+        console.log("✅ User is already verified, redirecting to dashboard...")
+        // Redirect to dashboard since user is already verified
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 1500)
+        return
+      }
+
+      // Send verification email with confirmation link using our Brevo service
       console.log("Sending verification email with confirmation link via Brevo...")
       try {
         // Generate a verification token for the email link
