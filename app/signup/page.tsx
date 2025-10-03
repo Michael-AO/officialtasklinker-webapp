@@ -86,12 +86,13 @@ export default function SignupPage() {
     console.log("Starting signup process...")
 
     try {
-      // 1. Create user in Supabase (with email confirmation required)
+      // 1. Create user in Supabase (without email confirmation for now)
       console.log("Creating user in Supabase...")
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
+          // Disable email confirmation temporarily since Supabase email is not configured
           emailRedirectTo: `${window.location.origin}/verify-email/callback`,
           data: {
             user_type: formData.userType,
@@ -120,35 +121,77 @@ export default function SignupPage() {
       // 2. Create user record in the users table (only columns that exist)
       console.log("Creating user record in users table...")
       const fullName = `${formData.firstName} ${formData.lastName}`.trim()
-      const { error: userCreateError } = await supabase.from("users").insert({
-        id: authData.user.id,
-        email: authData.user.email!,
-        name: fullName || authData.user.email!.split("@")[0],
-        user_type: formData.userType,
-        avatar_url: getDefaultAvatar(authData.user.id),
-        is_verified: false,
-        phone: null,
-        bio: null,
-        location: null,
-        hourly_rate: null,
-        skills: [],
-        rating: 0,
-        completed_tasks: 0,
-        total_earned: 0,
-        join_date: authData.user.created_at || new Date().toISOString(),
-        last_active: new Date().toISOString(),
-        is_active: true,
-        created_at: authData.user.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      if (userCreateError) {
-        console.error("❌ Error creating user record:", userCreateError)
-        console.warn("User record creation failed, but auth user was created. User ID:", authData.user.id)
+      
+      // Check if user already exists to avoid 409 conflict
+      const { data: existingUser, error: checkError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", authData.user.id)
+        .single()
+      
+      if (existingUser) {
+        console.log("✅ User record already exists, skipping creation")
       } else {
-        console.log("✅ User record created successfully")
+        const { error: userCreateError } = await supabase.from("users").insert({
+          id: authData.user.id,
+          email: authData.user.email!,
+          name: fullName || authData.user.email!.split("@")[0],
+          user_type: formData.userType,
+          avatar_url: getDefaultAvatar(authData.user.id),
+          is_verified: false,
+          phone: null,
+          bio: null,
+          location: null,
+          hourly_rate: null,
+          skills: [],
+          rating: 0,
+          completed_tasks: 0,
+          total_earned: 0,
+          join_date: authData.user.created_at || new Date().toISOString(),
+          last_active: new Date().toISOString(),
+          is_active: true,
+          created_at: authData.user.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        
+        if (userCreateError) {
+          console.error("❌ Error creating user record:", userCreateError)
+          // Check if it's a 409 conflict (duplicate key)
+          if (userCreateError.code === '23505' || userCreateError.message?.includes('duplicate key')) {
+            console.log("User record already exists (409 conflict), continuing...")
+          } else {
+            console.warn("User record creation failed, but auth user was created. User ID:", authData.user.id)
+          }
+        } else {
+          console.log("✅ User record created successfully")
+        }
       }
 
-      // 3. Show success message and redirect to verification page
+      // 3. Send verification email using our Brevo service
+      console.log("Sending verification email via Brevo...")
+      try {
+        const emailResponse = await fetch('/api/send-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            otp: 'VERIFY', // Special token for email verification
+            type: 'signup'
+          })
+        })
+        
+        if (emailResponse.ok) {
+          console.log("✅ Verification email sent successfully")
+        } else {
+          console.warn("⚠️ Failed to send verification email, but user created successfully")
+        }
+      } catch (emailError) {
+        console.warn("⚠️ Email sending failed:", emailError)
+      }
+
+      // 4. Show success message and redirect to verification page
       console.log("Redirecting to verify-email page...")
       setTimeout(() => {
         router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
