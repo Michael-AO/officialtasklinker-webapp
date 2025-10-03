@@ -91,15 +91,8 @@ export default function SignupPage() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-          // Remove emailRedirectTo to prevent Supabase from trying to send emails
-          // We'll handle email verification with our Brevo service instead
-          data: {
-            user_type: formData.userType,
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-          },
-        },
+        // Remove options entirely to prevent Supabase from trying to send emails
+        // We'll handle all email verification with our Brevo service
       })
 
       if (authError) {
@@ -137,6 +130,8 @@ export default function SignupPage() {
           email: authData.user.email!,
           name: fullName || authData.user.email!.split("@")[0],
           user_type: formData.userType,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
           avatar_url: getDefaultAvatar(authData.user.id),
           is_verified: false,
           phone: null,
@@ -186,36 +181,32 @@ export default function SignupPage() {
         return
       }
 
-      // Send OTP verification email using our Brevo service
-      console.log("Generating OTP and sending verification email...")
+      // Send verification email with confirmation link using our Brevo service
+      console.log("Sending verification email with confirmation link via Brevo...")
       try {
-        // Generate 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString()
-        console.log("Generated OTP:", otp)
+        // Generate a verification token for the email link
+        const verificationToken = authData.user.id // Use user ID as token for simplicity
+        const confirmationLink = `${window.location.origin}/verify-email/callback?token=${verificationToken}&type=signup`
         
-        // Send OTP via email using Brevo service
-        const emailResponse = await fetch('/api/send-otp', {
+        const emailResponse = await fetch('/api/send-verification-email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             email: formData.email,
-            otp: otp,
-            type: 'signup'
+            name: fullName,
+            confirmationLink: confirmationLink
           })
         })
         
         if (emailResponse.ok) {
-          console.log("✅ OTP verification email sent successfully")
-          // Store OTP in localStorage for verification
-          localStorage.setItem('pending_otp', otp)
-          localStorage.setItem('pending_email', formData.email)
+          console.log("✅ Verification email with confirmation link sent successfully")
         } else {
-          console.warn("⚠️ Failed to send OTP email, but user created successfully")
+          console.warn("⚠️ Failed to send verification email, but user created successfully")
         }
       } catch (emailError) {
-        console.warn("⚠️ OTP email sending failed:", emailError)
+        console.warn("⚠️ Email sending failed:", emailError)
       }
 
       // 4. Show success message and redirect to verification page
