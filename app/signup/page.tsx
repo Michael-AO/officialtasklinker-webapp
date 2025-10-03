@@ -167,23 +167,27 @@ export default function SignupPage() {
         }
       }
 
-      // 3. Send verification email using our Brevo service
-      console.log("Sending verification email via Brevo...")
+      // 3. Send verification email with confirmation link using our Brevo service
+      console.log("Sending verification email with confirmation link via Brevo...")
       try {
-        const emailResponse = await fetch('/api/send-otp', {
+        // Generate a verification token for the email link
+        const verificationToken = authData.user.id // Use user ID as token for simplicity
+        const confirmationLink = `${window.location.origin}/verify-email/callback?token=${verificationToken}&type=signup`
+        
+        const emailResponse = await fetch('/api/send-verification-email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             email: formData.email,
-            otp: 'VERIFY', // Special token for email verification
-            type: 'signup'
+            name: fullName,
+            confirmationLink: confirmationLink
           })
         })
         
         if (emailResponse.ok) {
-          console.log("✅ Verification email sent successfully")
+          console.log("✅ Verification email with confirmation link sent successfully")
         } else {
           console.warn("⚠️ Failed to send verification email, but user created successfully")
         }
