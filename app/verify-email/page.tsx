@@ -18,6 +18,7 @@ export default function VerifyEmailPage() {
   const [isVerified, setIsVerified] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [otp, setOtp] = useState("")
 
   // Get email from URL params
   const [userEmail, setUserEmail] = useState<string>("")
