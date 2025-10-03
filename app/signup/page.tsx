@@ -91,8 +91,14 @@ export default function SignupPage() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        // Remove options entirely to prevent Supabase from trying to send emails
-        // We'll handle all email verification with our Brevo service
+        options: {
+          // Include user metadata for proper profile creation
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            user_type: formData.userType,
+          },
+        },
       })
 
       if (authError) {

@@ -30,54 +30,53 @@ export default function CallbackPageContent() {
           return
         }
 
-        // Verify the token with Supabase
-        console.log("[Callback] Verifying token with Supabase...")
-        setDebug(prev => prev + `Verifying token with Supabase...\n`)
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: 'signup'
-        })
-        console.log("[Callback] Supabase verifyOtp result:", { data, error })
-        setDebug(prev => prev + `Supabase verifyOtp result: ${JSON.stringify({ data, error })}\n`)
+        // Verify the token by checking if user exists in database
+        console.log("[Callback] Verifying confirmation token...")
+        setDebug(prev => prev + `Verifying confirmation token: ${token}\n`)
+        
+        // Get user from database using the token (which is the user ID)
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", token)
+          .single()
 
-        if (error) {
+        console.log("[Callback] User lookup result:", { userData, userError })
+        setDebug(prev => prev + `User lookup result: ${JSON.stringify({ userData, userError })}\n`)
+
+        if (userError || !userData) {
           setStatus("error")
           setMessage("Invalid or expired confirmation link. Please try signing up again.")
-          setDebug(prev => prev + `Error: ${error.message || error}\n`)
+          setDebug(prev => prev + `Error: User not found - ${userError?.message || 'No user data'}\n`)
           return
         }
 
-        if (data && data.user) {
-          // Mark user as verified in our database
-          console.log("[Callback] Marking user as verified in DB:", data.user.email)
-          setDebug(prev => prev + `Marking user as verified in DB: ${data.user.email}\n`)
-          const { error: updateError } = await supabase
-            .from("users")
-            .update({
-              is_verified: true,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("email", data.user.email)
+        // Mark user as verified in our database
+        console.log("[Callback] Marking user as verified in DB:", userData.email)
+        setDebug(prev => prev + `Marking user as verified in DB: ${userData.email}\n`)
+        
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            is_verified: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", token)
 
-          if (updateError) {
-            console.error("[Callback] Database update error:", updateError)
-            setDebug(prev => prev + `Database update error: ${updateError.message || updateError}\n`)
-            // Don't fail the whole process if database update fails
-          }
-
-          setStatus("success")
-          setMessage("Email confirmed successfully! Redirecting to dashboard...")
-          setDebug(prev => prev + `Success! Redirecting...\n`)
-
-          // Redirect to dashboard after a short delay
-          setTimeout(() => {
-            router.push("/dashboard")
-          }, 2000)
-        } else {
-          setStatus("error")
-          setMessage("Confirmation failed. Please try again.")
-          setDebug(prev => prev + `Error: No user returned from Supabase.\n`)
+        if (updateError) {
+          console.error("[Callback] Database update error:", updateError)
+          setDebug(prev => prev + `Database update error: ${updateError.message || updateError}\n`)
+          // Don't fail the whole process if database update fails
         }
+
+        setStatus("success")
+        setMessage("Email confirmed successfully! Redirecting to dashboard...")
+        setDebug(prev => prev + `Success! Redirecting...\n`)
+
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          router.push("/dashboard")
+        }, 2000)
       } catch (error: any) {
         console.error("[Callback] Email confirmation error:", error)
         setStatus("error")
