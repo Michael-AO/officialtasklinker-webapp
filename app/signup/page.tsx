@@ -92,8 +92,8 @@ export default function SignupPage() {
         email: formData.email,
         password: formData.password,
         options: {
-          // Disable email confirmation temporarily since Supabase email is not configured
-          emailRedirectTo: `${window.location.origin}/verify-email/callback`,
+          // Remove emailRedirectTo to prevent Supabase from trying to send emails
+          // We'll handle email verification with our Brevo service instead
           data: {
             user_type: formData.userType,
             first_name: formData.firstName,
