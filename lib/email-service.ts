@@ -263,4 +263,151 @@ export class EmailService {
       htmlContent,
     })
   }
+
+  /**
+   * Send magic link email for authentication
+   */
+  static async sendMagicLinkEmail(
+    email: string,
+    name: string,
+    magicLinkUrl: string,
+    type: 'signup' | 'login'
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const subject = type === 'signup' 
+      ? 'Welcome to TaskLinkers - Complete Your Signup'
+      : 'Sign in to TaskLinkers'
+
+    const htmlContent = this.getMagicLinkTemplate(name, magicLinkUrl, type)
+
+    // Log magic link URL in development for easy testing
+    if (process.env.NODE_ENV === 'development') {
+      console.log('\n' + '='.repeat(80))
+      console.log('🔗 MAGIC LINK VERIFICATION URL:')
+      console.log('='.repeat(80))
+      console.log(magicLinkUrl)
+      console.log('='.repeat(80) + '\n')
+      console.log('📧 Email:', email)
+      console.log('👤 Name:', name)
+      console.log('🔐 Type:', type)
+      console.log('\n' + '💡 Copy the URL above and paste it in your browser to test\n')
+    }
+
+    return this.sendEmail({
+      to: email,
+      toName: name,
+      subject,
+      htmlContent,
+    })
+  }
+
+  /**
+   * Get magic link email template
+   */
+  private static getMagicLinkTemplate(name: string, magicLinkUrl: string, type: 'signup' | 'login'): string {
+    const isSignup = type === 'signup'
+    const greeting = isSignup ? 'Welcome to TaskLinkers!' : 'Welcome back!'
+    const actionText = isSignup ? 'Complete Your Signup' : 'Sign In to Your Account'
+    const message = isSignup
+      ? 'Thank you for signing up with TaskLinkers! Click the button below to complete your registration and access your account.'
+      : 'Click the button below to securely sign in to your TaskLinkers account.'
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${actionText} - TaskLinkers</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f5f5f5;">
+          
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px 20px; text-align: center;">
+            <div style="background: white; width: 60px; height: 60px; border-radius: 12px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 11l3 3L22 4" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700;">${greeting}</h1>
+            <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0 0 0; font-size: 16px;">${actionText}</p>
+          </div>
+          
+          <!-- Content -->
+          <div style="background: white; padding: 40px 30px; border-radius: 0;">
+            <p style="font-size: 16px; margin: 0 0 24px 0; color: #374151;">
+              Hi ${name},
+            </p>
+            
+            <p style="font-size: 16px; margin: 0 0 32px 0; color: #374151;">
+              ${message}
+            </p>
+            
+            <!-- CTA Button -->
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="${magicLinkUrl}" 
+                 style="display: inline-block; background: #3b82f6; color: white; padding: 16px 48px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); transition: background 0.3s;">
+                ${actionText}
+              </a>
+            </div>
+            
+            <!-- Alternative Link -->
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 32px 0;">
+              <p style="font-size: 14px; color: #6b7280; margin: 0 0 12px 0; font-weight: 600;">
+                Button not working? Copy and paste this link:
+              </p>
+              <p style="margin: 0; font-size: 13px; word-break: break-all; color: #3b82f6; font-family: monospace;">
+                ${magicLinkUrl}
+              </p>
+            </div>
+            
+            <!-- Security Notice -->
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 4px; margin: 32px 0;">
+              <p style="margin: 0 0 8px 0; font-weight: 600; color: #92400e; font-size: 14px;">
+                🔒 Security Information:
+              </p>
+              <ul style="margin: 0; padding-left: 20px; color: #78350f; font-size: 13px;">
+                <li>This link will expire in 24 hours</li>
+                <li>It can only be used once</li>
+                <li>Never share this link with anyone</li>
+                <li>If you didn't request this, you can safely ignore this email</li>
+              </ul>
+            </div>
+            
+            ${isSignup ? `
+            <!-- What's Next -->
+            <div style="margin-top: 32px;">
+              <p style="font-size: 14px; color: #6b7280; margin: 0 0 12px 0; font-weight: 600;">
+                What's next?
+              </p>
+              <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 14px; line-height: 1.8;">
+                <li>Complete your profile</li>
+                <li>Browse available tasks or post your first task</li>
+                <li>Connect with talented freelancers or find great opportunities</li>
+                <li>Start earning or hiring today</li>
+              </ul>
+            </div>
+            ` : ''}
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+            
+            <p style="font-size: 12px; color: #9ca3af; margin: 0; text-align: center;">
+              Need help? Contact us at support@tasklinkers.com
+            </p>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background: #f9fafb; padding: 24px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">
+              This email was sent from TaskLinkers
+            </p>
+            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+              © ${new Date().getFullYear()} TaskLinkers. All rights reserved.
+            </p>
+          </div>
+          
+        </body>
+      </html>
+    `
+  }
 } 

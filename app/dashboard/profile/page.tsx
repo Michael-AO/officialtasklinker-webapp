@@ -364,7 +364,7 @@ export default function ProfilePage() {
                       </p>
                       <Button className="w-full" asChild>
                         <Link href="/dashboard/verification">
-                          Start Manual Verification
+                          Start AI Verification
                         </Link>
                       </Button>
                     </div>
@@ -390,7 +390,7 @@ export default function ProfilePage() {
                       </p>
                       <Button className="w-full" asChild>
                         <Link href="/dashboard/verification">
-                          Start Manual Verification
+                          Start AI Verification
                         </Link>
                       </Button>
                     </div>

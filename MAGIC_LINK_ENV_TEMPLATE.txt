@@ -1,0 +1,62 @@
+# ========================================
+# TASKLINKERS - Magic Link Authentication
+# Environment Variables Template
+# ========================================
+
+# ========================================
+# DATABASE & AUTH (Supabase)
+# ========================================
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+
+# ========================================
+# JWT SESSION SECRET (REQUIRED for Magic Link Auth)
+# Generate a secure 256-bit secret using one of these methods:
+# 
+# Method 1 (Node.js):
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+#
+# Method 2 (OpenSSL):
+# openssl rand -hex 32
+#
+# Method 3 (Online):
+# Visit: https://generate-secret.now.sh/32
+# ========================================
+JWT_SECRET=your-256-bit-secret-key-change-in-production
+
+# ========================================
+# EMAIL SERVICE (Brevo)
+# ========================================
+BREVO_API_KEY=your-brevo-api-key
+NEXT_PUBLIC_SENDER_EMAIL=noreply@tasklinkers.com
+SENDER_NAME=TaskLinkers
+
+# ========================================
+# APPLICATION
+# ========================================
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NODE_ENV=development
+
+# ========================================
+# PAYMENT PROCESSING (Paystack)
+# ========================================
+PAYSTACK_SECRET_KEY=sk_test_your_paystack_secret_key
+PAYSTACK_PUBLIC_KEY=pk_test_your_paystack_public_key
+
+# ========================================
+# OPTIONAL: ID VERIFICATION (Dojah)
+# ========================================
+DOJAH_APP_ID=your_dojah_app_id
+DOJAH_SECRET_KEY=your_dojah_secret_key
+DOJAH_PUBLIC_KEY=your_dojah_public_key
+
+# ========================================
+# INSTRUCTIONS
+# ========================================
+# 1. Copy this file to .env.local in your project root
+# 2. Replace all placeholder values with your actual credentials
+# 3. Generate a JWT_SECRET using one of the methods above
+# 4. Never commit .env.local to version control
+# 5. Run the database migration: scripts/magic-link-auth-schema.sql
+
