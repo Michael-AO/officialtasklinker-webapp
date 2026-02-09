@@ -69,6 +69,7 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
     coverLetter: "",
     estimatedDuration: "",
     questions: {} as Record<string, string>,
+    portfolioLinks: "",
   })
 
   const { applications } = useApplicationsReal();
@@ -83,9 +84,7 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
         console.log("=== Fetching task data for ID:", taskId)
 
         const response = await fetch(`/api/tasks/${taskId}`, {
-          headers: {
-            "user-id": user?.id || "",
-          },
+          credentials: "include",
         })
 
         console.log("=== Task fetch response status:", response.status)
@@ -134,11 +133,35 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
       return
     }
 
+    // Enforce: answer all screening questions before submit
+    const questions = task.questions ?? []
+    if (questions.length > 0) {
+      const missing: number[] = []
+      for (let i = 0; i < questions.length; i++) {
+        const answer = applicationData.questions[i] ?? applicationData.questions[String(i)]
+        if (answer == null || String(answer).trim() === "") missing.push(i + 1)
+      }
+      if (missing.length > 0) {
+        toast({
+          title: "Answer all questions",
+          description: `Please answer screening question(s): ${missing.join(", ")}`,
+          variant: "destructive",
+        })
+        return
+      }
+    }
+
     setIsSubmitting(true)
 
     try {
       console.log("=== Submitting application for task:", taskId)
       console.log("=== Application data:", applicationData)
+
+      const portfolioUrls = applicationData.portfolioLinks
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .filter((s) => s.startsWith("http://") || s.startsWith("https://"))
 
       const applicationPayload = {
         proposed_budget: Number.parseFloat(applicationData.proposedAmount),
@@ -146,6 +169,7 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
         cover_letter: applicationData.coverLetter,
         estimated_duration: applicationData.estimatedDuration,
         questions_answers: applicationData.questions,
+        attachments: portfolioUrls,
       }
 
       console.log("=== Application payload:", applicationPayload)
@@ -154,7 +178,6 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "user-id": user.id,
         },
         body: JSON.stringify(applicationPayload),
       })
@@ -422,6 +445,20 @@ export default function TaskApplicationPage({ params }: TaskApplicationPageProps
                     ))}
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="portfolioLinks">Portfolio links (optional)</Label>
+                  <Textarea
+                    id="portfolioLinks"
+                    value={applicationData.portfolioLinks}
+                    onChange={(e) =>
+                      setApplicationData((prev) => ({ ...prev, portfolioLinks: e.target.value }))
+                    }
+                    placeholder="One URL per line (e.g. https://your-portfolio.com)"
+                    rows={2}
+                    className="font-mono text-sm"
+                  />
+                </div>
 
                 <div className="flex justify-end gap-4">
                   <Button type="button" variant="outline" onClick={() => router.back()}>

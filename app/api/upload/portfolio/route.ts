@@ -1,21 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function POST(request: NextRequest) {
   try {
     console.log("=== PORTFOLIO UPLOAD API START ===")
 
-    // Get user ID from headers
-    const userId = request.headers.get("user-id")
-    
-    if (!userId) {
-      console.error("❌ No user ID provided in headers")
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ 
         success: false, 
         error: "User ID required" 
       }, { status: 401 })
     }
 
+    const userId = user.id
     console.log("🔍 Uploading portfolio file for user:", userId)
 
     // Get the form data

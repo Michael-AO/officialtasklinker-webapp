@@ -1,37 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
-
-// Helper function to convert simple IDs to UUID format
-function convertToUUID(id: string): string {
-  if (id.length === 36 && id.includes("-")) {
-    return id // Already a UUID
-  }
-  // Convert simple ID like "1" to UUID format
-  const paddedId = id.padStart(8, "0")
-  return `${paddedId}-0000-4000-8000-000000000000`
-}
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function PUT(request: NextRequest) {
   try {
     console.log("=== UPDATE PROFILE API START ===")
 
-    // Get user ID from headers
-    const userId = request.headers.get("user-id")
-    
-    if (!userId) {
-      console.error("❌ No user ID provided in headers")
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ 
         success: false, 
         error: "User ID required" 
       }, { status: 401 })
     }
 
-    // Convert user ID to UUID format if needed
-    let formattedUserId = userId
-    if (userId.length < 36) {
-      formattedUserId = convertToUUID(userId)
-    }
-
+    const formattedUserId = user.id
     console.log("🔍 Updating profile for user:", formattedUserId)
 
     // Get the update data from request body

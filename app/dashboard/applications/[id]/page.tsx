@@ -76,9 +76,7 @@ export default function ApplicationDetailPage() {
       try {
         // Fetch application details
         const response = await fetch(`/api/applications/${applicationId}`, {
-          headers: {
-            "x-user-id": user.id,
-          },
+          credentials: "include",
         })
 
         if (!response.ok) {
@@ -112,9 +110,7 @@ export default function ApplicationDetailPage() {
     try {
       const response = await fetch(`/api/applications/${applicationId}/withdraw`, {
         method: "POST",
-        headers: {
-          "x-user-id": user?.id || "",
-        },
+        credentials: "include",
       })
 
       if (response.ok) {

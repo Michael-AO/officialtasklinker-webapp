@@ -5,7 +5,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useRealProfileData, useRealDashboardData, useRealSettingsData } from "@/hooks/use-real-data"
+import { useRealProfileData, useRealSettingsData } from "@/hooks/use-real-data"
+import { useRealDashboardData } from "@/hooks/use-dashboard-data"
 
 export function DataComparisonDebug() {
   const [showDebug, setShowDebug] = useState(false)

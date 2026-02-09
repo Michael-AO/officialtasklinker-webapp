@@ -186,9 +186,9 @@ export function MilestoneManager({
       if (escrowId) {
         const response = await fetch("/api/escrow/milestones", {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            "user-id": "current-user-id", // From auth context
           },
           body: JSON.stringify({
             escrow_id: escrowId,

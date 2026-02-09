@@ -15,11 +15,18 @@ import {
   Clock,
   Eye,
   MapPin,
+  MoreHorizontal,
   Search,
   Star,
   Users,
   Briefcase,
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { NairaIcon } from "@/components/naira-icon"
 import Link from "next/link"
 import { formatCurrency, getStatusColor, generateTaskCode } from "@/lib/api-utils"
@@ -70,7 +77,7 @@ interface Task {
     rating: number
     location: string
     email?: string
-    avatar_url?: string
+    avatar_url?: string | null
   }
 }
 
@@ -401,104 +408,82 @@ export default function BrowseTasksPage() {
         </Tabs>
       </div>
 
-      {/* Task List */}
+      {/* Task List - card design: header (avatar, name, posted), tags, title, description, price, Apply now */}
       <div className={viewMode === "grid" ? "grid gap-6 md:grid-cols-2" : "space-y-4"}>
         {tasks.map((task) => (
-          <Card key={task.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Link href={`/dashboard/browse/${task.id}`} className="hover:underline">
-                      <CardTitle className="text-lg">{task.title}</CardTitle>
-                    </Link>
-                    {task.client?.email && isVerifiedEmail(task.client.email) && (
-                      <VerifiedBadge size="sm" />
-                    )}
-                    <Badge variant="outline" className="text-xs">
-                      {generateTaskCode(task.id)}
-                    </Badge>
-                    {task.urgency === "high" && <Badge variant="destructive">Urgent</Badge>}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <NairaIcon className="h-4 w-4" />
-                      {formatCurrency(task.budget_max)}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {task.duration}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {task.location}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {timeAgo(task.created_at)}
-                    </div>
-                  </div>
+          <Card key={task.id} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-0">
+              {/* Header: avatar, name + posted time, menu */}
+              <div className="flex items-start gap-3 p-4 pb-2">
+                <Avatar className="h-10 w-10 shrink-0 rounded-full border border-gray-100">
+                  <AvatarImage src={task.client?.avatar_url ?? undefined} alt={task.client?.name} />
+                  <AvatarFallback className="bg-brand/10 text-sm font-medium text-brand">
+                    {task.client?.name?.split(" ").map((n) => n[0]).join("") || "C"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-foreground truncate">{task.client?.name || "Client"}</p>
+                  <p className="text-xs text-muted-foreground">Posted {timeAgo(task.created_at)}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => toggleSaveTask(task.id)}
-                  className={savedTasks.includes(task.id) ? "text-blue-600" : ""}
-                >
-                  <Bookmark className={`h-4 w-4 ${savedTasks.includes(task.id) ? "fill-current" : ""}`} />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
-
-                <div className="flex flex-wrap gap-2">
-                  {task.skills_required?.slice(0, 4).map((skill) => (
-                    <Badge key={skill} variant="secondary">
-                      {skill}
-                    </Badge>
-                  ))}
-                  {(task.skills_required?.length || 0) > 4 && (
-                    <Badge variant="outline">+{(task.skills_required?.length || 0) - 4} more</Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={task.client?.avatar_url} />
-                        <AvatarFallback>
-                          {task.client?.name
-                            ?.split(" ")
-                            .map((n) => n[0])
-                            .join("") || "C"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{task.client?.name || "Client"}</span>
-                      {task.client?.email && isVerifiedEmail(task.client.email) && (
-                        <span className="text-xs text-muted-foreground">(Verified)</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {task.applications_count}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Eye className="h-4 w-4" />
-                        {task.views_count}
-                      </div>
-                    </div>
-                    <Button size="sm" asChild>
-                      <Link href={`/dashboard/browse/${task.id}`}>View Details</Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full">
+                      <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                     </Button>
-                  </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => toggleSaveTask(task.id)}>
+                      <Bookmark className={`mr-2 h-4 w-4 ${savedTasks.includes(task.id) ? "fill-current" : ""}`} />
+                      {savedTasks.includes(task.id) ? "Unsave" : "Save task"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/browse/${task.id}`}>View details</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              {/* Skills / category pills */}
+              <div className="flex flex-wrap gap-2 px-4 pb-2">
+                {task.category && (
+                  <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
+                    {task.category}
+                  </span>
+                )}
+                {(task.skills_required || []).slice(0, 3).map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+              {/* Headline + description */}
+              <div className="px-4 pb-3">
+                <Link href={`/dashboard/browse/${task.id}`} className="hover:underline focus:outline-none">
+                  <h3 className="text-lg font-semibold leading-tight text-foreground line-clamp-2">{task.title}</h3>
+                </Link>
+                <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{task.description}</p>
+              </div>
+              {/* Price row: amount left, type pill right */}
+              <div className="flex items-center justify-between gap-2 px-4 pb-4">
+                <div className="flex items-center gap-1">
+                  <NairaIcon className="h-5 w-5 text-brand" />
+                  <span className="text-xl font-semibold text-brand">
+                    {task.budget_type === "hourly"
+                      ? `${formatCurrency(task.budget_max)}/hr`
+                      : formatCurrency(task.budget_max)}
+                  </span>
                 </div>
+                <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium capitalize text-brand">
+                  {task.budget_type === "hourly" ? "Hourly" : "Fixed"}
+                </span>
+              </div>
+              {/* Full-width Apply now button */}
+              <div className="border-t bg-brand/5 px-4 py-3">
+                <Button className="w-full rounded-lg bg-brand font-medium text-brand-foreground hover:bg-brand/90" asChild>
+                  <Link href={`/dashboard/browse/${task.id}`}>Apply now</Link>
+                </Button>
               </div>
             </CardContent>
           </Card>

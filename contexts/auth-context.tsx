@@ -10,6 +10,10 @@ interface AuthContextType {
   isAuthenticated: boolean
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
+  /** Alias for refreshUser - used by dashboard */
+  refreshUserVerification: () => Promise<void>
+  /** No-op for compatibility - profile updates go through API */
+  updateProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -81,6 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: user !== null,
     logout,
     refreshUser,
+    refreshUserVerification: refreshUser,
+    updateProfile: refreshUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

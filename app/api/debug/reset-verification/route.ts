@@ -1,48 +1,48 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { ServerSessionManager } from "@/lib/server-session-manager"
+
+async function resetVerification() {
+  const user = await ServerSessionManager.getCurrentUser()
+  if (!user) return { error: "Unauthorized", status: 401 as const }
+
+  const supabase = createClient()
+
+  const { data: updatedUser, error: updateError } = await supabase
+    .from("users")
+    .update({
+      is_verified: false,
+      dojah_verified: false,
+      verification_type: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id)
+    .select()
+    .single()
+
+  if (updateError) {
+    console.error("Error updating user verification status:", updateError)
+    return { error: "Failed to reset verification status", status: 500 as const }
+  }
+
+  await supabase
+    .from("manual_verification_requests")
+    .delete()
+    .eq("user_id", user.id)
+
+  return { success: true, updatedUser }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const result = await resetVerification()
+    if ("status" in result && result.status === 401) {
+      return NextResponse.json({ error: result.error }, { status: 401 })
     }
-
-    const supabase = createClient()
-
-    // Reset verification status for the current user
-    const { data: updatedUser, error: updateError } = await supabase
-      .from('users')
-      .update({
-        is_verified: false,
-        dojah_verified: false,
-        verification_type: null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', session.user.id)
-      .select()
-      .single()
-
-    if (updateError) {
-      console.error('Error updating user verification status:', updateError)
-      return NextResponse.json({ 
-        error: "Failed to reset verification status" 
-      }, { status: 500 })
+    if ("status" in result && result.status === 500) {
+      return NextResponse.json({ error: result.error }, { status: 500 })
     }
-
-    // Also delete any existing verification requests for testing
-    const { error: deleteError } = await supabase
-      .from('manual_verification_requests')
-      .delete()
-      .eq('user_id', session.user.id)
-
-    if (deleteError) {
-      console.error('Error deleting verification requests:', deleteError)
-      // Don't fail the request if this fails
-    }
-
+    const { updatedUser } = result as { success: true; updatedUser: any }
     return NextResponse.json({
       success: true,
       message: "Verification status reset successfully",
@@ -51,14 +51,25 @@ export async function POST(request: NextRequest) {
         email: updatedUser.email,
         is_verified: updatedUser.is_verified,
         dojah_verified: updatedUser.dojah_verified,
-        verification_type: updatedUser.verification_type
-      }
+        verification_type: updatedUser.verification_type,
+      },
     })
-
   } catch (error) {
-    console.error('Reset verification error:', error)
-    return NextResponse.json({ 
-      error: "Internal server error" 
-    }, { status: 500 })
+    console.error("Reset verification error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+/** GET: unverify current user and redirect to dashboard (for opening in browser). */
+export async function GET(request: NextRequest) {
+  try {
+    const result = await resetVerification()
+    if ("status" in result && (result.status === 401 || result.status === 500)) {
+      return NextResponse.redirect(new URL("/login", request.url))
+    }
+    return NextResponse.redirect(new URL("/dashboard", request.url))
+  } catch (error) {
+    console.error("Reset verification GET error:", error)
+    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 }

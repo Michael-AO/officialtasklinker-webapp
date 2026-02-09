@@ -1,14 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function GET(request: NextRequest, { params }: { params: { taskId: string } }) {
   try {
     const { taskId } = params
-    const userId = request.headers.get("user-id")
+    const user = await ServerSessionManager.getCurrentUser()
 
     console.log("=== API: Fetching escrow data for task:", taskId)
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 

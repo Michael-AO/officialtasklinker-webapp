@@ -1,53 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
 import { getDefaultAvatar } from "@/lib/avatar-utils"
-
-// Helper function to validate UUID format
-function isValidUUID(str: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-  return uuidRegex.test(str)
-}
-
-// Helper function to generate a UUID from a simple ID (for development)
-function generateUUIDFromId(id: string): string {
-  // Pad the ID to create a UUID-like format for development
-  const paddedId = id.padStart(8, "0")
-  return `${paddedId}-0000-4000-8000-000000000000`
-}
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user ID from headers (sent by the frontend)
-    const rawUserId = request.headers.get("x-user-id")
-
-    if (!rawUserId) {
-      console.log("❌ No user ID provided")
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ success: false, error: "User ID required" }, { status: 401 })
     }
 
-    console.log("🔍 Raw user ID received:", rawUserId)
-
-    // Handle different user ID formats
-    let userId = rawUserId
-    if (!isValidUUID(rawUserId)) {
-      console.log("⚠️ User ID is not a valid UUID, attempting to handle...")
-
-      // For development: try to find user by email or create a proper UUID
-      if (rawUserId === "1" || !isNaN(Number(rawUserId))) {
-        // This is likely a development scenario with simple numeric IDs
-        console.log("🔧 Development mode: Converting simple ID to UUID format")
-        userId = generateUUIDFromId(rawUserId)
-        console.log("🔧 Generated UUID:", userId)
-      } else {
-        console.error("❌ Invalid user ID format:", rawUserId)
-        return NextResponse.json({ success: false, error: "Invalid user ID format" }, { status: 400 })
-      }
-    }
-
+    const userId = user.id
     console.log("🔍 Fetching profile for user:", userId)
 
     // First, try to get user from users table
-    const { data: user, error: userError } = await supabase
+    const { data: dbUser, error: userError } = await supabase
       .from("users")
       .select(`
         id,
@@ -73,14 +40,14 @@ export async function GET(request: NextRequest) {
     if (userError) {
       console.error("❌ User fetch error:", userError)
 
-      // If user doesn't exist, create a development profile
+      // If dbUser doesn't exist, create a development profile
       if (userError.code === "PGRST116") {
         console.log("🔄 User not found in users table, creating development profile...")
 
         const newUserData = {
           id: userId,
-          name: `User ${rawUserId}`,
-          email: `user${rawUserId}@example.com`,
+          name: `User ${userId}`,
+          email: `user${userId}@example.com`,
           user_type: "freelancer",
           created_at: new Date().toISOString(),
           rating: 0,
@@ -96,7 +63,7 @@ export async function GET(request: NextRequest) {
           profile_completion: 0,
         }
 
-        const { data: newUser, error: createError } = await supabase.from("users").insert(newUserData).select().single()
+        const { data: createdUser, error: createError } = await supabase.from("users").insert(newUserData).select().single()
 
         if (createError) {
           console.error("❌ Failed to create user:", createError)
@@ -110,21 +77,21 @@ export async function GET(request: NextRequest) {
           )
         }
 
-        console.log("✅ Created new development user profile:", newUser.name)
+        console.log("✅ Created new development user profile:", createdUser?.name)
 
         // Return the new user with default values
         return NextResponse.json({
           success: true,
           data: {
-            ...newUser,
-            avatar_url: newUser.avatar_url || null,
-            bio: newUser.bio || null,
-            location: newUser.location || null,
-            hourly_rate: newUser.hourly_rate || null,
-            skills: newUser.skills || [],
-            join_date: newUser.created_at,
-            last_active: newUser.created_at,
-            phone: newUser.phone || null,
+            ...createdUser,
+            avatar_url: createdUser?.avatar_url || null,
+            bio: createdUser?.bio || null,
+            location: createdUser?.location || null,
+            hourly_rate: createdUser?.hourly_rate || null,
+            skills: createdUser?.skills || [],
+            join_date: createdUser?.created_at,
+            last_active: createdUser?.created_at,
+            phone: createdUser?.phone || null,
           },
         })
       }
@@ -139,32 +106,32 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    if (!user) {
+    if (!dbUser) {
       console.log("❌ User not found")
       return NextResponse.json({ success: false, error: "Profile not found" }, { status: 404 })
     }
 
-    console.log("✅ User found:", user.name)
+    console.log("✅ User found:", dbUser.name)
 
     // Format the response data with safe defaults
     const formattedProfile = {
-      id: user.id,
-      name: user.name || "User",
-      email: user.email || "",
-      user_type: user.user_type || "freelancer",
-      avatar_url: user.avatar_url || null,
-      bio: user.bio || null,
-      location: user.location || null,
-      hourly_rate: user.hourly_rate || null,
-      skills: user.skills || [],
-      rating: user.rating || 0,
-      completed_tasks: user.completed_tasks || 0,
-      total_earned: user.total_earned || 0,
-      join_date: user.created_at,
-      last_active: user.created_at,
-      is_verified: user.is_verified || false,
-      phone: user.phone || null,
-      profile_completion: user.profile_completion || 0,
+      id: dbUser.id,
+      name: dbUser.name || "User",
+      email: dbUser.email || "",
+      user_type: dbUser.user_type || "freelancer",
+      avatar_url: dbUser.avatar_url || null,
+      bio: dbUser.bio || null,
+      location: dbUser.location || null,
+      hourly_rate: dbUser.hourly_rate || null,
+      skills: dbUser.skills || [],
+      rating: dbUser.rating || 0,
+      completed_tasks: dbUser.completed_tasks || 0,
+      total_earned: dbUser.total_earned || 0,
+      join_date: dbUser.created_at,
+      last_active: dbUser.created_at,
+      is_verified: dbUser.is_verified || false,
+      phone: dbUser.phone || null,
+      profile_completion: dbUser.profile_completion || 0,
     }
 
     console.log("✅ Profile formatted successfully for:", formattedProfile.name)

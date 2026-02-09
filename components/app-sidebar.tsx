@@ -14,12 +14,10 @@ import {
   Banknote,
   Shield,
   Scale,
-  CheckCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { isVerifiedEmail } from "@/lib/utils"
 import { SupportModal } from "@/components/support-modal"
 
 import {
@@ -33,9 +31,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar"
-
 const navigationItems = [
   {
     title: "Dashboard",
@@ -46,7 +42,6 @@ const navigationItems = [
     title: "Browse Tasks",
     url: "/dashboard/browse",
     icon: Search,
-    requiresVerification: true,
   },
   {
     title: "My Tasks",
@@ -58,7 +53,6 @@ const navigationItems = [
     title: "Applications",
     url: "/dashboard/applications",
     icon: Users,
-    requiresVerification: true,
   },
 ]
 
@@ -67,37 +61,19 @@ const quickActions = [
     title: "Post New Task",
     url: "/dashboard/tasks/new",
     icon: Plus,
-    requiresVerification: true,
   },
   {
     title: "Find Work",
     url: "/dashboard/browse",
     icon: Briefcase,
-    requiresVerification: true,
   },
 ]
 
-const disabledItems = [
-  {
-    title: "Messages",
-    icon: MessageSquare,
-    disabled: true,
-  },
-  {
-    title: "Payments",
-    icon: CreditCard,
-    disabled: true,
-  },
-  {
-    title: "Escrow",
-    icon: Shield,
-    disabled: true,
-  },
-  {
-    title: "Withdrawals",
-    icon: Banknote,
-    disabled: true,
-  },
+const paymentsAndMessagesItems = [
+  { title: "Messages", url: "/dashboard/messages", icon: MessageSquare },
+  { title: "Payments", url: "/dashboard/payments", icon: CreditCard },
+  { title: "Escrow", url: "/dashboard/escrow", icon: Shield },
+  { title: "Withdrawals", url: "/dashboard/payments/withdrawals", icon: Banknote },
 ]
 
 export function AppSidebar() {
@@ -112,95 +88,61 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="bg-black border-r border-gray-800 w-64 text-white">
-      <SidebarHeader className="border-b border-gray-800 bg-black">
+    <Sidebar className="bg-gray-900 border-r border-gray-800 w-64 text-white tracking-[0.02em]" style={{ fontFamily: '"Helvetica Neue", Arial, Helvetica, sans-serif' }}>
+      <SidebarHeader className="border-b border-gray-800 bg-gray-900">
         <div className="flex items-center gap-2 px-2 py-2">
           <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-8 w-8" />
           <span className="text-lg font-bold text-white">Tasklinkers</span>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="bg-black">
+      <SidebarContent className="bg-gray-900">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-300">Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-500">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => {
-                const isDisabled = item.requiresVerification && !user?.isVerified
-                
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    {isDisabled ? (
-                      <SidebarMenuButton
-                        disabled
-                        className="text-gray-500 cursor-not-allowed opacity-50"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        <div className="ml-auto text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
-                          Verify
-                        </div>
-                      </SidebarMenuButton>
-                    ) : (
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive(item.url)}
-                        className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
-                      >
-                        <Link href={item.url}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    )}
-                  </SidebarMenuItem>
-                )
-              })}
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
+                  >
+                    <Link href={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-300">Quick Actions</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-500">Quick Actions</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {quickActions.map((item) => {
-                const isDisabled = item.requiresVerification && !user?.isVerified
-                
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    {isDisabled ? (
-                      <SidebarMenuButton
-                        disabled
-                        className="text-gray-500 cursor-not-allowed opacity-50"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        <div className="ml-auto text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
-                          Verify
-                        </div>
-                      </SidebarMenuButton>
-                    ) : (
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive(item.url)}
-                        className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
-                      >
-                        <Link href={item.url}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    )}
-                  </SidebarMenuItem>
-                )
-              })}
+              {quickActions.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
+                  >
+                    <Link href={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-300">Account</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-500">Account</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -215,32 +157,25 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive("/dashboard/verification")}
-                  className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
-                >
-                  <Link href="/dashboard/verification">
-                    <span>Verification</span>
-                    {user?.isVerified && (
-                      <CheckCircle className="h-4 w-4 ml-auto text-green-500" />
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
+          <SidebarGroupLabel className="text-gray-500">Payments & Messages</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {disabledItems.map((item) => (
+              {paymentsAndMessagesItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton disabled className="text-gray-500 cursor-not-allowed opacity-60">
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
+                  >
+                    <Link href={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -249,7 +184,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-300">Legal & Support</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-500">Legal & Support</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -272,7 +207,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-gray-800 bg-black">
+      <SidebarFooter className="border-t border-gray-800 bg-gray-900">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

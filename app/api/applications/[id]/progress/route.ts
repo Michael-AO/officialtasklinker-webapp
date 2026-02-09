@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -19,11 +20,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ success: false, error: "Invalid progress type" }, { status: 400 })
     }
 
-    // Get user ID from headers
-    const userId = request.headers.get("user-id")
-    if (!userId) {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
+    const userId = user.id
 
     // First, get the application to verify the user is the task owner
     const { data: application, error: appError } = await supabase
@@ -103,11 +104,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "Invalid application ID" }, { status: 400 })
     }
 
-    // Get user ID from headers
-    const userId = request.headers.get("user-id")
-    if (!userId) {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
+    const userId = user.id
 
     // Get the application with progress data
     const { data: application, error: appError } = await supabase

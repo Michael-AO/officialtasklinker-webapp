@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CalendarDays, FileText, Users, Shield, CheckCircle, User, AlertTriangle, RefreshCw } from "lucide-react"
+import { CalendarDays, FileText, Users } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
 import { SmartTaskMatching } from "@/components/smart-task-matching"
 import Link from "next/link"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
-import { useRealDashboardData } from "@/hooks/use-real-data"
+import { useRealDashboardData } from "@/hooks/use-dashboard-data"
 import {
   Dialog,
   DialogContent,
@@ -24,17 +24,14 @@ import { formatNairaCompact } from "@/lib/currency"
 import { Progress } from "@/components/ui/progress"
 
 export default function DashboardPage() {
-  const { user, isLoading, updateProfile, refreshUserVerification } = useAuth()
+  const { user, isLoading } = useAuth()
   const router = useRouter()
   const { stats, applications, loading } = useRealDashboardData()
   const [selectedApplication, setSelectedApplication] = useState<any>(null)
   const [showAcceptDialog, setShowAcceptDialog] = useState(false)
   const [isAccepting, setIsAccepting] = useState(false)
-  const [isRefreshingVerification, setIsRefreshingVerification] = useState(false)
-
   // Filter applications to only show ones the current user has sent (as freelancer)
   const myApplications = (applications as any[]).filter(app => app.freelancer_id === user?.id)
-  
 
   useEffect(() => {
     // Only redirect if we're not loading and there's definitely no user
@@ -42,21 +39,6 @@ export default function DashboardPage() {
       router.push("/login")
     }
   }, [user, isLoading, router])
-
-  // Set up periodic verification status refresh
-  useEffect(() => {
-    if (!user || user.isVerified) {
-      return // No need to refresh if user is fully verified
-    }
-
-    // Refresh verification status every 30 seconds when user is not fully verified
-    const interval = setInterval(() => {
-      console.log("🔄 Dashboard: Refreshing verification status...")
-      refreshUserVerification()
-    }, 30000) // 30 seconds
-
-    return () => clearInterval(interval)
-  }, [user, refreshUserVerification])
 
   // Show loading state while authentication is being determined
   if (isLoading) {
@@ -117,38 +99,6 @@ export default function DashboardPage() {
   const handleRefreshApplications = () => {
     // Force a page refresh to get latest data
     window.location.reload()
-  }
-
-  const handleRefreshVerification = async () => {
-    setIsRefreshingVerification(true)
-    try {
-      await refreshUserVerification()
-      toast({
-        title: "Verification Status Updated",
-        description: "Your verification status has been refreshed.",
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to refresh verification status. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsRefreshingVerification(false)
-    }
-  }
-
-
-  // Calculate verification status
-  const isFullyVerified = user.isVerified
-  const needsEmailVerification = !user.isVerified
-  const needsIDVerification = !user.isVerified
-
-
-  // Handle starting ID verification
-  const handleStartIDVerification = () => {
-    // Redirect to verification page
-    router.push("/dashboard/verification")
   }
 
   return (
@@ -215,90 +165,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Verification Status Card - Only show for unverified users */}
-      {!isFullyVerified && (
-        <Card className="border-gray-200 bg-gray-50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-gray-100">
-                  <Shield className="h-5 w-5 text-gray-600" />
-                </div>
-                <div>
-                  <CardTitle className="text-gray-900">
-                    Verification Status
-                  </CardTitle>
-                  <CardDescription className="text-gray-600">
-                    {needsEmailVerification
-                      ? "Email verification required"
-                      : "ID verification required"
-                    }
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800">
-                  Unverified
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRefreshVerification}
-                  disabled={isRefreshingVerification}
-                  className="h-6 w-6 p-0"
-                >
-                  <RefreshCw className={`h-3 w-3 ${isRefreshingVerification ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="text-sm text-gray-700">
-                <p className="mb-2">
-                  {needsEmailVerification 
-                    ? "Verify your email to unlock platform features"
-                    : "Complete ID verification to access all features"
-                  }
-                </p>
-                {needsEmailVerification && (
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li>Post tasks (clients)</li>
-                    <li>Apply to tasks (freelancers)</li>
-                    <li>Access full platform features</li>
-                  </ul>
-                )}
-              </div>
-              
-              <div className="flex gap-2">
-                {needsEmailVerification ? (
-                  <Button asChild className="flex-1">
-                    <Link href="/verify-email">
-                      📧 Verify Email
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={handleStartIDVerification}
-                    className="flex-1"
-                  >
-                    🆔 Complete ID Verification
-                  </Button>
-                )}
-              </div>
-            </div>
-            
-            {/* Button to go to verifications page */}
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/dashboard/verification">
-                View Verification Details
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
 
       {/* Two-column grid layout - Original structure */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -433,6 +299,7 @@ export default function DashboardPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   )
 }

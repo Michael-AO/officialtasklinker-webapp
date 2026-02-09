@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, FileText, MessageSquare, DollarSign, TrendingUp, Activity } from "lucide-react"
+import { Users, FileText, MessageSquare, DollarSign, TrendingUp, Activity, Database, Scale } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 interface DashboardStats {
   totalUsers: number
@@ -25,6 +26,7 @@ export default function AdminDashboard() {
     activeTasks: 0
   })
   const [loading, setLoading] = useState(true)
+  const [seeding, setSeeding] = useState(false)
 
   useEffect(() => {
     fetchDashboardStats()
@@ -33,27 +35,28 @@ export default function AdminDashboard() {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true)
-      
-      // Fetch stats from various endpoints
-      const [usersRes, tasksRes, applicationsRes, supportRes] = await Promise.all([
-        fetch('/api/admin/users'),
-        fetch('/api/admin/tasks'),
-        fetch('/api/admin/applications'),
-        fetch('/api/admin/support-requests')
+
+      const [usersRes, tasksRes, applicationsRes, supportRes, revenueRes] = await Promise.all([
+        fetch("/api/admin/users"),
+        fetch("/api/admin/tasks"),
+        fetch("/api/admin/applications"),
+        fetch("/api/admin/support-requests"),
+        fetch("/api/admin/revenue/summary"),
       ])
 
       const usersData = await usersRes.json()
       const tasksData = await tasksRes.json()
       const applicationsData = await applicationsRes.json()
       const supportData = await supportRes.json()
+      const revenueData = revenueRes.ok ? await revenueRes.json() : { totalPlatformFee: 0 }
 
       setStats({
         totalUsers: usersData.users?.length || 0,
         totalTasks: tasksData.tasks?.length || 0,
         totalApplications: applicationsData.applications?.length || 0,
         totalSupportRequests: supportData.supportRequests?.length || 0,
-        totalRevenue: 0, // Placeholder
-        activeTasks: tasksData.tasks?.filter((task: any) => task.status === 'active')?.length || 0
+        totalRevenue: Number(revenueData.totalPlatformFee ?? 0),
+        activeTasks: tasksData.tasks?.filter((t: { status?: string }) => t.status === "active")?.length || 0,
       })
     } catch (error) {
       console.error("Error fetching dashboard stats:", error)
@@ -100,12 +103,38 @@ export default function AdminDashboard() {
     },
     {
       title: "Total Revenue",
-      value: `$${stats.totalRevenue.toLocaleString()}`,
-      description: "Platform revenue",
+      value: `₦${stats.totalRevenue.toLocaleString()}`,
+      description: "Platform fee from platform_ledger",
       icon: DollarSign,
       href: "/admin/revenue"
     }
   ]
+
+  const handleSeedDemo = async () => {
+    setSeeding(true)
+    try {
+      const res = await fetch("/api/admin/seed-demo", { method: "POST" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Seed failed")
+      const description = data.launchTaskId
+        ? `${data.tasksCreated} tasks created. Launch checklist task ready — use it to test Fund Milestone, Release, and Raise Dispute.`
+        : `${data.tasksCreated} tasks and ${data.paidTransactionsCreated} paid transactions created.`
+      toast.success("Demo data seeded", {
+        description,
+        ...(data.launchTaskId && {
+          action: {
+            label: "Open launch task",
+            onClick: () => window.open(`/dashboard/tasks/${data.launchTaskId}`, "_self"),
+          },
+        }),
+      })
+      await fetchDashboardStats()
+    } catch (e) {
+      toast.error("Seed failed", { description: e instanceof Error ? e.message : "Unknown error" })
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -134,9 +163,15 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Button onClick={fetchDashboardStats} variant="outline">
-          Refresh Stats
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleSeedDemo} variant="secondary" disabled={seeding}>
+            <Database className="mr-2 h-4 w-4" />
+            {seeding ? "Seeding…" : "Seed Demo Data"}
+          </Button>
+          <Button onClick={fetchDashboardStats} variant="outline">
+            Refresh Stats
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -182,6 +217,12 @@ export default function AdminDashboard() {
               <Button variant="outline" className="w-full justify-start">
                 <Activity className="mr-2 h-4 w-4" />
                 Support Requests
+              </Button>
+            </Link>
+            <Link href="/admin/disputes">
+              <Button variant="outline" className="w-full justify-start">
+                <Scale className="mr-2 h-4 w-4" />
+                Disputes
               </Button>
             </Link>
           </CardContent>

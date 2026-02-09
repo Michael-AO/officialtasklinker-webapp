@@ -103,9 +103,7 @@ export function ProgressTracking({
 
     try {
       const response = await fetch(`/api/applications/${applicationId}/progress`, {
-        headers: {
-          "user-id": user.id,
-        },
+        credentials: "include",
       })
 
       if (response.ok) {
@@ -130,7 +128,6 @@ export function ProgressTracking({
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "user-id": user.id,
         },
         body: JSON.stringify({ progress_type: progressType }),
       })

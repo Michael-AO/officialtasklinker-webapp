@@ -1,17 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id: applicationId } = params
-    const userId = request.headers.get("x-user-id")
+    const user = await ServerSessionManager.getCurrentUser()
 
     console.log("=== API: Withdrawing application ID:", applicationId)
-    console.log("=== API: User ID:", userId)
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
+
+    const userId = user.id
 
     if (!applicationId || applicationId === "undefined" || applicationId === "null") {
       return NextResponse.json({ success: false, error: "Invalid application ID" }, { status: 400 })

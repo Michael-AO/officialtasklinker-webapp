@@ -16,7 +16,7 @@ import { Camera, X, Plus } from "lucide-react"
 import { getInitials } from "@/lib/utils"
 
 export default function EditProfilePage() {
-  const { user, updateProfile } = useAuth()
+  const { user, refreshUser } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [newSkill, setNewSkill] = useState("")
@@ -24,11 +24,11 @@ export default function EditProfilePage() {
   const [profileImagePreview, setProfileImagePreview] = useState<string>("")
 
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    bio: user?.bio || "",
-    location: user?.location || "",
-    skills: user?.skills || [],
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    bio: user?.bio ?? "",
+    location: user?.location ?? "",
+    skills: (user?.skills ?? []) as string[],
   })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -49,9 +49,7 @@ export default function EditProfilePage() {
 
         const uploadResponse = await fetch("/api/upload/avatar", {
           method: "POST",
-          headers: {
-            "user-id": user?.id || "",
-          },
+          credentials: "include",
           body: formData,
         })
 
@@ -65,13 +63,25 @@ export default function EditProfilePage() {
         console.log("✅ Profile image uploaded:", avatarUrl)
       }
 
-      await updateProfile({
-        name: formData.name,
-        bio: formData.bio,
-        skills: formData.skills,
-        location: formData.location,
+      const updateResponse = await fetch("/api/user/profile/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: formData.name,
+          bio: formData.bio,
+          skills: formData.skills,
+          location: formData.location,
+          avatar_url: avatarUrl ?? undefined,
+        }),
       })
 
+      if (!updateResponse.ok) {
+        const err = await updateResponse.json()
+        throw new Error(err.error || "Failed to update profile")
+      }
+
+      await refreshUser()
       router.push("/dashboard/profile")
     } catch (error) {
       console.error("Failed to update profile:", error)
@@ -115,7 +125,7 @@ export default function EditProfilePage() {
   const removeSkill = (skillToRemove: string) => {
     setFormData((prev) => ({
       ...prev,
-      skills: prev.skills.filter((skill) => skill !== skillToRemove),
+      skills: prev.skills.filter((s: string) => s !== skillToRemove),
     }))
   }
 
@@ -143,7 +153,7 @@ export default function EditProfilePage() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={profileImagePreview || user?.avatar} alt={user?.name || "User"} />
+                  <AvatarImage src={(profileImagePreview || user?.avatar) ?? undefined} alt={user?.name || "User"} />
                   <AvatarFallback className="text-lg">
                     {getInitials(user?.name)}
                   </AvatarFallback>
@@ -252,7 +262,7 @@ export default function EditProfilePage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {formData.skills.map((skill) => (
+              {formData.skills.map((skill: string) => (
                 <Badge key={skill} variant="secondary" className="flex items-center gap-1">
                   {skill}
                   <Button

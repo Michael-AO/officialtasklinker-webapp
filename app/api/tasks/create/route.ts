@@ -1,48 +1,22 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
-import { isVerifiedEmail } from "@/lib/utils"
-
-// Helper function to convert simple IDs to UUID format
-function convertToUUID(id: string): string {
-  if (id.length === 36 && id.includes("-")) {
-    return id // Already a UUID
-  }
-  // Convert simple ID like "1" to UUID format
-  const paddedId = id.padStart(8, "0")
-  return `${paddedId}-0000-4000-8000-000000000000`
-}
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function POST(request: NextRequest) {
   try {
     console.log("=== TASK CREATION API START ===")
 
-    const body = await request.json()
-    console.log("Request body received:", JSON.stringify(body, null, 2))
-
-    // Extract user information from request body
-    const { user_data, ...taskFields } = body
-
-    if (!user_data || !user_data.id) {
-      console.error("No user data provided")
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
 
-    // Check if user email is admin (only admin emails can post tasks)
-    if (!user_data.email || !isVerifiedEmail(user_data.email)) {
-      console.error("User email not admin for task posting:", user_data.email)
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: "Only admin accounts can post tasks. Please contact support for admin access." 
-        }, 
-        { status: 403 }
-      )
-    }
+    const body = await request.json()
+    console.log("Request body received:", JSON.stringify(body, null, 2))
 
-    // Convert user ID to UUID format
-    const rawUserId = user_data.id
-    const userId = convertToUUID(rawUserId)
-    console.log(`User ID conversion: ${rawUserId} -> ${userId}`)
+    // Extract task fields (no longer trust user_data from body)
+    const { user_data, ...taskFields } = body
+    const userId = user.id
 
     // Extract and validate task fields
     const {
@@ -51,7 +25,10 @@ export async function POST(request: NextRequest) {
       category,
       budget_type,
       budget_amount,
-      currency = "NGN",
+      budget_min,
+      budget_max,
+      total_budget,
+      currency,
       duration,
       location = "Remote",
       skills_required = [],
@@ -60,6 +37,7 @@ export async function POST(request: NextRequest) {
       visibility = "public",
       urgency = "normal",
       experience_level = "intermediate",
+      milestones: milestonesInput = [],
     } = taskFields
 
     // Validate required fields
@@ -72,41 +50,89 @@ export async function POST(request: NextRequest) {
     if (!category) {
       return NextResponse.json({ success: false, error: "Category is required" }, { status: 400 })
     }
-    if (!budget_amount) {
-      return NextResponse.json({ success: false, error: "Budget amount is required" }, { status: 400 })
+    // Budget: support single amount or min/max range
+    const hasRange = budget_min != null && budget_max != null
+    const hasSingle = budget_amount != null && budget_amount !== ""
+    if (!hasRange && !hasSingle) {
+      return NextResponse.json({ success: false, error: "Budget amount or budget range (min and max) is required" }, { status: 400 })
+    }
+    let budgetMinVal: number
+    let budgetMaxVal: number
+    if (hasRange) {
+      budgetMinVal = Number(budget_min)
+      budgetMaxVal = Number(budget_max)
+      if (Number.isNaN(budgetMinVal) || Number.isNaN(budgetMaxVal)) {
+        return NextResponse.json({ success: false, error: "Budget min and max must be valid numbers" }, { status: 400 })
+      }
+      if (budgetMinVal > budgetMaxVal) {
+        return NextResponse.json({ success: false, error: "Budget min must be less than or equal to budget max" }, { status: 400 })
+      }
+    } else {
+      const amt = Number(budget_amount)
+      if (Number.isNaN(amt) || amt < 0) {
+        return NextResponse.json({ success: false, error: "Budget amount must be a valid positive number" }, { status: 400 })
+      }
+      budgetMinVal = amt
+      budgetMaxVal = amt
     }
     if (!duration) {
       return NextResponse.json({ success: false, error: "Duration is required" }, { status: 400 })
     }
 
+    // Milestones (optional): validate sum equals total budget
+    const milestones = Array.isArray(milestonesInput) ? milestonesInput : []
+    if (milestones.length > 0) {
+      const totalBudgetForMilestones = total_budget != null ? Number(total_budget) : budgetMaxVal
+      if (Number.isNaN(totalBudgetForMilestones) || totalBudgetForMilestones < 0) {
+        return NextResponse.json(
+          { success: false, error: "Total budget is required and must be a valid number when using milestones" },
+          { status: 400 },
+        )
+      }
+      const sum = milestones.reduce(
+        (acc: number, m: { amount?: number }) => acc + (Number(m?.amount) || 0),
+        0,
+      )
+      const tolerance = 0.01
+      if (Math.abs(sum - totalBudgetForMilestones) > tolerance) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Milestone amounts (${sum}) must equal total budget (${totalBudgetForMilestones})`,
+          },
+          { status: 400 },
+        )
+      }
+    }
+
     console.log("Validation passed")
 
-    // Ensure user exists in database
+    // Ensure user exists in database and fetch user_type / is_verified for posting rule
     console.log("Checking/creating user in database...")
     const { data: existingUser, error: userCheckError } = await supabase
       .from("users")
-      .select("id, name, email")
+      .select("id, name, email, user_type, is_verified")
       .eq("id", userId)
       .single()
 
     if (userCheckError && userCheckError.code === "PGRST116") {
-      // User doesn't exist, create from provided data
-      console.log("User doesn't exist, creating from auth data...")
+      // User doesn't exist, create from session data
+      console.log("User doesn't exist, creating from session data...")
       const { error: userCreateError } = await supabase.from("users").insert({
         id: userId,
-        email: user_data.email,
-        name: user_data.name,
-        user_type: user_data.userType || "client",
-        is_verified: user_data.isVerified || false,
+        email: user.email,
+        name: user.name || user.email,
+        user_type: user.user_type || "client",
+        is_verified: user.is_verified || false,
         rating: 0,
         completed_tasks: 0,
         total_earned: 0,
         join_date: new Date().toISOString(),
         is_active: true,
-        skills: user_data.skills || [],
-        bio: user_data.bio || "",
-        location: user_data.location || "",
-        hourly_rate: user_data.hourlyRate || null,
+        skills: [],
+        bio: "",
+        location: "",
+        hourly_rate: null,
       })
 
       if (userCreateError) {
@@ -127,16 +153,35 @@ export async function POST(request: NextRequest) {
       console.log("User exists:", existingUser)
     }
 
+    // Only verified clients can post tasks (resolve from DB for consistency)
+    const { data: dbUser, error: dbUserError } = await supabase
+      .from("users")
+      .select("user_type, is_verified")
+      .eq("id", userId)
+      .single()
+    if (dbUserError || !dbUser) {
+      return NextResponse.json(
+        { success: false, error: "Could not verify your account. Please try again." },
+        { status: 500 },
+      )
+    }
+    if (dbUser.user_type !== "client") {
+      return NextResponse.json(
+        { success: false, error: "Only clients can post tasks. Your account is not set as a client." },
+        { status: 403 },
+      )
+    }
+
     // ✅ FIXED: Removed non-existent columns (has_escrow, escrow_amount)
     const taskData = {
       client_id: userId,
       title: title.trim(),
       description: description.trim(),
       category,
-      budget_type,
-      budget_min: Number(budget_amount),
-      budget_max: Number(budget_amount),
-      currency,
+      budget_type: budget_type || "fixed",
+      budget_min: budgetMinVal,
+      budget_max: budgetMaxVal,
+      currency: "NGN",
       duration,
       location,
       skills_required: Array.isArray(skills_required) ? skills_required : [],
@@ -169,6 +214,32 @@ export async function POST(request: NextRequest) {
         },
         { status: 500 },
       )
+    }
+
+    // Insert task_milestones if provided
+    if (milestones.length > 0 && task?.id) {
+      const now = new Date().toISOString()
+      const milestoneRows = milestones.map((m: { title?: string; description?: string; amount?: number; due_date?: string }) => ({
+        task_id: task.id,
+        title: String(m?.title ?? "Milestone").trim() || "Milestone",
+        description: m?.description != null ? String(m.description).trim() : null,
+        amount: Number(m?.amount) || 0,
+        status: "PENDING",
+        due_date: m?.due_date || null,
+        created_at: now,
+        updated_at: now,
+      }))
+      const { error: milestonesError } = await supabase.from("task_milestones").insert(milestoneRows)
+      if (milestonesError) {
+        console.error("Task milestones insertion failed:", milestonesError)
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Task created but milestones failed: ${milestonesError.message}`,
+          },
+          { status: 500 },
+        )
+      }
     }
 
     console.log("Task created successfully and is now ACTIVE:", task)

@@ -1,14 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get("user-id")
+    const user = await ServerSessionManager.getCurrentUser()
     const body = await request.json()
 
     console.log("=== API: Creating milestone:", body)
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 

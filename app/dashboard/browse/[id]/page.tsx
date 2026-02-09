@@ -40,6 +40,7 @@ import { formatNaira } from "@/lib/currency"
 import { NairaIcon } from "@/components/naira-icon"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
+import { toast as sonnerToast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils"
 // import { DojahModal } from "@/components/dojah-modal" // Removed - using manual verification
@@ -141,9 +142,7 @@ export default function TaskViewPage() {
 
         // Fetch task details
         const taskResponse = await fetch(`/api/tasks/${taskId}`, {
-          headers: {
-            "user-id": user.id,
-          },
+          credentials: "include",
         })
 
         if (!taskResponse.ok) {
@@ -200,9 +199,7 @@ export default function TaskViewPage() {
 
         // Check if user has applied to this task
         const applicationResponse = await fetch(`/api/tasks/${taskId}/my-application`, {
-          headers: {
-            "user-id": user.id,
-          },
+          credentials: "include",
         })
 
         if (applicationResponse.ok) {
@@ -309,7 +306,6 @@ export default function TaskViewPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "user-id": user.id,
         },
         body: JSON.stringify(applicationData),
       })
@@ -317,6 +313,11 @@ export default function TaskViewPage() {
       const data = await response.json()
 
       if (data.success) {
+        const taskTitle = task?.title || "this task"
+        sonnerToast.success("[System] Application submitted.", {
+          description: `Your application for "${taskTitle}" has been sent to the client.`,
+          duration: 5000,
+        })
         toast({
           title: "Application Submitted!",
           description: "Your detailed application has been sent to the client.",
@@ -691,18 +692,7 @@ export default function TaskViewPage() {
               </CardHeader>
               <CardContent>
                 {!showApplicationForm ? (
-                  <Button className="w-full" onClick={() => {
-                    if (!user?.isVerified) {
-                      router.push("/dashboard/verification")
-                      toast({
-                        title: "ID Verification Required",
-                        description: "You must verify your identity before applying for tasks.",
-                        variant: "destructive",
-                      })
-                      return
-                    }
-                    setShowApplicationForm(true)
-                  }}>
+                  <Button className="w-full" onClick={() => setShowApplicationForm(true)}>
                     <Send className="h-4 w-4 mr-2" />
                     Submit Detailed Application
                   </Button>

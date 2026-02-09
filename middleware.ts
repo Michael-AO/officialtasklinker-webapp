@@ -1,14 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { jwtVerify } from 'jose'
-
-// JWT secret key
-const getSecretKey = () => {
-  const secret = process.env.JWT_SECRET_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  return new TextEncoder().encode(secret)
-}
-
-const COOKIE_NAME = 'tl-auth-token'
+import { ServerSessionManager } from '@/lib/server-session-manager'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -24,6 +16,7 @@ export async function middleware(request: NextRequest) {
     '/privacy',
     '/forgot-password',
     '/reset-password',
+    '/dashboard/browse',  // Browse tasks - viewable without login (apply requires auth)
   ]
 
   // Check if current path is public
@@ -31,7 +24,18 @@ export async function middleware(request: NextRequest) {
     pathname === route || pathname.startsWith(`${route}/`)
   )
 
-  // Allow API routes through (they handle their own auth)
+  // Protected API routes: verify JWT before proceeding
+  const isProtectedApiRoute =
+    pathname.startsWith('/api/admin/') || pathname.startsWith('/api/dashboard/')
+  if (pathname.startsWith('/api/') && isProtectedApiRoute) {
+    const isValid = await ServerSessionManager.validateTokenInMiddleware(request)
+    if (!isValid) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    return NextResponse.next()
+  }
+
+  // Allow other API routes through (they verify session via ServerSessionManager.getCurrentUser())
   if (pathname.startsWith('/api/')) {
     return NextResponse.next()
   }
@@ -41,57 +45,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Get session token from cookie
-  const token = request.cookies.get(COOKIE_NAME)?.value
+  // Check for authentication cookie (simplified check - actual verification happens in pages/API)
+  // This avoids Edge Runtime compatibility issues with Supabase SSR
+  const authCookie = request.cookies.get('tl-auth-token')
+  const supabaseSessionCookie = request.cookies.get('sb-access-token') || 
+                                request.cookies.get('sb-refresh-token')
 
-  if (!token) {
-    // No session, redirect to login with return URL
+  // If no auth cookies found, redirect to login
+  if (!authCookie && !supabaseSessionCookie) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  try {
-    // Verify JWT token
-    const secretKey = getSecretKey()
-    const { payload } = await jwtVerify(token, secretKey)
-    
-    const user = payload.user as any
-
-    if (!user) {
-      throw new Error('Invalid token payload')
-    }
-
-    // Role-based access control for admin routes
-    if (pathname.startsWith('/admin')) {
-      if (user.user_type !== 'admin') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
-    }
-
-    // Role-based access control for client routes
-    if (pathname.startsWith('/dashboard/client')) {
-      if (user.user_type !== 'client') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
-    }
-
-    // Allow the request to proceed
-    return NextResponse.next()
-  } catch (error) {
-    console.error('Middleware auth error:', error)
-    
-    // Invalid or expired token, redirect to login
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', pathname)
-    loginUrl.searchParams.set('error', 'Session expired. Please login again.')
-    
-    // Clear invalid cookie
-    const response = NextResponse.redirect(loginUrl)
-    response.cookies.delete(COOKIE_NAME)
-    
-    return response
-  }
+  // Allow the request to proceed - actual auth verification happens in pages/API routes
+  // Role-based access control is handled at the page/API level
+  return NextResponse.next()
 }
 
 export const config = {

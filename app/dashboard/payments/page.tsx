@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarDays, Shield, CheckCircle } from "lucide-react"
 import { NairaIcon } from "@/components/naira-icon"
+import { formatNaira } from "@/lib/currency"
 
 export default function PaymentsPage() {
   const escrowPayments = [
@@ -11,16 +12,16 @@ export default function PaymentsPage() {
       id: 1,
       taskTitle: "Website Redesign Project",
       client: "Sarah Johnson",
-      amount: "$1,500",
+      amount: 150000,
       status: "In Escrow",
       dueDate: "Dec 15, 2024",
-      description: "Payment held in escrow until project completion",
+      description: "Payment held in escrow until project completion (Naira)",
     },
     {
       id: 2,
       taskTitle: "Mobile App Development",
       client: "TechCorp Inc.",
-      amount: "$3,200",
+      amount: 320000,
       status: "Pending Release",
       dueDate: "Dec 20, 2024",
       description: "Awaiting client approval for payment release",
@@ -32,7 +33,7 @@ export default function PaymentsPage() {
       id: 1,
       taskTitle: "Logo Design",
       client: "StartupXYZ",
-      amount: "$450",
+      amount: 45000,
       status: "Completed",
       completedDate: "Dec 1, 2024",
       description: "Payment successfully released",
@@ -41,7 +42,7 @@ export default function PaymentsPage() {
       id: 2,
       taskTitle: "Content Writing",
       client: "BlogCorp",
-      amount: "$280",
+      amount: 28000,
       status: "Completed",
       completedDate: "Nov 28, 2024",
       description: "Payment successfully released",
@@ -50,7 +51,7 @@ export default function PaymentsPage() {
       id: 3,
       taskTitle: "Social Media Graphics",
       client: "Marketing Pro",
-      amount: "$320",
+      amount: 32000,
       status: "Completed",
       completedDate: "Nov 25, 2024",
       description: "Payment successfully released",
@@ -60,9 +61,10 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Payments & Escrow</h1>
+        <h1 className="text-3xl font-bold">Payments & Escrow (Naira)</h1>
         <Button>Request Withdrawal</Button>
       </div>
+      <p className="text-sm text-muted-foreground">All amounts are in Nigerian Naira (₦)</p>
 
       {/* Payment Stats */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -72,8 +74,8 @@ export default function PaymentsPage() {
             <NairaIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$8,450</div>
-            <p className="text-xs text-muted-foreground">+$1,200 this month</p>
+            <div className="text-2xl font-bold">{formatNaira(8450)}</div>
+            <p className="text-xs text-muted-foreground">+{formatNaira(1200)} this month</p>
           </CardContent>
         </Card>
         <Card>
@@ -82,7 +84,7 @@ export default function PaymentsPage() {
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$4,700</div>
+            <div className="text-2xl font-bold">{formatNaira(4700)}</div>
             <p className="text-xs text-muted-foreground">2 active payments</p>
           </CardContent>
         </Card>
@@ -92,7 +94,7 @@ export default function PaymentsPage() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$3,750</div>
+            <div className="text-2xl font-bold">{formatNaira(3750)}</div>
             <p className="text-xs text-muted-foreground">Ready for withdrawal</p>
           </CardContent>
         </Card>
@@ -124,7 +126,7 @@ export default function PaymentsPage() {
                     </div>
                   </div>
                   <div className="text-right space-y-1">
-                    <p className="text-lg font-bold">{payment.amount}</p>
+                    <p className="text-lg font-bold">{formatNaira(payment.amount)}</p>
                     <Badge variant={payment.status === "In Escrow" ? "secondary" : "outline"}>{payment.status}</Badge>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <CalendarDays className="h-3 w-3" />
@@ -157,7 +159,7 @@ export default function PaymentsPage() {
                     </div>
                   </div>
                   <div className="text-right space-y-1">
-                    <p className="text-lg font-bold">{payment.amount}</p>
+                    <p className="text-lg font-bold">{formatNaira(payment.amount)}</p>
                     <Badge variant="default" className="bg-green-600">
                       {payment.status}
                     </Badge>

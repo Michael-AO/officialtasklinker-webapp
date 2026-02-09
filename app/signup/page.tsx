@@ -56,23 +56,33 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#0a0a0a] via-[#0d1f17] to-[#052e1f] p-4">
+      {/* Gradient accent orbs */}
+      <div className="absolute top-1/4 -right-32 w-96 h-96 rounded-full bg-[#04A466]/20 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -left-24 w-72 h-72 rounded-full bg-[#04A466]/10 blur-3xl pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#04A466]/10 via-transparent to-transparent pointer-events-none" />
+
+      <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 z-10">
+        <img src="/logo-icon.svg" alt="Tasklinkers" className="h-8 w-8" />
+        <span className="text-xl font-bold text-white">Tasklinkers</span>
+      </Link>
+
+      <Card className="w-full max-w-md relative bg-white/95 backdrop-blur-sm border-gray-200/50 shadow-xl">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-2">
             {success ? (
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
+              <CheckCircle2 className="h-12 w-12 text-[#04A466]" />
             ) : (
-              <UserPlus className="h-12 w-12 text-blue-500" />
+              <UserPlus className="h-12 w-12 text-[#04A466]" />
             )}
           </div>
-          <CardTitle className="text-2xl font-bold text-center">
+          <CardTitle className="text-2xl font-bold text-center text-[#1e293b]">
             {success ? 'Check Your Email!' : 'Create Your Account'}
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-[#64748b]">
             {success 
               ? `We've sent a magic link to ${email}. Click the link to complete your signup!`
-              : 'Join TaskLinker to connect and collaborate'
+              : 'Join Tasklinkers to connect and collaborate'
             }
           </CardDescription>
         </CardHeader>
@@ -87,7 +97,7 @@ export default function SignupPage() {
 
           {success ? (
             <div className="space-y-4">
-              <Alert className="bg-green-50 text-green-900 border-green-200">
+              <Alert className="bg-[#04A466]/10 text-[#052e1e] border-[#04A466]/30">
                 <CheckCircle2 className="h-4 w-4" />
                 <AlertDescription>
                   <strong>Magic link sent!</strong> Check your inbox and spam folder.
@@ -104,8 +114,8 @@ export default function SignupPage() {
                 </ol>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
-                <p className="font-medium mb-1">Welcome to TaskLinker! 🎉</p>
+              <div className="bg-[#04A466]/5 border border-[#04A466]/20 rounded-lg p-3 text-sm text-[#1e293b]">
+                <p className="font-medium mb-1 text-[#04A466]">Welcome to Tasklinkers! 🎉</p>
                 <p>We're excited to have you as a {userType === 'freelancer' ? 'Freelancer' : 'Client'}.</p>
               </div>
 
@@ -117,7 +127,7 @@ export default function SignupPage() {
                     setError(null)
                   }}
                   variant="outline"
-                  className="w-full"
+                  className="w-full border-[#04A466] text-[#04A466] hover:bg-[#04A466]/10"
                 >
                   Try Again
                 </Button>
@@ -168,14 +178,14 @@ export default function SignupPage() {
               <div className="space-y-2">
                 <Label>I want to</Label>
                 <RadioGroup value={userType} onValueChange={(value) => setUserType(value as 'freelancer' | 'client')}>
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-[#04A466]/5 hover:border-[#04A466]/30 cursor-pointer transition-colors">
                     <RadioGroupItem value="freelancer" id="freelancer" />
                     <Label htmlFor="freelancer" className="flex-1 cursor-pointer">
                       <div className="font-medium">Find Work</div>
                       <div className="text-sm text-gray-500">I'm a freelancer looking for projects</div>
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-[#04A466]/5 hover:border-[#04A466]/30 cursor-pointer transition-colors">
                     <RadioGroupItem value="client" id="client" />
                     <Label htmlFor="client" className="flex-1 cursor-pointer">
                       <div className="font-medium">Hire Talent</div>
@@ -194,17 +204,17 @@ export default function SignupPage() {
                 />
                 <label htmlFor="terms" className="text-sm text-gray-600 leading-tight cursor-pointer">
                   I agree to the{' '}
-                  <Link href="/legal" className="text-blue-600 hover:underline">
+                  <Link href="/legal" className="text-[#04A466] hover:text-[#039a5c]">
                     Terms of Service
                   </Link>{' '}
                   and{' '}
-                  <Link href="/legal" className="text-blue-600 hover:underline">
+                  <Link href="/legal" className="text-[#04A466] hover:text-[#039a5c]">
                     Privacy Policy
                   </Link>
                 </label>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading || !agreedToTerms}>
+              <Button type="submit" className="w-full bg-[#04A466] hover:bg-[#039a5c] text-white" disabled={loading || !agreedToTerms}>
                 {loading ? (
                   <>
                     <Mail className="mr-2 h-4 w-4 animate-pulse" />
@@ -218,8 +228,8 @@ export default function SignupPage() {
                 )}
               </Button>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
-                <p className="font-medium mb-1">🔒 Secure & Passwordless</p>
+              <div className="bg-[#04A466]/5 border border-[#04A466]/20 rounded-lg p-3 text-sm text-[#1e293b]">
+                <p className="font-medium mb-1 text-[#04A466]">🔒 Secure & Passwordless</p>
                 <p>We'll send you a magic link to complete signup. No passwords to remember!</p>
               </div>
             </form>
@@ -229,7 +239,7 @@ export default function SignupPage() {
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-center text-gray-600">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">
+            <Link href="/login" className="text-[#04A466] hover:text-[#039a5c] font-medium">
               Login
             </Link>
           </div>

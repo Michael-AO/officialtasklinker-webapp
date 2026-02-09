@@ -1,14 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user ID from headers
-    const userId = request.headers.get("user-id")
-
-    if (!userId) {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
+
+    const userId = user.id
 
     // Get applications where user is the freelancer (only)
     const { data: freelancerApplications, error: freelancerError } = await supabase

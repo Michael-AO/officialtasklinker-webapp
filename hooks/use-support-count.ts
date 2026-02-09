@@ -26,9 +26,7 @@ export function useSupportCount() {
     setLoading(true)
     try {
       const response = await fetch('/api/admin/support-requests', {
-        headers: {
-          'user-id': user.id,
-        },
+        credentials: 'include',
       })
 
       if (response.ok) {

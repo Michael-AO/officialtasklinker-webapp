@@ -1,11 +1,29 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
 import { paystackService } from "@/lib/paystack"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 })
+    }
+
     const body = await request.json()
     const { reference, taskId, freelancerId, amount, paymentType, milestones } = body
+
+    if (!taskId) {
+      return NextResponse.json({ success: false, error: "taskId is required" }, { status: 400 })
+    }
+
+    const { data: task, error: taskError } = await supabase.from("tasks").select("client_id").eq("id", taskId).single()
+    if (taskError || !task) {
+      return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 })
+    }
+    if (task.client_id !== user.id) {
+      return NextResponse.json({ success: false, error: "Only the task client can create escrow for this task" }, { status: 403 })
+    }
 
     console.log("🔄 Starting escrow creation with data:", {
       reference,
@@ -102,47 +120,7 @@ export async function POST(request: NextRequest) {
       console.log("✅ Using freelancer UUID:", freelancerUuid)
     }
 
-    // Get client ID from task or use first available client
-    const { data: task, error: taskError } = await supabase.from("tasks").select("client_id").eq("id", taskId).single()
-
-    if (taskError || !task) {
-      console.log("⚠️ Task not found, using first available client...")
-      const { data: clients, error: clientsError } = await supabase
-        .from("users")
-        .select("id")
-        .eq("user_type", "client")
-        .limit(1)
-
-      if (clientsError || !clients || clients.length === 0) {
-        // Create a test client
-        const { data: newClient, error: createClientError } = await supabase
-          .from("users")
-          .insert({
-            email: "test.client@example.com",
-            name: "Test Client",
-            user_type: "client",
-            created_at: new Date().toISOString(),
-          })
-          .select()
-          .single()
-
-        if (createClientError || !newClient) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: "Failed to create test client",
-              details: createClientError?.message || "Client creation failed",
-            },
-            { status: 500 },
-          )
-        }
-        clientId = newClient.id
-      } else {
-        clientId = clients[0].id
-      }
-    } else {
-      clientId = task.client_id
-    }
+    clientId = user.id
 
     console.log("✅ Using client UUID:", clientId)
 

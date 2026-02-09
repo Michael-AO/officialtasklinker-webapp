@@ -1,21 +1,23 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: applicationId } = await params
-    const userId = request.headers.get("x-user-id")
+    const user = await ServerSessionManager.getCurrentUser()
 
     console.log("=== API: Fetching application details for ID:", applicationId)
-    console.log("=== API: User ID:", userId)
 
     if (!applicationId || applicationId === "undefined" || applicationId === "null") {
       return NextResponse.json({ success: false, error: "Invalid application ID" }, { status: 400 })
     }
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
+
+    const userId = user.id
 
     // Get the application with task details
     const { data: application, error: appError } = await supabase
@@ -102,18 +104,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: applicationId } = await params
-    const userId = request.headers.get("x-user-id")
+    const user = await ServerSessionManager.getCurrentUser()
 
     console.log("=== API: Withdrawing application ID:", applicationId)
-    console.log("=== API: User ID:", userId)
 
     if (!applicationId || applicationId === "undefined" || applicationId === "null") {
       return NextResponse.json({ success: false, error: "Invalid application ID" }, { status: 400 })
     }
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
+
+    const userId = user.id
 
     // Get the application to verify ownership
     const { data: application, error: appError } = await supabase

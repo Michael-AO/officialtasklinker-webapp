@@ -20,7 +20,7 @@ import {
   Ban,
   RotateCcw
 } from "lucide-react"
-import { SimpleVerificationForm } from "@/components/simple-verification-form"
+import { ManualVerificationForm } from "@/components/manual-verification-form"
 import { VerificationStatusSimple } from "@/components/verification-status-simple"
 import { toast } from "sonner"
 
@@ -87,14 +87,22 @@ export default function VerificationPage() {
       }
       
       const statusResponse = await fetch("/api/verification/status", {
-        headers: {
-          'x-user-id': user.id
-        }
+        credentials: 'include'
       })
       
       if (statusResponse.ok) {
         const data = await statusResponse.json()
-        setVerificationStatus(data)
+        // API returns { success, status: { status, type, last_updated } }; normalize for page checks
+        const statusObj = data.status ?? {}
+        let statusStr = typeof statusObj === "string" ? statusObj : (statusObj.status ?? "unverified")
+        if (statusStr === "pending") statusStr = "processing"
+        setVerificationStatus({
+          status: statusStr,
+          submittedAt: statusObj.submitted_at,
+          approvedAt: statusObj.reviewed_at,
+          revokedAt: statusObj.revoked_at,
+          canReverifyAt: statusObj.can_reverify_at,
+        })
       } else {
         throw new Error("Failed to fetch verification status")
       }
@@ -143,8 +151,7 @@ export default function VerificationPage() {
       const response = await fetch("/api/verification/reverify", {
         method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.id || ''
+          'Content-Type': 'application/json'
         }
       })
       
@@ -327,8 +334,8 @@ export default function VerificationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SimpleVerificationForm
-              userType={(user?.userType === "admin" ? "client" : user?.userType) || "freelancer"}
+            <ManualVerificationForm
+              userType={(user?.user_type === "admin" ? "client" : user?.user_type) || "freelancer"}
               onSuccess={handleVerificationSuccess}
               onError={(error) => {
                 toast.error(error)

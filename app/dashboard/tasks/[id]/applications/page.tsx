@@ -117,7 +117,6 @@ export default function TaskApplicationsPage() {
 
         const response = await fetch(`/api/tasks/${taskId}/applications`, {
           headers: {
-            "user-id": user.id,
             Authorization: `Bearer ${(user as any).access_token || ""}`,
             "Content-Type": "application/json",
           },
@@ -241,7 +240,6 @@ export default function TaskApplicationsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "user-id": user?.id || "",
         },
       })
 
@@ -265,11 +263,13 @@ export default function TaskApplicationsPage() {
 
       toast({
         title: "Application Accepted!",
-        description: `${application?.freelancer_name}'s application has been accepted. They will be notified via email to start work.`,
+        description: `${application?.freelancer_name} has been hired. They will be notified. Redirecting to task...`,
       })
 
       setAcceptDialogOpen(false)
       setCurrentApplicationId(null)
+      // Redirect so client sees task status "Assigned" and hired freelancer
+      router.push(`/dashboard/tasks/${taskId}`)
     } catch (error) {
       console.error("Accept application error:", error)
       toast({
@@ -290,7 +290,6 @@ export default function TaskApplicationsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "user-id": user?.id || "",
         },
         body: JSON.stringify({
           feedback: rejectFeedback,

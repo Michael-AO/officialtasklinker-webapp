@@ -1,44 +1,41 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
-
-// Admin emails that can post tasks
-const ADMIN_EMAILS = [
-  "admin@tasklinkers.com",
-  "michaelasereo@gmail.com", 
-  "ceo@tasklinkers.com",
-  "michael@tasklinkers.com"
-]
-
-function isVerifiedEmail(email: string): boolean {
-  return ADMIN_EMAILS.includes(email.toLowerCase())
-}
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function GET(request: NextRequest) {
   try {
     console.log("=== Smart matches API called")
 
-    const userId = request.headers.get("user-id")
-
-    if (!userId) {
-      console.log("=== No user ID provided")
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "User ID required",
-        },
+        { success: false, error: "User ID required" },
         { status: 401 },
       )
     }
 
+    const userId = user.id
     console.log("=== Fetching smart matches for user:", userId)
 
-    // Fetch latest active tasks with client info - only from admin emails
+    // Fetch current user's skills from DB (for MATCH-01: filter by skill match)
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("skills")
+      .eq("id", userId)
+      .single()
+
+    const userSkills: string[] = Array.isArray(profile?.skills) ? profile.skills : []
+    if (profileError) {
+      console.warn("Could not load user skills:", profileError.message)
+    }
+
+    // Fetch latest active tasks with client info (no admin-email filter; any task from any client)
     const { data: tasks, error: tasksError } = await supabase
       .from("tasks")
-      .select(`*, client:users!tasks_client_id_fkey(id, name, email, rating, avatar_url)`) // Include email for admin check
+      .select(`*, client:users!tasks_client_id_fkey(id, name, email, rating, avatar_url)`)
       .eq("status", "active")
-      .order("created_at", { ascending: false }) // Get latest tasks first
-      .limit(10)
+      .order("created_at", { ascending: false })
+      .limit(50)
 
     if (tasksError) {
       console.error("Error fetching tasks:", tasksError)
@@ -54,50 +51,55 @@ export async function GET(request: NextRequest) {
 
     console.log("=== Found tasks:", tasks?.length || 0)
 
-    // Filter tasks to only include those posted by admin emails
-    const adminTasks = (tasks || []).filter(task => {
-      const clientEmail = task.client?.email
-      return clientEmail && isVerifiedEmail(clientEmail)
-    })
+    // Filter out tasks that already have an accepted application
+    const tasksWithoutAccepted = await Promise.all(
+      (tasks || []).map(async (task) => {
+        const { data: acceptedApp, error: acceptedError } = await supabase
+          .from("applications")
+          .select("id")
+          .eq("task_id", task.id)
+          .eq("status", "accepted")
+          .single()
 
-    console.log("=== Admin tasks found:", adminTasks.length)
-
-    // Check for accepted applications and filter out tasks with accepted applicants
-    const availableAdminTasks = await Promise.all(
-      adminTasks.map(async (task) => {
-        try {
-          // Check if there's an accepted application for this task
-          const { data: acceptedApp, error: acceptedError } = await supabase
-            .from("applications")
-            .select("id")
-            .eq("task_id", task.id)
-            .eq("status", "accepted")
-            .single()
-
-          if (acceptedError && acceptedError.code !== 'PGRST116') { // PGRST116 is "not found"
-            console.warn("Error checking accepted application for task", task.id, acceptedError)
-          }
-
-          // If there's an accepted application, exclude this task
-          if (acceptedApp) {
-            return null
-          }
-
-          return task
-        } catch (err) {
-          console.warn("Error processing task", task.id, err)
-          return task
+        if (acceptedError && acceptedError.code !== "PGRST116") {
+          console.warn("Error checking accepted application for task", task.id, acceptedError)
         }
-      })
+        if (acceptedApp) return null
+        return task
+      }),
     )
 
-    // Filter out null values (tasks with accepted applications)
-    const finalAdminTasks = availableAdminTasks.filter(task => task !== null)
+    const availableTasks = tasksWithoutAccepted.filter((t): t is NonNullable<typeof t> => t !== null)
 
-    console.log("=== Available admin tasks (no accepted applications):", finalAdminTasks.length)
+    // MATCH-01: Filter by skill match — keep tasks where user.skills and task.skills_required overlap
+    const taskSkills = (t: { skills_required?: string[] | null }) =>
+      Array.isArray(t.skills_required) ? t.skills_required : []
+    const normalized = (arr: string[]) => arr.map((s) => String(s).toLowerCase().trim())
 
-    // Build matches from available admin tasks only - latest tasks first
-    const matches = finalAdminTasks.map((task, index) => ({
+    const userSkillsNorm = new Set(normalized(userSkills))
+    const skillMatchedTasks = availableTasks.filter((task) => {
+      const required = taskSkills(task)
+      if (required.length === 0) return true // No required skills → include
+      const requiredNorm = normalized(required)
+      const hasMatch = requiredNorm.some((s) => userSkillsNorm.has(s))
+      return hasMatch
+    })
+
+    // Optional: rank by number of matching skills (more overlap = higher score)
+    const withScore = skillMatchedTasks.map((task) => {
+      const required = taskSkills(task)
+      const requiredNorm = new Set(normalized(required))
+      let matchCount = 0
+      userSkillsNorm.forEach((s) => {
+        if (requiredNorm.has(s)) matchCount++
+      })
+      return { task, matchCount }
+    })
+    withScore.sort((a, b) => b.matchCount - a.matchCount)
+
+    const orderedTasks = withScore.map(({ task }) => task).slice(0, 10)
+
+    const matches = orderedTasks.map((task, index) => ({
       id: task.id,
       title: task.title,
       description: task.description,
@@ -110,9 +112,9 @@ export async function GET(request: NextRequest) {
       client_avatar: task.client?.avatar_url || "/placeholder.svg",
       clientRating: task.client?.rating || 0,
       postedDate: task.created_at,
-      matchScore: 100 - (index * 2), // Simple score based on recency
-      matchReasons: ["Latest admin task", "Recently posted"], // Show as latest tasks
-      urgency: task.urgency || "medium",
+      matchScore: 100 - index * 5,
+      matchReasons: ["Skill match", "Recently posted"],
+      urgency: task.urgency || "normal",
       skills: task.skills_required || [],
       location: task.location || "Remote",
       applications_count: task.applications_count || 0,

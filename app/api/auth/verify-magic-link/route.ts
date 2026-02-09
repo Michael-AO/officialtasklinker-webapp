@@ -66,8 +66,6 @@ export async function GET(request: NextRequest) {
         dashboardUrl = '/admin/dashboard'
         break
       case 'client':
-        dashboardUrl = '/dashboard/client'
-        break
       case 'freelancer':
       default:
         dashboardUrl = '/dashboard'

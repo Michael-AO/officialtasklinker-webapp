@@ -1,30 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
-
-// Helper function to convert simple IDs to UUID format
-function convertToUUID(id: string): string {
-  if (id.length === 36 && id.includes("-")) {
-    return id // Already a UUID
-  }
-  // Convert simple ID like "1" to UUID format
-  const paddedId = id.padStart(8, "0")
-  return `${paddedId}-0000-4000-8000-000000000000`
-}
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function GET(request: NextRequest) {
   try {
     console.log("=== MY TASKS API START ===")
 
-    const { searchParams } = new URL(request.url)
-    const rawUserId = searchParams.get("user_id")
-
-    if (!rawUserId) {
-      return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 })
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
 
-    // Convert user ID to UUID format
-    const userId = convertToUUID(rawUserId)
-    console.log(`User ID conversion: ${rawUserId} -> ${userId}`)
+    const userId = user.id
 
     // Get filters from query params
     const status = searchParams.get("status")

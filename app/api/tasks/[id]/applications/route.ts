@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,16 +13,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "Invalid task ID" }, { status: 400 })
     }
 
-    // Get user ID from headers
-    const userId = request.headers.get("user-id")
-    const authHeader = request.headers.get("authorization")
-
-    console.log("=== API: User ID from headers:", userId)
-    console.log("=== API: Auth header present:", !!authHeader)
-
-    if (!userId) {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
+
+    const userId = user.id
+    console.log("=== API: User ID from session:", userId)
 
     // First verify the task exists and get its details
     const { data: task, error: taskError } = await supabase

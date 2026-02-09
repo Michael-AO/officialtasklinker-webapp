@@ -1,11 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: taskId } = await params
     const body = await request.json()
-    const userId = request.headers.get("user-id")
+    const user = await ServerSessionManager.getCurrentUser()
 
     console.log("=== API: Updating task:", taskId)
 
@@ -13,9 +14,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "Invalid task ID" }, { status: 400 })
     }
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
+
+    const userId = user.id
 
     // Verify the user is the task owner
     const { data: task, error: taskError } = await supabase

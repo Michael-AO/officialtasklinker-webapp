@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CalendarDays, MapPin, Edit, Camera, ExternalLink, AlertCircle, FileText, Download, Plus, Shield } from "lucide-react"
+import { CalendarDays, MapPin, Edit, Camera, ExternalLink, AlertCircle, FileText, Download, Plus } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
@@ -17,7 +17,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
-import { VerifiedBadge } from "@/components/ui/verified-badge"
 import { ProfileCompletionWizard } from "@/components/profile-completion-wizard"
 
 interface UserProfile {
@@ -110,7 +109,6 @@ export default function ProfilePage() {
       const profileResponse = await fetch(`/api/user/profile`, {
         method: "GET",
         headers: {
-          "x-user-id": authUser.id,
           "Content-Type": "application/json",
         },
       })
@@ -172,7 +170,6 @@ export default function ProfilePage() {
       const portfolioResponse = await fetch(`/api/user/portfolio`, {
         method: "GET",
         headers: {
-          "x-user-id": authUser!.id,
           "Content-Type": "application/json",
         },
       })
@@ -196,7 +193,7 @@ export default function ProfilePage() {
   const fetchStatsData = async () => {
     try {
       const statsResponse = await fetch(`/api/user/stats`, {
-        headers: { "x-user-id": authUser!.id },
+        credentials: "include",
       })
       if (statsResponse.ok) {
         const statsData = await statsResponse.json()
@@ -332,80 +329,6 @@ export default function ProfilePage() {
         </Card>
       )}
 
-      {/* Profile Completion & ID Verification - Side by side, matching dashboard UI */}
-      <div className="flex flex-col md:flex-row gap-4 items-stretch">
-        {(() => {
-          if (!profile) {
-            // No profile, render two empty columns
-            return <><div className="w-full md:w-1/2 flex-1" /><div className="w-full md:w-1/2 flex-1" /></>
-          }
-          let completed = 0
-          const total = 3
-          if (profile.bio && profile.bio.trim()) completed++
-          if (profile.skills && profile.skills.length > 0) completed++
-          if (profile.location && profile.location.trim()) completed++
-          const profileCompletion = Math.round((completed / total) * 100)
-          const isProfileIncomplete = profileCompletion < 100
-          if (isProfileIncomplete) {
-            // Profile incomplete: left = profile, right = ID verification (if not verified)
-            return <>
-              {!profile.is_verified && (
-                <div className="w-full md:w-1/2 flex-1 flex">
-                  <div className="border rounded-lg p-6 bg-white shadow flex flex-col justify-between min-h-[180px] w-full relative">
-                    <div className="absolute top-4 right-4 text-muted-foreground">
-                      <Shield className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">ID Verification</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {profile.user_type === "admin"
-                          ? "As an admin, please verify your identity to access admin features."
-                          : "Verify your identity to apply for jobs or post tasks."}
-                      </p>
-                      <Button className="w-full" asChild>
-                        <Link href="/dashboard/verification">
-                          Start AI Verification
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          } else {
-            // Profile complete: left = ID verification (if not verified), right = empty
-            if (!profile.is_verified) {
-              return <>
-                <div className="w-full md:w-1/2 flex-1 flex">
-                  <div className="border rounded-lg p-6 bg-white shadow flex flex-col justify-between min-h-[180px] w-full relative">
-                    <div className="absolute top-4 right-4 text-muted-foreground">
-                      <Shield className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">ID Verification</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {profile.user_type === "admin"
-                          ? "As an admin, please verify your identity to access admin features."
-                          : "Verify your identity to apply for jobs or post tasks."}
-                      </p>
-                      <Button className="w-full" asChild>
-                        <Link href="/dashboard/verification">
-                          Start AI Verification
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                <div className="w-full md:w-1/2 flex-1" />
-              </>
-            } else {
-              // Both profile and ID are complete/verified: show two empty columns
-              return <><div className="w-full md:w-1/2 flex-1" /><div className="w-full md:w-1/2 flex-1" /></>
-            }
-          }
-        })()}
-      </div>
-
       <div className="flex justify-between items-start">
         <h1 className="text-3xl font-bold">Profile</h1>
         <Button asChild>
@@ -510,14 +433,6 @@ export default function ProfilePage() {
                   <span className="font-medium">Account Type:</span>
                   <span className="text-muted-foreground capitalize">{profile.user_type}</span>
                 </div>
-                {profile.is_verified && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Status:</span>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Verified Account
-                    </Badge>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -807,7 +722,6 @@ export default function ProfilePage() {
       const response = await fetch(`/api/user/portfolio`, {
         method: "POST",
         headers: {
-          "x-user-id": authUser.id,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(newItem),

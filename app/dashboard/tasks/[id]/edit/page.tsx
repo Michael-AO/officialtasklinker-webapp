@@ -113,9 +113,7 @@ export default function EditTaskPage() {
         setError(null)
 
         const response = await fetch(`/api/tasks/${taskId}`, {
-          headers: {
-            "user-id": user.id,
-          },
+          credentials: "include",
         })
 
         if (!response.ok) {

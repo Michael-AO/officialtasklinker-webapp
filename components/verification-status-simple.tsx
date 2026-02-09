@@ -28,9 +28,7 @@ export function VerificationStatusSimple() {
       if (!user) return
       
       const response = await fetch("/api/verification/status", {
-        headers: {
-          'x-user-id': user.id
-        }
+        credentials: 'include'
       })
       const data = await response.json()
       setStatus(data.status)

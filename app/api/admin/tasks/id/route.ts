@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -13,9 +14,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ success: false, error: "Invalid task ID" }, { status: 400 })
     }
 
-    // Check if user is admin (you might want to add proper admin authentication here)
-    const adminUserId = request.headers.get("user-id")
-    if (!adminUserId) {
+    const adminUser = await ServerSessionManager.getCurrentUser()
+    if (!adminUser || !(await ServerSessionManager.isAdmin())) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 

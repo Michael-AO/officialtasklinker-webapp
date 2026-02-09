@@ -7,14 +7,21 @@
 
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
-import { createClient } from '@supabase/supabase-js'
+import type { NextRequest } from 'next/server'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { AuditLogger } from './audit-logger'
 
-// Server-side Supabase client with service role
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Lazy-initialized Supabase client (avoids "supabaseKey is required" during Edge bundling)
+let _supabase: SupabaseClient | null = null
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!url || !key) throw new Error('supabaseKey is required')
+    _supabase = createClient(url, key)
+  }
+  return _supabase
+}
 
 // JWT secret key
 const getSecretKey = () => {
@@ -28,6 +35,7 @@ export interface UserData {
   user_type: 'freelancer' | 'client' | 'admin'
   name?: string
   is_verified?: boolean
+  avatar?: string | null
 }
 
 export interface SessionData extends UserData {
@@ -36,8 +44,11 @@ export interface SessionData extends UserData {
   iat: number
 }
 
-const COOKIE_NAME = 'tl-auth-token'
+export const COOKIE_NAME = 'tl-auth-token'
 const SESSION_DURATION_DAYS = 7
+
+// Demo presentation: show green Verified badge for this email without DB change
+const DEMO_VERIFIED_EMAIL = process.env.NEXT_PUBLIC_DEMO_VERIFIED_EMAIL || 'your@email.com'
 
 export class ServerSessionManager {
   /**
@@ -67,7 +78,7 @@ export class ServerSessionManager {
       // Store session in database for tracking
       const expiresAt = new Date(expirationTime * 1000)
       
-      await supabase.from('user_sessions').insert({
+      await getSupabase().from('user_sessions').insert({
         id: sessionId,
         user_id: userData.id,
         session_token: token,
@@ -124,7 +135,7 @@ export class ServerSessionManager {
       const sessionId = payload.sessionId as string
 
       // Check if session exists and is active in database
-      const { data: session, error } = await supabase
+      const { data: session, error } = await getSupabase()
         .from('user_sessions')
         .select('*')
         .eq('id', sessionId)
@@ -146,7 +157,7 @@ export class ServerSessionManager {
       }
 
       // Update last activity
-      await supabase
+      await getSupabase()
         .from('user_sessions')
         .update({ last_activity_at: new Date().toISOString() })
         .eq('id', sessionId)
@@ -181,7 +192,7 @@ export class ServerSessionManager {
           const userData = payload.user as UserData
 
           // Mark session as inactive in database
-          await supabase
+          await getSupabase()
             .from('user_sessions')
             .update({ is_active: false })
             .eq('id', sessionId)
@@ -233,7 +244,25 @@ export class ServerSessionManager {
   }
 
   /**
-   * Get current user from session
+   * Lightweight JWT validation for middleware (Edge-compatible, no DB round-trip).
+   * Verifies signature and expiration only. Use for early 401 on protected API routes.
+   */
+  static async validateTokenInMiddleware(request: NextRequest): Promise<boolean> {
+    try {
+      const token = request.cookies.get(COOKIE_NAME)?.value
+      if (!token) return false
+
+      const secretKey = getSecretKey()
+      await jwtVerify(token, secretKey)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Get current user from session.
+   * Fetches fresh is_verified (and name) from DB so sidebar unlocks after verification without re-login.
    */
   static async getCurrentUser(): Promise<UserData | null> {
     const sessionData = await this.validateSession()
@@ -242,12 +271,29 @@ export class ServerSessionManager {
       return null
     }
 
+    // Fresh read from DB so verification and avatar updates are reflected immediately
+    const { data: dbUser } = await getSupabase()
+      .from('users')
+      .select('is_verified, name, avatar_url')
+      .eq('id', sessionData.id)
+      .single()
+
+    const isVerified = dbUser
+      ? (dbUser.is_verified ?? false)
+      : sessionData.email === DEMO_VERIFIED_EMAIL
+        ? true
+        : (sessionData.is_verified ?? false)
+    const name = dbUser?.name ?? sessionData.name
+    const avatar = dbUser?.avatar_url ?? sessionData.avatar ?? undefined
+
     return {
       id: sessionData.id,
       email: sessionData.email,
       user_type: sessionData.user_type,
-      name: sessionData.name,
-      is_verified: sessionData.is_verified
+      name: name ?? sessionData.name,
+      is_verified: isVerified,
+      isVerified,
+      avatar: avatar ?? undefined,
     }
   }
 
@@ -272,7 +318,7 @@ export class ServerSessionManager {
    */
   static async getUserSessions(userId: string) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('user_sessions')
         .select('*')
         .eq('user_id', userId)
@@ -297,7 +343,7 @@ export class ServerSessionManager {
    */
   static async revokeAllUserSessions(userId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('user_sessions')
         .update({ is_active: false })
         .eq('user_id', userId)
@@ -316,7 +362,7 @@ export class ServerSessionManager {
     try {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('user_sessions')
         .delete()
         .eq('is_active', false)

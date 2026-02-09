@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     const paystackData = {
       email: escrow.clientEmail,
       amount: escrow.amount,
+      currency: "NGN",
       reference,
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/callback?reference=${reference}`,
       metadata: {

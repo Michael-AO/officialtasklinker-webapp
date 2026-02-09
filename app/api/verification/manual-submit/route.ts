@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -22,11 +21,11 @@ export async function POST(request: NextRequest) {
     const idNumber = formData.get('idNumber') as string
     const additionalInfo = formData.get('additionalInfo') as string
 
-    // Get user information from session
+    // Get user information from database
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('name, email')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
 
     if (userError || !userData) {
@@ -50,7 +49,7 @@ export async function POST(request: NextRequest) {
     
     for (const { file, type } of files) {
       const fileExt = file.name.split('.').pop()
-      const fileName = `${session.user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('verification-documents')
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
     const { data: verificationRequest, error: dbError } = await supabase
       .from('manual_verification_requests')
       .insert({
-        user_id: session.user.id,
+        user_id: user.id,
         verification_type: verificationType,
         status: 'pending',
         submitted_at: new Date().toISOString(),

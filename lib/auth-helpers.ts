@@ -1,10 +1,8 @@
 /**
  * Authentication Helper Functions (Client-Side)
  * Enhanced with server-side magic links, rate limiting, and audit logging
- * Adapted from senior engineer best practices
+ * No Supabase client import - uses fetch to API only (avoids realtime/webpack crash on dashboard).
  */
-
-import { supabase } from './supabaseClient'
 
 export interface AuthUser {
   id: string
@@ -12,6 +10,14 @@ export interface AuthUser {
   user_type: 'freelancer' | 'client' | 'admin'
   name: string | null
   is_verified: boolean
+  /** Set by API for frontend; demo override when NEXT_PUBLIC_DEMO_VERIFIED_EMAIL matches */
+  isVerified?: boolean
+  /** Profile picture URL; synced from DB so header/sidebar update in real time after profile edit */
+  avatar?: string | null
+  /** Optional profile fields (from /api/user/profile or session); used by profile edit */
+  bio?: string | null
+  location?: string | null
+  skills?: string[]
 }
 
 export interface SendMagicLinkResponse {

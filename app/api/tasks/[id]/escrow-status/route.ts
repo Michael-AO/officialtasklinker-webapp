@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: taskId } = await params
-    const userId = request.headers.get("user-id")
+    const user = await ServerSessionManager.getCurrentUser()
 
     console.log("=== API: Checking escrow status for task:", taskId)
 
@@ -13,9 +14,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "Invalid task ID" }, { status: 400 })
     }
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
+
+    const userId = user.id
 
     // Get the task to verify ownership
     const { data: task, error: taskError } = await supabase
@@ -48,27 +51,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Check if escrow exists for this task
     const { data: escrow, error: escrowError } = await supabase
       .from("escrow_accounts")
-      .select(`
-        id,
-        status,
-        amount
-      `)
+      .select("id, status, amount, payment_reference, created_at, updated_at")
       .eq("task_id", taskId)
       .single()
 
-    // Get milestones separately to avoid relationship issues
+    // Get milestones from escrow_milestones
     let milestones: any[] = []
     if (escrow && !escrowError) {
       const { data: milestoneData, error: milestoneError } = await supabase
-        .from("milestones")
-        .select(`
-          id,
-          title,
-          amount,
-          status
-        `)
+        .from("escrow_milestones")
+        .select("id, title, description, amount, status")
         .eq("escrow_id", escrow.id)
-      
+        .order("created_at", { ascending: true })
       if (!milestoneError && milestoneData) {
         milestones = milestoneData
       }
@@ -83,7 +77,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const escrowStatus = escrow?.status
     const milestonesCount = milestones.length
 
-    console.log("=== API: Escrow status check result:", { hasEscrow, escrowStatus, milestonesCount })
+    // Shape escrow for frontend (funded_at from updated_at when funded)
+    const escrowForClient = escrow
+      ? {
+          ...escrow,
+          funded_at: escrow.status === "funded" ? escrow.updated_at : escrow.created_at,
+        }
+      : null
 
     return NextResponse.json({
       success: true,
@@ -91,6 +91,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       escrowStatus,
       milestonesCount,
       milestones,
+      escrow: escrowForClient,
     })
   } catch (error) {
     console.error("=== API: Escrow status check error:", error)

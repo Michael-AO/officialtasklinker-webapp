@@ -19,6 +19,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { ManualVerificationFlow } from "./verification/manual-verification-flow"
+import { YouVerifyModal } from "./youverify-modal"
 
 interface VerificationGateProps {
   children: React.ReactNode
@@ -32,6 +33,7 @@ export function VerificationGate({
   fallback 
 }: VerificationGateProps) {
   const { user, isLoading, refreshUser } = useAuth()
+  const [showYouVerifyModal, setShowYouVerifyModal] = useState(false)
   const [showManualVerification, setShowManualVerification] = useState(false)
 
   // Helper function to get action text
@@ -143,13 +145,21 @@ export function VerificationGate({
               <strong>How it works:</strong> Submit your documents for verification.
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <Button 
-                onClick={() => setShowManualVerification(true)}
-                className="flex-1"
+                onClick={() => setShowYouVerifyModal(true)}
+                className="w-full bg-[#04A466] hover:bg-[#04A466]/90"
               >
                 <Shield className="h-4 w-4 mr-2" />
-                Start AI Verification
+                Verify now
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setShowManualVerification(true)}
+                className="w-full"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Submit documents (manual)
               </Button>
             </div>
           </div>
@@ -162,13 +172,15 @@ export function VerificationGate({
         </CardContent>
       </Card>
 
-      {/* AI Verification Flow */}
+      <YouVerifyModal open={showYouVerifyModal} onOpenChange={(open) => { setShowYouVerifyModal(open); if (!open) refreshUser() }} />
+
+      {/* Identity / Document Verification Flow */}
       {showManualVerification && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">AI Document Verification</h2>
+                <h2 className="text-2xl font-bold">Document Verification</h2>
                 <Button
                   variant="ghost"
                   onClick={() => setShowManualVerification(false)}
@@ -180,7 +192,7 @@ export function VerificationGate({
               <ManualVerificationFlow
                 onSuccess={() => {
                   setShowManualVerification(false)
-                  toast.success("Documents submitted for AI review!")
+                  toast.success("Documents submitted for review!")
                   // Refresh user to check if approved
                   refreshUser()
                 }}

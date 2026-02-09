@@ -59,9 +59,7 @@ export function SmartTaskMatching() {
 
         // Fetch smart matches
         const matchesResponse = await fetch("/api/tasks/smart-matches", {
-          headers: {
-            "user-id": user.id.toString(),
-          },
+          credentials: "include",
         })
 
         if (!matchesResponse.ok) {

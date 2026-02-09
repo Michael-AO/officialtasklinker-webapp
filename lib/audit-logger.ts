@@ -4,13 +4,18 @@
  * Adapted from senior engineer best practices
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Server-side Supabase client with service role
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+let _supabase: SupabaseClient | null = null
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!url || !key) throw new Error('supabaseKey is required')
+    _supabase = createClient(url, key)
+  }
+  return _supabase
+}
 
 export interface AuditLogEntry {
   userId?: string
@@ -198,7 +203,7 @@ export class AuditLogger {
    */
   private static async log(entry: AuditLogEntry): Promise<void> {
     try {
-      const { error } = await supabase.rpc('log_auth_event', {
+      const { error } = await getSupabase().rpc('log_auth_event', {
         p_user_id: entry.userId || null,
         p_email: entry.email,
         p_action: entry.action,
@@ -225,7 +230,7 @@ export class AuditLogger {
    */
   static async getRecentLogs(limit: number = 100) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('auth_audit_log')
         .select('*')
         .order('created_at', { ascending: false })
@@ -248,7 +253,7 @@ export class AuditLogger {
    */
   static async getUserLogs(userId: string, limit: number = 50) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('auth_audit_log')
         .select('*')
         .eq('user_id', userId)
@@ -274,7 +279,7 @@ export class AuditLogger {
     try {
       const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('auth_audit_log')
         .select('*')
         .eq('email', email.toLowerCase())

@@ -157,19 +157,6 @@ export default function EscrowPage() {
           </Alert>
         )}
 
-        {!user?.isVerified && (
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Identity Verification Required:</strong> Complete identity verification to enable all escrow
-              features.{" "}
-              <Button variant="link" className="p-0 h-auto" asChild>
-                <Link href="/dashboard/escrow/setup">Verify now</Link>
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Escrow Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>

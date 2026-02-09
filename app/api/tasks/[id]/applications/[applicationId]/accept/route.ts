@@ -1,128 +1,121 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
+import { createNotification } from "@/lib/notifications"
 import { EmailService } from "@/lib/email-service"
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string; applicationId: string }> }) {
   try {
     const { id: taskId, applicationId } = await params
 
-    // Use regular client - RLS policies should allow task owners to accept applications
-    const supabase = createServerClient()
-
-    // Update application status to accepted
-    const { error: updateError } = await supabase
-      .from("applications")
-      .update({
-        status: "accepted",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", applicationId)
-
-    if (updateError) {
-      console.error("[ACCEPT] Failed to update application status:", updateError)
-      return NextResponse.json({ error: "Failed to update application status", details: updateError.message || updateError }, { status: 500 })
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    // Get application details for escrow creation and email
+    // Use server client (service role when available) so updates are not blocked by RLS
+    const supabase = createServerClient()
+
+    // Fetch application and task first to authorize (only task owner can accept)
     const { data: application, error: appError } = await supabase
       .from("applications")
       .select(`
-        *,
-        task:tasks(*)
+        id,
+        freelancer_id,
+        proposed_budget,
+        task:tasks(id, client_id, title)
       `)
       .eq("id", applicationId)
       .single()
 
-    if (appError) {
-      console.error("[ACCEPT] Failed to fetch application details:", appError)
-      return NextResponse.json({ error: "Failed to fetch application details", details: appError.message || appError }, { status: 500 })
+    if (appError || !application) {
+      console.error("[ACCEPT] Failed to fetch application:", appError)
+      return NextResponse.json({ error: "Application not found", details: appError?.message }, { status: 404 })
     }
 
-    // Get freelancer details separately
-    const { data: freelancer, error: freelancerError } = await supabase
-      .from("users")
-      .select("id, name, email")
-      .eq("id", application.freelancer_id)
-      .single()
-
-    if (freelancerError) {
-      console.error("[ACCEPT] Failed to fetch freelancer details:", freelancerError)
-      return NextResponse.json({ error: "Failed to fetch freelancer details", details: freelancerError.message || freelancerError }, { status: 500 })
+    const rawTask = application.task
+    const task =
+      rawTask && !Array.isArray(rawTask) && "id" in rawTask && "client_id" in rawTask
+        ? (rawTask as { id: string; client_id: string; title: string })
+        : null
+    if (!task || task.id !== taskId) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
-    // Get client details separately
-    const { data: client, error: clientError } = await supabase
-      .from("users")
-      .select("id, name, email")
-      .eq("id", application.task.client_id)
-      .single()
-
-    if (clientError) {
-      console.error("[ACCEPT] Failed to fetch client details:", clientError)
-      return NextResponse.json({ error: "Failed to fetch client details", details: clientError.message || clientError }, { status: 500 })
+    if (task.client_id !== user.id) {
+      return NextResponse.json({ error: "Only the task owner can accept an application" }, { status: 403 })
     }
 
-    // Create escrow if task requires it (commented out for now due to RLS issues)
-    // if (application.task && application.task.budget_type === "fixed") {
-    //   const { error: escrowError } = await supabase.from("escrows").insert({
-    //     task_id: taskId,
-    //     client_id: application.task.posted_by,
-    //     freelancer_id: application.user_id,
-    //     amount: application.proposed_budget,
-    //     status: "pending",
-    //   })
+    const now = new Date().toISOString()
 
-    //   if (escrowError) {
-    //     console.error("[ACCEPT] Failed to create escrow:", escrowError)
-    //     return NextResponse.json({ error: "Failed to create escrow", details: escrowError.message || escrowError }, { status: 500 })
-    //   }
-    // }
-
-    // Reject all other applications for this task
-    const { error: rejectError } = await supabase
+    // 1. Update application status to accepted
+    const { error: updateError } = await supabase
       .from("applications")
-      .update({ status: "rejected" })
+      .update({ status: "accepted", updated_at: now })
+      .eq("id", applicationId)
+
+    if (updateError) {
+      console.error("[ACCEPT] Failed to update application status:", updateError)
+      return NextResponse.json({ error: "Failed to update application status", details: updateError.message }, { status: 500 })
+    }
+
+    // 2. Update task status to assigned
+    const { error: taskUpdateError } = await supabase
+      .from("tasks")
+      .update({ status: "assigned", updated_at: now })
+      .eq("id", taskId)
+
+    if (taskUpdateError) {
+      console.error("[ACCEPT] Failed to update task status:", taskUpdateError)
+      // Application already accepted; try to continue
+    }
+
+    // 3. Reject all other applications for this task
+    await supabase
+      .from("applications")
+      .update({ status: "rejected", updated_at: now })
       .eq("task_id", taskId)
       .neq("id", applicationId)
 
-    if (rejectError) {
-      console.error("[ACCEPT] Failed to reject other applications:", rejectError)
-      return NextResponse.json({ error: "Failed to reject other applications", details: rejectError.message || rejectError }, { status: 500 })
-    }
+    // 4. In-app notification for the freelancer
+    const title = "You've been hired!"
+    const content = `You've been hired for "${task.title}"!`
+    const link = `/dashboard/tasks/${taskId}`
+    await createNotification(application.freelancer_id, "application", title, content, link)
 
-    // Send email notification to the accepted freelancer
+    // 5. Email notification (existing behavior)
     try {
-      const task = application.task as any
+      const { data: freelancer } = await supabase
+        .from("users")
+        .select("id, name, email")
+        .eq("id", application.freelancer_id)
+        .single()
+      const { data: client } = await supabase
+        .from("users")
+        .select("id, name, email")
+        .eq("id", task.client_id)
+        .single()
 
-      if (freelancer && client && task) {
-        console.log("[ACCEPT] Sending acceptance email to freelancer:", freelancer.email)
-        
-        const emailResult = await EmailService.sendApplicationAcceptedEmail(
+      if (freelancer?.email && client && task) {
+        await EmailService.sendApplicationAcceptedEmail(
           freelancer.email,
           freelancer.name,
           task.title,
           taskId,
           application.proposed_budget,
-          client.name
+          client.name,
         )
-
-        if (emailResult.success) {
-          console.log("[ACCEPT] Acceptance email sent successfully:", emailResult.messageId)
-        } else {
-          console.error("[ACCEPT] Failed to send acceptance email:", emailResult.error)
-          // Don't fail the request if email fails, just log it
-        }
-      } else {
-        console.error("[ACCEPT] Missing user data for email:", { freelancer, client, task })
       }
     } catch (emailError) {
       console.error("[ACCEPT] Email sending error:", emailError)
-      // Don't fail the request if email fails, just log it
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("[ACCEPT] Unexpected error:", error)
-    return NextResponse.json({ error: "Failed to accept application", details: error instanceof Error ? error.message : error }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to accept application", details: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 },
+    )
   }
 }

@@ -28,20 +28,9 @@ import { formatCurrency, getStatusColor, generateTaskCode } from "@/lib/api-util
 import { NairaIcon } from "@/components/naira-icon"
 import { VerifiedBadge } from "@/components/ui/verified-badge"
 import { isVerifiedEmail } from "@/lib/utils"
+import { TASK_CATEGORIES } from "@/lib/categories"
 
-const categories = [
-  "All Categories",
-  "Web Development",
-  "Mobile Development",
-  "Design",
-  "Writing",
-  "Programming",
-  "Marketing",
-  "Data Science",
-  "DevOps",
-  "AI/ML",
-  "Medicine and Health",
-]
+const categories = ["All Categories", ...TASK_CATEGORIES]
 
 const experienceLevels = ["All Levels", "entry", "intermediate", "expert"]
 const budgetRanges = ["All Budgets", "Under ₦50,000", "₦50,000 - ₦100,000", "₦100,000 - ₦250,000", "₦250,000 - ₦500,000", "Over ₦500,000"]

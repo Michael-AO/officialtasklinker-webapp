@@ -22,10 +22,25 @@ import {
 import Link from "next/link"
 import { MilestoneManager } from "@/components/milestone-manager"
 import { ProgressTracking } from "@/components/progress-tracking"
+import { FundMilestoneModal } from "@/components/fund-milestone-modal"
+import { RaiseDisputeModal } from "@/components/raise-dispute-modal"
 import { formatNaira } from "@/lib/currency"
 import { NairaIcon } from "@/components/naira-icon"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
+import { toast as sonnerToast } from "sonner"
+
+interface TaskMilestone {
+  id: string
+  title: string
+  description?: string | null
+  amount: number
+  status: string
+  paystack_reference?: string | null
+  due_date?: string | null
+  created_at: string
+  updated_at: string
+}
 
 interface TaskData {
   id: string
@@ -56,6 +71,7 @@ interface TaskData {
     rating: number
     completed_tasks: number
   }
+  milestones?: TaskMilestone[]
 }
 
 interface Application {
@@ -71,7 +87,7 @@ interface Application {
 export default function TaskDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const taskId = params.id as string
 
   const [task, setTask] = useState<TaskData | null>(null)
@@ -82,6 +98,9 @@ export default function TaskDetailPage() {
   const [escrowData, setEscrowData] = useState<any>(null)
   const [milestones, setMilestones] = useState<any[]>([])
   const [progressData, setProgressData] = useState<any>(null)
+  const [releasing, setReleasing] = useState(false)
+  const [fundModalMilestone, setFundModalMilestone] = useState<TaskMilestone | null>(null)
+  const [disputeModalMilestone, setDisputeModalMilestone] = useState<TaskMilestone | null>(null)
 
   // Check if current user is a freelancer with an application
   const userApplication = applications.find(app => app.freelancer_name === user?.name)
@@ -97,9 +116,7 @@ export default function TaskDetailPage() {
 
       try {
         const response = await fetch(`/api/applications/${userApplication.id}/progress`, {
-          headers: {
-            "user-id": user.id,
-          },
+          credentials: "include",
         })
 
         if (response.ok) {
@@ -153,9 +170,7 @@ export default function TaskDetailPage() {
         console.log("=== Fetching applications for task:", taskId)
 
         const response = await fetch(`/api/tasks/${taskId}/applications`, {
-          headers: {
-            "user-id": user.id,
-          },
+          credentials: "include",
         })
 
         if (!response.ok) {
@@ -195,9 +210,7 @@ export default function TaskDetailPage() {
         console.log("=== Fetching task details for ID:", taskId)
 
         const response = await fetch(`/api/tasks/${taskId}`, {
-          headers: {
-            "user-id": user.id,
-          },
+          credentials: "include",
         })
 
         if (!response.ok) {
@@ -236,6 +249,7 @@ export default function TaskDetailPage() {
             reviews: data.task.client?.completed_tasks || 0,
           },
           accepted_freelancer: data.task.accepted_freelancer,
+          milestones: data.task.milestones ?? [],
         }
 
         setTask(transformedTask)
@@ -256,52 +270,108 @@ export default function TaskDetailPage() {
     fetchTaskData()
   }, [taskId, user?.id, applications.length])
 
-  // Update the escrow data fetching useEffect
-  useEffect(() => {
-    const fetchEscrowStatus = async () => {
-      if (!taskId || !user?.id) return
-
-      try {
-        console.log("=== Fetching escrow status for task:", taskId)
-
-        const response = await fetch(`/api/tasks/${taskId}/escrow-status`, {
-          headers: {
-            "user-id": user.id,
-          },
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          console.log("=== Escrow status response:", data)
-
-          if (data.success) {
-            setEscrowData(data.escrow)
-            setMilestones(data.milestones || [])
-          } else {
-            setEscrowData(null)
-            setMilestones([])
-          }
+  const fetchEscrowStatus = async () => {
+    if (!taskId || !user?.id) return
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/escrow-status`, {
+        credentials: "include",
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setEscrowData(data.escrow)
+          setMilestones(data.milestones || [])
         } else {
-          console.log("=== Failed to fetch escrow status")
           setEscrowData(null)
           setMilestones([])
         }
-      } catch (error) {
-        console.error("=== Error fetching escrow status:", error)
+      } else {
         setEscrowData(null)
         setMilestones([])
       }
+    } catch (error) {
+      setEscrowData(null)
+      setMilestones([])
     }
+  }
 
-    if (task) {
-      fetchEscrowStatus()
-    }
+  useEffect(() => {
+    if (task) fetchEscrowStatus()
   }, [taskId, user?.id, task])
+
+  const refetchTask = async () => {
+    if (!taskId || !user?.id) return
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, { credentials: "include" })
+      if (!response.ok) return
+      const data = await response.json()
+      if (!data.success || !data.task) return
+      const transformedTask: TaskData = {
+        id: data.task.id,
+        title: data.task.title,
+        description: data.task.description,
+        budget_min: data.task.budget_min || 0,
+        budget_max: data.task.budget_max || 0,
+        budget_type: data.task.budget_type || "fixed",
+        status: data.task.status,
+        category: data.task.category || "General",
+        location: data.task.location || "Remote",
+        skills_required: data.task.skills_required || [],
+        applications_count: applications.length,
+        views_count: data.task.views_count || 0,
+        created_at: data.task.created_at,
+        deadline: data.task.deadline || data.task.created_at,
+        urgency: data.task.urgency || "normal",
+        client: {
+          name: data.task.client?.name || "Anonymous Client",
+          avatar_url: data.task.client?.avatar_url || "/placeholder.svg?height=40&width=40",
+          rating: data.task.client?.rating || 4.8,
+          reviews: data.task.client?.completed_tasks || 0,
+        },
+        accepted_freelancer: data.task.accepted_freelancer,
+        milestones: data.task.milestones ?? [],
+      }
+      setTask(transformedTask)
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  const handleReleasePayment = async () => {
+    if (!escrowData?.id || releasing) return
+    setReleasing(true)
+    try {
+      const res = await fetch("/api/escrow/release", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ escrowId: escrowData.id, skipTransfer: true }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Release failed")
+      sonnerToast.success("[System] Payment released.", {
+        description: "Freelancer has been paid. Earnings have been updated.",
+        duration: 5000,
+      })
+      toast({ title: "Payment released", description: "Funds have been released to the freelancer." })
+      await fetchEscrowStatus()
+      await refreshUser()
+    } catch (e) {
+      toast({
+        title: "Release failed",
+        description: e instanceof Error ? e.message : "Something went wrong",
+        variant: "destructive",
+      })
+    } finally {
+      setReleasing(false)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800"
+      case "assigned":
+        return "bg-indigo-100 text-indigo-800"
       case "in_progress":
         return "bg-blue-100 text-blue-800"
       case "completed":
@@ -395,7 +465,7 @@ export default function TaskDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Badge className={getStatusColor(task.status)}>{task.status.replace("_", " ")}</Badge>
+          <Badge className={getStatusColor(task.status)}>{task.status.replace(/_/g, " ")}</Badge>
           {/* Only show Edit Task button if user is the client */}
           {task.client.name === user?.name && (
             <Button variant="outline" size="sm" asChild>
@@ -448,6 +518,79 @@ export default function TaskDetailPage() {
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span>Posted: {new Date(task.created_at).toLocaleDateString()}</span>
               </div>
+            </div>
+
+            <div className="pt-4 border-t space-y-3">
+              <h4 className="font-semibold flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Task Milestones
+              </h4>
+              {task.milestones && task.milestones.length > 0 ? (
+                <ul className="space-y-2">
+                  {task.milestones.map((m) => (
+                    <li
+                      key={m.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"
+                    >
+                      <div>
+                        <p className="font-medium">{m.title}</p>
+                        {m.description && (
+                          <p className="text-muted-foreground mt-0.5">{m.description}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          <NairaIcon className="h-3.5 w-3.5" />
+                          <span>{formatNaira(m.amount)}</span>
+                          {m.due_date && (
+                            <span className="text-muted-foreground">
+                              Due: {new Date(m.due_date).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            m.status === "RELEASED"
+                              ? "default"
+                              : m.status === "DISPUTED"
+                                ? "destructive"
+                                : "secondary"
+                          }
+                        >
+                          {m.status.replace(/_/g, " ")}
+                        </Badge>
+                        {isClient && m.status === "PENDING" && (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => setFundModalMilestone(m)}
+                          >
+                            Fund Milestone
+                          </Button>
+                        )}
+                        {isAcceptedFreelancer && m.status === "FUNDED" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-amber-700 border-amber-300 hover:bg-amber-50"
+                            onClick={() => setDisputeModalMilestone(m)}
+                          >
+                            Raise Dispute
+                          </Button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
+                  <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+                  <p className="font-medium text-muted-foreground">No milestones yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Milestones can be added when creating the task or from the project management tab.
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -802,7 +945,8 @@ export default function TaskDetailPage() {
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Escrow Summary</CardTitle>
+                <CardTitle>Escrow Summary (Naira)</CardTitle>
+                <p className="text-sm text-muted-foreground">All amounts in Nigerian Naira (₦)</p>
               </CardHeader>
               <CardContent className="space-y-4">
                 {escrowData ? (
@@ -875,7 +1019,7 @@ export default function TaskDetailPage() {
                 )}
 
                 {escrowData && (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
                     <h4 className="font-semibold text-green-800 mb-2">✅ Escrow Active</h4>
                     <p className="text-sm text-green-700 mb-2">
                       Your payment is secured in escrow. Funds will be released as milestones are completed.
@@ -884,6 +1028,15 @@ export default function TaskDetailPage() {
                       Reference: {escrowData.payment_reference} | Funded:{" "}
                       {new Date(escrowData.funded_at).toLocaleDateString()}
                     </div>
+                    {escrowData.status === "funded" && (
+                      <Button
+                        onClick={handleReleasePayment}
+                        disabled={releasing}
+                        className="mt-2"
+                      >
+                        {releasing ? "Releasing…" : "Release Payment"}
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -944,6 +1097,21 @@ export default function TaskDetailPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <FundMilestoneModal
+        isOpen={!!fundModalMilestone}
+        onClose={() => setFundModalMilestone(null)}
+        milestone={fundModalMilestone}
+        taskId={taskId}
+        onSuccess={refetchTask}
+      />
+
+      <RaiseDisputeModal
+        isOpen={!!disputeModalMilestone}
+        onClose={() => setDisputeModalMilestone(null)}
+        milestone={disputeModalMilestone}
+        onSuccess={refetchTask}
+      />
     </div>
   )
 }

@@ -16,14 +16,13 @@ import { Plus, X, FileText, Save, Eye, Clock, CheckCircle, AlertCircle } from "l
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { isVerifiedEmail } from "@/lib/utils"
+import { TASK_CATEGORIES } from "@/lib/categories"
 import Link from "next/link"
-import { VerificationGate } from "@/components/verification-gate"
 import { ArrowLeft } from "lucide-react"
 
 export default function NewTaskPage() {
   const router = useRouter()
-  const { user, isLoading: authLoading, updateProfile } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [taskPosted, setTaskPosted] = useState(false)
@@ -52,20 +51,7 @@ export default function NewTaskPage() {
   const [newQuestion, setNewQuestion] = useState("")
   const [newRequirement, setNewRequirement] = useState("")
 
-  const categories = [
-    "Web Development",
-    "Mobile Development",
-    "UI/UX Design",
-    "Content Writing",
-    "Digital Marketing",
-    "Data Analysis",
-    "Graphic Design",
-    "Video Editing",
-    "Translation",
-    "Virtual Assistant",
-    "Medicine and Health",
-    "Other",
-  ]
+  const categories = TASK_CATEGORIES
 
   // Show loading state while authentication is being determined
   if (authLoading) {
@@ -103,8 +89,7 @@ export default function NewTaskPage() {
     )
   }
 
-  // Check if user can post tasks
-  const canPostTasks = isVerifiedEmail(user.email)
+  const canPostTasks = user.user_type === "client"
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,17 +112,13 @@ export default function NewTaskPage() {
       console.log("Task data:", taskData)
 
       const requestBody = {
-        // User authentication data
+        // User authentication data (API uses session; this is for legacy/compat)
         user_data: {
           id: user.id,
           email: user.email,
           name: user.name,
-          userType: user.userType,
-          isVerified: user.isVerified,
-          skills: user.skills || [],
-          bio: user.bio || "",
-          location: user.location || "",
-          hourlyRate: user.hourlyRate,
+          user_type: user.user_type,
+          is_verified: user.is_verified ?? user.isVerified,
         },
         // Task data
         title: taskData.title,
@@ -382,8 +363,7 @@ export default function NewTaskPage() {
         
       </div>
 
-      <VerificationGate requiredAction="post_tasks">
-        <div className="space-y-6">
+      <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold">Post New Task</h1>
@@ -806,8 +786,7 @@ export default function NewTaskPage() {
           </div>
         </div>
       </form>
-        </div>
-      </VerificationGate>
+      </div>
     </div>
   )
 }

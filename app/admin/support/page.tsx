@@ -56,9 +56,7 @@ export default function AdminSupportPage() {
   const fetchSupportRequests = async () => {
     try {
       const response = await fetch("/api/admin/support-requests", {
-        headers: {
-          "user-id": user?.id || "",
-        },
+        credentials: "include",
       })
 
       if (response.ok) {
@@ -107,7 +105,6 @@ export default function AdminSupportPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "user-id": user?.id || "",
         },
         body: JSON.stringify({ status: newStatus }),
       })

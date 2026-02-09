@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { useAuth } from "@/contexts/auth-context"
 
 export interface Notification {
   id: string
@@ -23,75 +24,85 @@ interface NotificationContextType {
   markAllAsRead: () => void
   removeNotification: (id: string) => void
   clearAll: () => void
+  isLoading: boolean
+  refreshNotifications: () => Promise<void>
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
 
+function mapType(type: string): "info" | "success" | "warning" | "error" {
+  const m: Record<string, "info" | "success" | "warning" | "error"> = {
+    task: "info",
+    application: "info",
+    payment: "success",
+    message: "info",
+    system: "info",
+    info: "info",
+    success: "success",
+    warning: "warning",
+    error: "error",
+  }
+  return m[type] ?? "info"
+}
+
+function mapApiToNotification(n: {
+  id: string
+  type: string
+  title: string
+  message: string
+  timestamp: string
+  read: boolean
+  actionUrl?: string
+  actionLabel?: string
+}): Notification {
+  return {
+    id: n.id,
+    type: mapType(n.type),
+    title: n.title,
+    message: n.message,
+    timestamp: n.timestamp,
+    read: n.read,
+    actionUrl: n.actionUrl,
+    actionLabel: n.actionLabel,
+  }
+}
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.id) {
+      setNotifications([])
+      setIsLoading(false)
+      return
+    }
+    try {
+      const res = await fetch("/api/notifications", { credentials: "include" })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && Array.isArray(data.notifications)) {
+          setNotifications(data.notifications.map(mapApiToNotification))
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [user?.id])
 
   useEffect(() => {
-    // Load mock notifications
-    const mockNotifications: Notification[] = [
-      {
-        id: "notif_001",
-        type: "success",
-        title: "Application Accepted",
-        message: "Your application for 'Website Development' has been accepted by Sarah Johnson.",
-        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-        read: true,
-        actionUrl: "/dashboard/tasks/task_001",
-        actionLabel: "View Task",
-        metadata: { taskId: "task_001", clientId: "client_001" },
-      },
-      {
-        id: "notif_002",
-        type: "info",
-        title: "New Task Match",
-        message: "A new task matching your skills has been posted: 'Mobile App Development'.",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-        read: true,
-        actionUrl: "/dashboard/browse/task_002",
-        actionLabel: "View Task",
-        metadata: { taskId: "task_002" },
-      },
-      {
-        id: "notif_003",
-        type: "success",
-        title: "Payment Released",
-        message: "Payment of ₦50,000 has been released for completed task 'Logo Design'.",
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        read: true,
-        actionUrl: "/dashboard/payments",
-        actionLabel: "View Payment",
-        metadata: { amount: 50000, taskId: "task_003" },
-      },
-      {
-        id: "notif_004",
-        type: "warning",
-        title: "Task Deadline Approaching",
-        message: "The deadline for 'Content Writing Project' is in 2 days.",
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-        read: true,
-        actionUrl: "/dashboard/tasks/task_004",
-        actionLabel: "View Task",
-        metadata: { taskId: "task_004", daysLeft: 2 },
-      },
-      {
-        id: "notif_005",
-        type: "info",
-        title: "Profile View",
-        message: "Your profile has been viewed 15 times this week.",
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-        read: true,
-        actionUrl: "/dashboard/profile",
-        actionLabel: "View Profile",
-        metadata: { views: 15 },
-      },
-    ]
+    fetchNotifications()
+  }, [fetchNotifications])
 
-    setNotifications(mockNotifications)
-  }, [])
+  // Poll for new notifications every 60s (no Supabase client = no realtime; avoids dashboard bundle crash)
+  useEffect(() => {
+    if (!user?.id) return
+    const interval = setInterval(fetchNotifications, 60_000)
+    return () => clearInterval(interval)
+  }, [user?.id, fetchNotifications])
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
@@ -102,22 +113,41 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       timestamp: new Date().toISOString(),
       read: false,
     }
-
     setNotifications((prev) => [newNotification, ...prev])
   }
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
     setNotifications((prev) =>
-      prev.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)),
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     )
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id }),
+      })
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err)
+    }
   }
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })))
+  const markAllAsRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ markAll: true }),
+      })
+    } catch (err) {
+      console.error("Failed to mark all as read:", err)
+    }
   }
 
   const removeNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((notification) => notification.id !== id))
+    setNotifications((prev) => prev.filter((n) => n.id !== id))
   }
 
   const clearAll = () => {
@@ -134,6 +164,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         markAllAsRead,
         removeNotification,
         clearAll,
+        isLoading,
+        refreshNotifications: fetchNotifications,
       }}
     >
       {children}

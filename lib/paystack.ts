@@ -1,5 +1,3 @@
-"use client"
-
 export interface PaystackConfig {
   publicKey: string
   secretKey?: string
@@ -209,6 +207,66 @@ class ServerPaystackService {
   // Generate unique reference
   private generateReference(): string {
     return `TL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+
+  // Create transfer recipient (for payouts)
+  async createTransferRecipient(params: {
+    type: string
+    name: string
+    account_number: string
+    bank_code: string
+    currency?: string
+  }): Promise<{ status: boolean; message: string; data?: { recipient_code: string } }> {
+    if (!process.env.PAYSTACK_SECRET_KEY) {
+      throw new Error("PAYSTACK_SECRET_KEY is not configured")
+    }
+    const response = await fetch(`${this.baseUrl}/transferrecipient`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: params.type || "nuban",
+        name: params.name,
+        account_number: params.account_number,
+        bank_code: params.bank_code,
+        currency: params.currency || "NGN",
+      }),
+    })
+    const data = await response.json()
+    return data
+  }
+
+  // Initiate transfer (amount in Naira; converted to kobo internally for Paystack)
+  async initiateTransfer(params: {
+    source: string
+    amount: number
+    recipient: string
+    reason: string
+    reference: string
+  }): Promise<{ status: boolean; message: string; data?: unknown }> {
+    if (!process.env.PAYSTACK_SECRET_KEY) {
+      throw new Error("PAYSTACK_SECRET_KEY is not configured")
+    }
+    const amountNaira = Number(params.amount)
+    const amountKobo = Math.round(amountNaira * 100) // Paystack expects kobo (1 Naira = 100 kobo)
+    const response = await fetch(`${this.baseUrl}/transfer`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        source: params.source || "balance",
+        amount: amountKobo,
+        recipient: params.recipient,
+        reason: params.reason,
+        reference: params.reference,
+      }),
+    })
+    const data = await response.json()
+    return data
   }
 }
 

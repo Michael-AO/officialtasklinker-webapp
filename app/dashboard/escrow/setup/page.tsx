@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, CreditCard, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/contexts/auth-context"
 
 interface Task {
   id: string
@@ -28,6 +29,7 @@ export default function EscrowSetupPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { toast } = useToast()
+  const { user, isLoading: authLoading } = useAuth()
 
   const taskId = searchParams.get("taskId")
   const [task, setTask] = useState<Task | null>(null)
@@ -138,7 +140,8 @@ export default function EscrowSetupPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Payment Setup</CardTitle>
+          <CardTitle>Payment Setup (Naira)</CardTitle>
+          <p className="text-sm text-muted-foreground">All amounts are in Nigerian Naira (₦)</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-blue-50 p-4 rounded-lg">
@@ -151,7 +154,7 @@ export default function EscrowSetupPage() {
 
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Project Amount:</span>
+              <span>Project Amount (NGN):</span>
               <span>{formatNaira(budget)}</span>
             </div>
             <div className="flex justify-between text-sm">
@@ -160,7 +163,7 @@ export default function EscrowSetupPage() {
             </div>
             <hr />
             <div className="flex justify-between font-medium">
-              <span>Total:</span>
+              <span>Total (Naira):</span>
               <span>{formatNaira(budget * 1.05)}</span>
             </div>
           </div>

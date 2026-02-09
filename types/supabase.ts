@@ -1,4 +1,4 @@
-deloy export interface Database {
+export interface Database {
   public: {
     Tables: {
       users: {
@@ -11,6 +11,10 @@ deloy export interface Database {
           is_verified: boolean
           dojah_verified: boolean
           verification_type: string | null
+          kyc_status: string | null
+          youverify_id: string | null
+          kyc_last_checked: string | null
+          kyc_fail_reason: string | null
           phone: string | null
           bio: string | null
           location: string | null
@@ -34,6 +38,10 @@ deloy export interface Database {
           is_verified?: boolean
           dojah_verified?: boolean
           verification_type?: string | null
+          kyc_status?: string | null
+          youverify_id?: string | null
+          kyc_last_checked?: string | null
+          kyc_fail_reason?: string | null
           phone?: string | null
           bio?: string | null
           location?: string | null
@@ -57,6 +65,10 @@ deloy export interface Database {
           is_verified?: boolean
           dojah_verified?: boolean
           verification_type?: string | null
+          kyc_status?: string | null
+          youverify_id?: string | null
+          kyc_last_checked?: string | null
+          kyc_fail_reason?: string | null
           phone?: string | null
           bio?: string | null
           location?: string | null
@@ -89,7 +101,7 @@ deloy export interface Database {
           location: string
           experience_level: string
           urgency: "low" | "normal" | "high"
-          status: "draft" | "active" | "in_progress" | "completed" | "cancelled"
+          status: "draft" | "active" | "assigned" | "in_progress" | "completed" | "cancelled"
           visibility: "public" | "private"
           requirements: string[]
           questions: string[]
@@ -116,7 +128,7 @@ deloy export interface Database {
           location?: string
           experience_level?: string
           urgency?: "low" | "normal" | "high"
-          status?: "draft" | "active" | "in_progress" | "completed" | "cancelled"
+          status?: "draft" | "active" | "assigned" | "in_progress" | "completed" | "cancelled"
           visibility?: "public" | "private"
           requirements?: string[]
           questions?: string[]
@@ -143,7 +155,7 @@ deloy export interface Database {
           location?: string
           experience_level?: string
           urgency?: "low" | "normal" | "high"
-          status?: "draft" | "active" | "in_progress" | "completed" | "cancelled"
+          status?: "draft" | "active" | "assigned" | "in_progress" | "completed" | "cancelled"
           visibility?: "public" | "private"
           requirements?: string[]
           questions?: string[]
@@ -366,7 +378,7 @@ deloy export interface Database {
     }
     Enums: {
       user_type: "freelancer" | "client"
-      task_status: "draft" | "active" | "in_progress" | "completed" | "cancelled"
+      task_status: "draft" | "active" | "assigned" | "in_progress" | "completed" | "cancelled"
       application_status: "pending" | "accepted" | "rejected" | "withdrawn" | "interviewing"
       escrow_status: "pending" | "funded" | "released" | "disputed" | "refunded"
     }

@@ -1,17 +1,23 @@
 import { createServerClient } from "@/lib/supabase"
 import { type NextRequest, NextResponse } from "next/server"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: "User authentication required" }, { status: 401 })
+    }
+
     const supabase = createServerClient()
     const body = await request.json()
-    const { bankName, bankCode, accountNumber, accountName, userId } = body
+    const { bankName, bankCode, accountNumber, accountName } = body
 
-    // Insert into Supabase
+    // Insert into Supabase (use session user_id)
     const { data, error } = await supabase
       .from("bank_accounts")
       .insert({
-        user_id: userId,
+        user_id: user.id,
         bank_name: bankName,
         bank_code: bankCode,
         account_number: accountNumber,
@@ -48,18 +54,16 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient()
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get("userId")
-
-    if (!userId) {
-      return NextResponse.json({ error: "User ID required" }, { status: 400 })
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: "User authentication required" }, { status: 401 })
     }
 
+    const supabase = createServerClient()
     const { data, error } = await supabase
       .from("bank_accounts")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
     if (error) {

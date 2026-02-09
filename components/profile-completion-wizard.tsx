@@ -285,9 +285,7 @@ export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpande
 
           const uploadResponse = await fetch("/api/upload/avatar", {
             method: "POST",
-            headers: {
-              "user-id": user?.id || "",
-            },
+            credentials: "include",
             body: formData,
           })
 
@@ -331,9 +329,7 @@ export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpande
 
             const uploadResponse = await fetch("/api/upload/portfolio", {
               method: "POST",
-              headers: {
-                "user-id": user?.id || "",
-              },
+              credentials: "include",
               body: formData,
             })
 
@@ -366,7 +362,6 @@ export function ProfileCompletionWizard({ onComplete, isExpanded: initialExpande
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-user-id": user?.id || "",
           },
           body: JSON.stringify(portfolioData),
         })

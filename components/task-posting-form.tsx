@@ -14,7 +14,6 @@ import { Progress } from "@/components/ui/progress"
 import { Plus, X, Upload, FileText, DollarSign, Clock, CheckCircle, Lock, Info, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { isVerifiedEmail } from "@/lib/utils"
 
 interface TaskFormData {
   title: string
@@ -42,8 +41,7 @@ export function TaskPostingForm() {
   const [newRequirement, setNewRequirement] = useState("")
   const [isSubmitted, setIsSubmitted] = useState(false)
 
-  // Check if user can post tasks
-  const canPostTasks = user && isVerifiedEmail(user.email)
+  const canPostTasks = user?.user_type === "client"
 
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",

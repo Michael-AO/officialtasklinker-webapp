@@ -1,15 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user ID from headers
-    const userId = request.headers.get("x-user-id")
-
-    if (!userId) {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
 
+    const userId = user.id
     console.log("🔍 Fetching portfolio for user:", userId)
 
     // Get portfolio items from database using service role (bypass RLS)
@@ -56,13 +56,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get user ID from headers
-    const userId = request.headers.get("x-user-id")
-
-    if (!userId) {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
       return NextResponse.json({ success: false, error: "User authentication required" }, { status: 401 })
     }
 
+    const userId = user.id
     console.log("🔍 Creating portfolio item for user:", userId)
 
     // Get the portfolio data from request body
