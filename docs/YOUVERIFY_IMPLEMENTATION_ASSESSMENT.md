@@ -118,6 +118,7 @@ Defined in: `scripts/30-phase3-financials-identity.sql` and `scripts/32-kyc-fail
 | Component | Location | Notes |
 |-----------|----------|--------|
 | Session start API | `app/api/verification/youverify/start/route.ts` | Session generate + optional liveness token fallback; config validation (HTTPS in prod); 15s timeout; rate-limit/network error handling; GET health check |
+| NIN verification (test) | `app/api/verification/youverify/nin/route.ts` | Nigeria NIN verification: POST body `{ nin, premiumNin?, validations? }`; calls YouVerify `POST /v2/api/identity/ng/nin`; used from `/dashboard/youverify-test` for testing before full integration |
 | Webhook handler | `app/api/webhooks/youverify/route.ts` | Signature verification; updates `users` on success |
 | YouVerify modal | `components/youverify-modal.tsx` | Loads SDK, init with sessionId, fallback “Verification” (simulate) |
 | Sidebar entry | `components/app-sidebar.tsx` | Verification group: link to `/dashboard/verification`, “Verify now” opens modal |
@@ -173,6 +174,7 @@ Defined in: `scripts/30-phase3-financials-identity.sql` and `scripts/32-kyc-fail
 | Concern | File(s) |
 |--------|---------|
 | Start session / get sessionId | `app/api/verification/youverify/start/route.ts` |
+| NIN verification (Nigeria, test) | `app/api/verification/youverify/nin/route.ts` |
 | Webhook → update user | `app/api/webhooks/youverify/route.ts` |
 | Modal + SDK load + init | `components/youverify-modal.tsx` |
 | Sidebar “Verify now” | `components/app-sidebar.tsx` |

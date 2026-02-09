@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send email with magic link
-    const magicLinkUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/verify-magic-link?token=${result.token}&user_type=${body.user_type}`
+    const magicLinkUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tasklinkers.com'}/api/auth/verify-magic-link?token=${result.token}&user_type=${body.user_type}`
     const name = body.first_name || body.email?.split('@')[0] || 'User'
 
     const emailResult = await EmailService.sendMagicLinkEmail(

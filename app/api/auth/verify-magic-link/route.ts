@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || 'unknown'
     }
 
-    await ServerSessionManager.createSession(result.user!, metadata)
+    const sessionToken = await ServerSessionManager.createSession(result.user!, metadata)
 
     // Redirect to appropriate dashboard based on user type
     let dashboardUrl: string
@@ -76,7 +76,18 @@ export async function GET(request: NextRequest) {
     const redirectUrl = new URL(dashboardUrl, request.url)
     redirectUrl.searchParams.set('verified', 'true')
 
-    return NextResponse.redirect(redirectUrl)
+    const res = NextResponse.redirect(redirectUrl)
+    // Set session cookie on the redirect response so it is sent in production.
+    // cookies().set() in createSession can be lost when we return a custom Response.
+    const isProduction = process.env.NODE_ENV === 'production'
+    res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    })
+    return res
 
   } catch (error) {
     console.error('Verify magic link API error:', error)
