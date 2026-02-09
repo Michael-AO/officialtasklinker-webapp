@@ -31,8 +31,11 @@ const getValidatedBaseUrl = (url: string): string => {
   }
 }
 
+// In development always use sandbox; in production use YOUVERIFY_BASE_URL or production API
 const YOUVERIFY_BASE_URL = getValidatedBaseUrl(
-  process.env.YOUVERIFY_BASE_URL || "https://api.sandbox.youverify.co"
+  process.env.NODE_ENV === "production"
+    ? (process.env.YOUVERIFY_BASE_URL || "https://api.youverify.co")
+    : "https://api.sandbox.youverify.co"
 )
 
 const YOUVERIFY_TOKEN =

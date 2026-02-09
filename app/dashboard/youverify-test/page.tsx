@@ -13,7 +13,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Loader2, ChevronDown, ChevronRight } from "lucide-react"
+import { Loader2, ChevronDown, ChevronRight, Smartphone } from "lucide-react"
+import { YouVerifyModal } from "@/components/youverify-modal"
 
 type EndpointResult = {
   endpoint: string
@@ -71,6 +72,7 @@ export default function YouVerifyTestPage() {
   const [ninResult, setNinResult] = useState<EndpointResult | null>(null)
   const [ninLoading, setNinLoading] = useState(false)
   const [validationsOpen, setValidationsOpen] = useState(false)
+  const [showSdkModal, setShowSdkModal] = useState(false)
 
   async function testEndpoint(id: string, method: string, path: string) {
     setLoading(id)
@@ -332,6 +334,33 @@ export default function YouVerifyTestPage() {
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div>
               <CardTitle className="text-base flex items-center gap-2">
+                <Smartphone className="h-4 w-4" />
+                YouVerify Web SDK (Liveness)
+              </CardTitle>
+              <CardDescription className="mt-1 font-mono text-xs">
+                Same modal as dashboard verification flow
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              variant="default"
+              className="bg-[#04A466] hover:bg-[#04A466]/90"
+              onClick={() => setShowSdkModal(true)}
+            >
+              Open verification modal
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Opens the YouVerify Liveness modal: gets a session from the API, loads the SDK, and runs the identity verification flow. Complete the steps in the modal to test end-to-end.
+          </p>
+        </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
                 <Badge variant="outline" className="font-mono">
                   POST
                 </Badge>
@@ -534,6 +563,8 @@ export default function YouVerifyTestPage() {
           )}
         </CardContent>
       </Card>
+
+      <YouVerifyModal open={showSdkModal} onOpenChange={setShowSdkModal} />
     </div>
   )
 }
