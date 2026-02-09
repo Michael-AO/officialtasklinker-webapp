@@ -141,7 +141,8 @@ export async function POST(request: Request) {
       id: nin,
       isSubjectConsent: true,
     }
-    if (body.premiumNin === true) {
+    // YouVerify sandbox test NIN is 11111111111 and requires premiumNin: true (see doc.youverify.co NIN verification).
+    if (body.premiumNin === true || (process.env.NODE_ENV !== "production" && nin === "11111111111")) {
       payload.premiumNin = true
     }
     if (body.validations != null && typeof body.validations === "object") {

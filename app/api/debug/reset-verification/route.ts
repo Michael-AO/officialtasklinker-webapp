@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase"
+import { createServerClient } from "@/lib/supabase"
 import { ServerSessionManager } from "@/lib/server-session-manager"
 
 async function resetVerification() {
   const user = await ServerSessionManager.getCurrentUser()
   if (!user) return { error: "Unauthorized", status: 401 as const }
 
-  const supabase = createClient()
+  const supabase = createServerClient()
 
   const { data: updatedUser, error: updateError } = await supabase
     .from("users")
