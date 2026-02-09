@@ -2,9 +2,11 @@
  * YouVerify Nigeria NIN (National Identification Number) verification.
  * POST body: { nin, premiumNin?, validations? }.
  * Calls YouVerify POST /v2/api/identity/ng/nin. Requires auth.
+ * On success: updates users.name (official name from YouVerify) and users.is_verified.
  */
 import { NextResponse } from "next/server"
 import { ServerSessionManager } from "@/lib/server-session-manager"
+import { supabase } from "@/lib/supabase"
 
 // ==================== CONFIG ====================
 const getValidatedBaseUrl = (url: string): string => {
@@ -23,8 +25,11 @@ const getValidatedBaseUrl = (url: string): string => {
   }
 }
 
+// In development always use sandbox; in production use YOUVERIFY_BASE_URL or production API
 const YOUVERIFY_BASE_URL = getValidatedBaseUrl(
-  process.env.YOUVERIFY_BASE_URL || "https://api.sandbox.youverify.co"
+  process.env.NODE_ENV === "production"
+    ? (process.env.YOUVERIFY_BASE_URL || "https://api.youverify.co")
+    : "https://api.sandbox.youverify.co"
 )
 
 const YOUVERIFY_TOKEN =
@@ -72,6 +77,23 @@ async function youverifyNinFetch(
 }
 
 const NIN_11_DIGITS = /^\d{11}$/
+
+/** Parse official full name from YouVerify NIN response (supports multiple shapes). */
+function parseOfficialName(data: unknown): string | null {
+  if (data == null || typeof data !== "object") return null
+  const o = data as Record<string, unknown>
+  // Nested: data.data.firstName etc.
+  const inner = o.data != null && typeof o.data === "object" ? (o.data as Record<string, unknown>) : o
+  const first = (inner.firstName ?? inner.first_name) as string | undefined
+  const last = (inner.lastName ?? inner.last_name) as string | undefined
+  if (typeof first === "string" || typeof last === "string") {
+    const parts = [first?.trim(), last?.trim()].filter(Boolean)
+    if (parts.length) return parts.join(" ")
+  }
+  const full = (inner.fullName ?? inner.full_name ?? o.fullName ?? o.full_name) as string | undefined
+  if (typeof full === "string" && full.trim()) return full.trim()
+  return null
+}
 
 export async function POST(request: Request) {
   const requestId = Date.now().toString(36) + Math.random().toString(36).substring(2)
@@ -129,6 +151,24 @@ export async function POST(request: Request) {
     const { response, data } = await youverifyNinFetch(payload)
 
     if (response.ok) {
+      const officialName = parseOfficialName(data)
+      const now = new Date().toISOString()
+      const updates: { is_verified: boolean; updated_at: string; name?: string } = {
+        is_verified: true,
+        updated_at: now,
+      }
+      if (officialName) updates.name = officialName
+
+      const { error: updateError } = await supabase
+        .from("users")
+        .update(updates)
+        .eq("id", user.id)
+
+      if (updateError) {
+        console.error(`[youverify-nin][${requestId}] User update failed:`, updateError)
+        // Still return success so client knows NIN verified; name/flag may sync later
+      }
+
       return NextResponse.json(data)
     }
 
