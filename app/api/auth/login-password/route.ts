@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get("user-agent") || "unknown",
     }
 
-    await ServerSessionManager.createSession(
+    const sessionToken = await ServerSessionManager.createSession(
       {
         id: user.id,
         email: user.email,
@@ -92,7 +92,20 @@ export async function POST(request: NextRequest) {
     )
 
     const redirect = user.user_type === "admin" ? "/admin/dashboard" : "/dashboard"
-    return NextResponse.json({ success: true, redirect })
+    const isProduction = process.env.NODE_ENV === "production"
+    const cookieDomain = isProduction
+      ? new URL((process.env.NEXT_PUBLIC_APP_URL || "https://tasklinkers.com").replace(/\/$/, "")).hostname
+      : undefined
+    const res = NextResponse.json({ success: true, redirect })
+    res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
+      ...(cookieDomain && { domain: cookieDomain }),
+    })
+    return res
   } catch (error) {
     console.error("[login-password] error:", error)
     return NextResponse.json(
