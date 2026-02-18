@@ -91,12 +91,15 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
+    const cookieDomain =
+      isProduction && canonicalOrigin ? new URL(canonicalOrigin).hostname : undefined
     res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60,
+      ...(cookieDomain && { domain: cookieDomain }),
     })
     return res
 

@@ -47,6 +47,17 @@ export interface SessionData extends UserData {
 export const COOKIE_NAME = 'tl-auth-token'
 const SESSION_DURATION_DAYS = 7
 
+/** In production, cookie domain so session works on both apex and www (e.g. tasklinkers.com). */
+function getCookieDomain(): string | undefined {
+  if (process.env.NODE_ENV !== 'production') return undefined
+  const url = process.env.NEXT_PUBLIC_APP_URL || 'https://tasklinkers.com'
+  try {
+    return new URL(url.replace(/\/$/, '')).hostname
+  } catch {
+    return undefined
+  }
+}
+
 // Demo presentation: show green Verified badge for this email without DB change
 const DEMO_VERIFIED_EMAIL = process.env.NEXT_PUBLIC_DEMO_VERIFIED_EMAIL || 'your@email.com'
 
@@ -89,15 +100,18 @@ export class ServerSessionManager {
         is_active: true
       })
 
-      // Set HttpOnly cookie
+      // Set HttpOnly cookie (domain in prod so cookie works on both apex and www)
       const cookieStore = await cookies()
-      cookieStore.set(COOKIE_NAME, token, {
-        httpOnly: true, // Not accessible via JavaScript (XSS protection)
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        sameSite: 'lax', // CSRF protection
-        maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60, // 7 days in seconds
+      const cookieOpts: { httpOnly: boolean; secure: boolean; sameSite: 'lax'; maxAge: number; path: string; domain?: string } = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
         path: '/'
-      })
+      }
+      const domain = getCookieDomain()
+      if (domain) cookieOpts.domain = domain
+      cookieStore.set(COOKIE_NAME, token, cookieOpts)
 
       // Log session creation
       await AuditLogger.logSessionCreated(
@@ -209,8 +223,13 @@ export class ServerSessionManager {
         }
       }
 
-      // Clear cookie
-      cookieStore.delete(COOKIE_NAME)
+      // Clear cookie (same path/domain as set so browser removes it)
+      const domain = getCookieDomain()
+      if (domain) {
+        cookieStore.delete({ name: COOKIE_NAME, path: '/', domain })
+      } else {
+        cookieStore.delete(COOKIE_NAME)
+      }
     } catch (error) {
       console.error('Destroy session error:', error)
     }

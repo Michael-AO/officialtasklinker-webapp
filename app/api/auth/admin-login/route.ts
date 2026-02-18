@@ -129,14 +129,17 @@ export async function POST(request: NextRequest) {
     )
 
     const isProduction = process.env.NODE_ENV === "production"
+    const cookieDomain = isProduction
+      ? new URL((process.env.NEXT_PUBLIC_APP_URL || "https://tasklinkers.com").replace(/\/$/, "")).hostname
+      : undefined
     const res = NextResponse.json({ success: true, redirect: "/admin/dashboard" })
-    // Do not set domain — let the cookie bind to the request host so it persists on reload
     res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60,
+      ...(cookieDomain && { domain: cookieDomain }),
     })
     return res
   } catch (err) {
