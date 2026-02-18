@@ -18,12 +18,10 @@ import {
   Download,
   MessageSquare,
   ExternalLink,
-  Plus,
   Settings,
 } from "lucide-react"
 import { useEscrow } from "@/contexts/escrow-context"
 import { EscrowDetailsModal } from "@/components/escrow-details-modal"
-import { PaymentModal } from "@/components/payment-modal"
 import { DisputeModal } from "@/components/dispute-modal"
 import { PaymentLinkModal } from "@/components/payment-link-modal"
 import { PinSetupModal } from "@/components/pin-setup-modal"
@@ -35,7 +33,6 @@ export default function EscrowPage() {
   const { user } = useAuth()
   const { transactions, disputes, releaseFunds, raiseDispute } = useEscrow()
   const [selectedEscrow, setSelectedEscrow] = useState<string | null>(null)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false)
   const [selectedEscrowForPayment, setSelectedEscrowForPayment] = useState<string | null>(null)
   const [showDisputeModal, setShowDisputeModal] = useState(false)
@@ -129,18 +126,12 @@ export default function EscrowPage() {
             <h1 className="text-3xl font-bold">Escrow Management</h1>
             <p className="text-muted-foreground">Manage your secure payments and project funds</p>
           </div>
-          <div className="flex gap-2">
-            {!user?.hasPinSetup && (
-              <Button variant="outline" onClick={handlePinSetup}>
-                <Settings className="mr-2 h-4 w-4" />
-                Setup Security PIN
-              </Button>
-            )}
-            <Button onClick={() => setShowPaymentModal(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create New Escrow
+          {!user?.hasPinSetup && (
+            <Button variant="outline" onClick={handlePinSetup}>
+              <Settings className="mr-2 h-4 w-4" />
+              Setup Security PIN
             </Button>
-          </div>
+          )}
         </div>
 
         {/* Security Alert */}
@@ -440,8 +431,6 @@ export default function EscrowPage() {
             onClose={() => setSelectedEscrow(null)}
           />
         )}
-
-        <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} />
 
         {selectedEscrow && (
           <DisputeModal

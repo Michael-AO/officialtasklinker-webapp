@@ -14,7 +14,6 @@ import {
   Banknote,
   Shield,
   Scale,
-  TestTube,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -89,15 +88,15 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="bg-gray-900 border-r border-gray-800 w-64 text-white tracking-[0.02em]" style={{ fontFamily: '"Helvetica Neue", Arial, Helvetica, sans-serif' }}>
-      <SidebarHeader className="border-b border-gray-800 bg-gray-900">
+    <Sidebar className="bg-gradient-to-br from-[#0a0a0a] via-[#0d1f17] to-[#052e1f] border-r border-gray-800 w-64 text-white tracking-[0.02em]" style={{ fontFamily: '"Helvetica Neue", Arial, Helvetica, sans-serif' }}>
+      <SidebarHeader className="border-b border-gray-800 bg-gradient-to-br from-[#0a0a0a] via-[#0d1f17] to-[#052e1f]">
         <div className="flex items-center gap-2 px-2 py-2">
           <img src="/logo-icon.svg" alt="Tasklinkers Logo" className="h-8 w-8" />
           <span className="text-lg font-bold text-white">Tasklinkers</span>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="bg-gray-900">
+      <SidebarContent className="bg-transparent">
         <SidebarGroup>
           <SidebarGroupLabel className="text-gray-500">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -170,18 +169,6 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive("/dashboard/youverify-test")}
-                  className="text-gray-300 hover:text-white hover:bg-gray-800 data-[active=true]:bg-[#04A466] data-[active=true]:text-white"
-                >
-                  <Link href="/dashboard/youverify-test">
-                    <TestTube className="h-4 w-4" />
-                    <span>YouVerify API Test</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -232,7 +219,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-gray-800 bg-gray-900">
+      <SidebarFooter className="border-t border-gray-800 bg-gradient-to-br from-[#0a0a0a] via-[#0d1f17] to-[#052e1f]">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

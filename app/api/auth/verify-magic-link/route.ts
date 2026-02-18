@@ -43,11 +43,13 @@ export async function GET(request: NextRequest) {
     const result = await MagicLinkManager.verifyMagicLink(token, userType)
 
     if (!result.success) {
-      // Return error page with specific message
-      const errorUrl = new URL('/login', request.url)
+      const canonicalOrigin =
+        process.env.NODE_ENV === 'production'
+          ? (process.env.NEXT_PUBLIC_APP_URL || 'https://tasklinkers.com').replace(/\/$/, '')
+          : request.nextUrl.origin
+      const errorUrl = new URL('/login', canonicalOrigin)
       errorUrl.searchParams.set('error', result.error || 'Verification failed')
       errorUrl.searchParams.set('error_code', result.errorCode || 'UNKNOWN')
-      
       return NextResponse.redirect(errorUrl)
     }
 
@@ -72,30 +74,41 @@ export async function GET(request: NextRequest) {
         break
     }
 
-    // Add success message to URL
-    const redirectUrl = new URL(dashboardUrl, request.url)
+    // Always redirect to canonical app URL in production so we never send users to deploy URL (e.g. *.netlify.app)
+    const canonicalOrigin =
+      process.env.NODE_ENV === 'production'
+        ? (process.env.NEXT_PUBLIC_APP_URL || 'https://tasklinkers.com').replace(/\/$/, '')
+        : request.nextUrl.origin
+    const redirectUrl = new URL(dashboardUrl, canonicalOrigin)
     redirectUrl.searchParams.set('verified', 'true')
+    const redirectHref = redirectUrl.toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;')
 
-    const res = NextResponse.redirect(redirectUrl)
-    // Set session cookie on the redirect response so it is sent in production.
-    // cookies().set() in createSession can be lost when we return a custom Response.
+    // Return 200 + HTML redirect so the browser persists the Set-Cookie before navigating.
+    // Some browsers don't persist cookies on 3xx redirect responses, which caused users to land on dashboard without the session cookie and get sent back to login.
     const isProduction = process.env.NODE_ENV === 'production'
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirectHref}"></head><body>Redirecting to dashboard…</body></html>`
+    const res = new NextResponse(html, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    })
     res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 7 * 24 * 60 * 60,
     })
     return res
 
   } catch (error) {
     console.error('Verify magic link API error:', error)
-    
-    const errorUrl = new URL('/login', request.url)
+    const canonicalOrigin =
+      process.env.NODE_ENV === 'production'
+        ? (process.env.NEXT_PUBLIC_APP_URL || 'https://tasklinkers.com').replace(/\/$/, '')
+        : request.nextUrl.origin
+    const errorUrl = new URL('/login', canonicalOrigin)
     errorUrl.searchParams.set('error', 'An unexpected error occurred. Please try again.')
     errorUrl.searchParams.set('error_code', 'INTERNAL_ERROR')
-    
     return NextResponse.redirect(errorUrl)
   }
 }

@@ -9,13 +9,10 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { 
   Shield, 
-  CheckCircle, 
   Clock, 
   AlertTriangle, 
   User, 
-  Building,
   RefreshCw,
-  Unlock,
   Zap,
   Ban,
   RotateCcw
@@ -344,44 +341,6 @@ export default function VerificationPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Verification Benefits */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Unlock className="h-5 w-5" />
-            Verified Account Benefits
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3">
-              <h4 className="font-semibold flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                For Freelancers
-              </h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Apply to premium tasks</li>
-                <li>• Build trust with clients</li>
-                <li>• Access higher-paying opportunities</li>
-                <li>• Priority in search results</li>
-              </ul>
-            </div>
-            <div className="space-y-3">
-              <h4 className="font-semibold flex items-center gap-2">
-                <Building className="h-4 w-4 text-purple-600" />
-                For Clients
-              </h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Post tasks and hire freelancers</li>
-                <li>• Access verified talent pool</li>
-                <li>• Build platform credibility</li>
-                <li>• Enhanced platform features</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

@@ -58,7 +58,7 @@ export default function WithdrawalsPage() {
   const [pinModalMode, setPinModalMode] = useState<"setup" | "change" | "verify">("setup")
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([])
-  const [availableBalance, setAvailableBalance] = useState(250000) // In kobo
+  const [availableBalance, setAvailableBalance] = useState(0) // In kobo; loaded from API
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -68,18 +68,25 @@ export default function WithdrawalsPage() {
   const fetchData = async () => {
     try {
       setIsLoading(true)
-      // Fetch bank accounts
-      const bankResponse = await fetch("/api/bank-accounts")
+      const [bankResponse, withdrawalResponse, statsResponse] = await Promise.all([
+        fetch("/api/bank-accounts", { credentials: "include" }),
+        fetch("/api/withdrawals", { credentials: "include" }),
+        fetch("/api/user/stats", { credentials: "include" }),
+      ])
       if (bankResponse.ok) {
         const bankData = await bankResponse.json()
         setBankAccounts(bankData.accounts || [])
       }
-
-      // Fetch withdrawal history
-      const withdrawalResponse = await fetch("/api/withdrawals")
       if (withdrawalResponse.ok) {
         const withdrawalData = await withdrawalResponse.json()
         setWithdrawals(withdrawalData.withdrawals || [])
+      }
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        if (statsData.success && statsData.data?.totalEarnings != null) {
+          const totalEarningsNaira = Number(statsData.data.totalEarnings) || 0
+          setAvailableBalance(Math.round(totalEarningsNaira * 100))
+        }
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
@@ -372,6 +379,7 @@ export default function WithdrawalsPage() {
         availableBalance={availableBalance}
         bankAccounts={bankAccounts}
         calculateFee={calculateFee}
+        onSuccess={fetchData}
       />
 
       <BankAccountManagement />

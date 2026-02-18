@@ -13,18 +13,15 @@ export async function GET() {
 
     if (!user) {
       return NextResponse.json(
-        { 
-          authenticated: false,
-          user: null 
-        },
-        { status: 401 }
+        { authenticated: false, user: null },
+        { status: 401, headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
       )
     }
 
-    return NextResponse.json({
-      authenticated: true,
-      user
-    })
+    return NextResponse.json(
+      { authenticated: true, user },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+    )
   } catch (error) {
     console.error('Get current user API error:', error)
     return NextResponse.json(

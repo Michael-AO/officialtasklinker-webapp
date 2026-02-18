@@ -52,7 +52,7 @@ export function BankAccountManagement() {
 
   const fetchBankAccounts = async () => {
     try {
-      const response = await fetch("/api/bank-accounts")
+      const response = await fetch("/api/bank-accounts", { credentials: "include" })
       const result = await response.json()
       if (result.success) {
         setBankAccounts(result.data)
@@ -66,7 +66,7 @@ export function BankAccountManagement() {
 
   const fetchBanks = async () => {
     try {
-      const response = await fetch("/api/banks")
+      const response = await fetch("/api/banks", { credentials: "include" })
       const result = await response.json()
       if (result.success) {
         setBanks(result.data)
@@ -81,9 +81,10 @@ export function BankAccountManagement() {
 
     setIsVerifying(true)
     try {
-      const response = await fetch("/api/banks/verify-account", {
+      const response = await fetch("/api/banks/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           bankCode: selectedBankCode,
           accountNumber,
@@ -121,6 +122,7 @@ export function BankAccountManagement() {
       const response = await fetch("/api/bank-accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           bankName: selectedBank?.name,
           bankCode: selectedBankCode,
@@ -137,6 +139,12 @@ export function BankAccountManagement() {
         toast({
           title: "Bank Account Added",
           description: "Your bank account has been added successfully.",
+        })
+      } else {
+        toast({
+          title: "Failed to add account",
+          description: result.error || "Please try again.",
+          variant: "destructive",
         })
       }
     } catch (error) {
@@ -159,6 +167,7 @@ export function BankAccountManagement() {
       const response = await fetch(`/api/bank-accounts/${editingAccount.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           bankName: selectedBank?.name,
           bankCode: selectedBankCode,
@@ -193,6 +202,7 @@ export function BankAccountManagement() {
     try {
       const response = await fetch(`/api/bank-accounts/${accountId}/default`, {
         method: "PUT",
+        credentials: "include",
       })
 
       const result = await response.json()
@@ -221,6 +231,7 @@ export function BankAccountManagement() {
     try {
       const response = await fetch(`/api/bank-accounts/${accountId}`, {
         method: "DELETE",
+        credentials: "include",
       })
 
       const result = await response.json()
@@ -271,7 +282,7 @@ export function BankAccountManagement() {
           <h2 className="text-2xl font-bold">Bank Accounts</h2>
           <p className="text-muted-foreground">Manage your withdrawal bank accounts</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} disabled={true}>
+        <Button onClick={() => setShowAddModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Bank Account
         </Button>
@@ -316,22 +327,22 @@ export function BankAccountManagement() {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" disabled={true}>
+                      <Button variant="ghost" size="sm">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEditModal(account)} disabled={true}>
+                      <DropdownMenuItem onClick={() => openEditModal(account)}>
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
                       {!account.isDefault && account.isVerified && (
-                        <DropdownMenuItem onClick={() => setAsDefault(account.id)} disabled={true}>
+                        <DropdownMenuItem onClick={() => setAsDefault(account.id)}>
                           <Star className="h-4 w-4 mr-2" />
                           Set as Default
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={() => deleteBankAccount(account.id)} className="text-red-600" disabled={true}>
+                      <DropdownMenuItem onClick={() => deleteBankAccount(account.id)} className="text-red-600">
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete
                       </DropdownMenuItem>
@@ -347,7 +358,7 @@ export function BankAccountManagement() {
               <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="font-semibold mb-2">No Bank Accounts</h3>
               <p className="text-sm text-muted-foreground mb-4">Add a bank account to start receiving withdrawals</p>
-              <Button onClick={() => setShowAddModal(true)} disabled={true}>
+              <Button onClick={() => setShowAddModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Bank Account
               </Button>
@@ -367,7 +378,7 @@ export function BankAccountManagement() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Select Bank</Label>
-              <Select value={selectedBankCode} onValueChange={setSelectedBankCode} disabled={true}>
+              <Select value={selectedBankCode} onValueChange={setSelectedBankCode}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose your bank" />
                 </SelectTrigger>
@@ -394,11 +405,10 @@ export function BankAccountManagement() {
                   }}
                   placeholder="0123456789"
                   maxLength={10}
-                  disabled={true}
                 />
                 <Button
                   onClick={verifyAccount}
-                  disabled={true}
+                  disabled={isVerifying || !selectedBankCode || accountNumber.length !== 10}
                   size="sm"
                 >
                   {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
@@ -424,10 +434,10 @@ export function BankAccountManagement() {
           </div>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setShowAddModal(false)} disabled={true}>
+            <Button variant="outline" onClick={() => setShowAddModal(false)}>
               Cancel
             </Button>
-            <Button onClick={addBankAccount} disabled={true}>
+            <Button onClick={addBankAccount} disabled={!isVerified || isSaving}>
               {isSaving ? "Adding..." : "Add Account"}
             </Button>
           </div>
@@ -445,7 +455,7 @@ export function BankAccountManagement() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Select Bank</Label>
-              <Select value={selectedBankCode} onValueChange={setSelectedBankCode} disabled={true}>
+              <Select value={selectedBankCode} onValueChange={setSelectedBankCode}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose your bank" />
                 </SelectTrigger>
@@ -472,11 +482,10 @@ export function BankAccountManagement() {
                   }}
                   placeholder="0123456789"
                   maxLength={10}
-                  disabled={true}
                 />
                 <Button
                   onClick={verifyAccount}
-                  disabled={true}
+                  disabled={isVerifying || !selectedBankCode || accountNumber.length !== 10}
                   size="sm"
                 >
                   {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
@@ -502,10 +511,10 @@ export function BankAccountManagement() {
           </div>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setShowEditModal(false)} disabled={true}>
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>
               Cancel
             </Button>
-            <Button onClick={updateBankAccount} disabled={true}>
+            <Button onClick={updateBankAccount} disabled={!isVerified || isSaving}>
               {isSaving ? "Updating..." : "Update Account"}
             </Button>
           </div>

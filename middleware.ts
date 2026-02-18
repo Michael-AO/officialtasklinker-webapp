@@ -2,13 +2,26 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { ServerSessionManager } from '@/lib/server-session-manager'
 
+const CANONICAL_ORIGIN =
+  process.env.NODE_ENV === 'production'
+    ? (process.env.NEXT_PUBLIC_APP_URL || 'https://tasklinkers.com').replace(/\/$/, '')
+    : null
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const host = request.nextUrl.hostname
+
+  // In production, if request hit a Netlify deploy URL, redirect to canonical domain so cookie/session stay on tasklinkers.com
+  if (CANONICAL_ORIGIN && host.includes('netlify.app') && host !== new URL(CANONICAL_ORIGIN).hostname) {
+    const canonicalUrl = new URL(pathname + request.nextUrl.search, CANONICAL_ORIGIN)
+    return NextResponse.redirect(canonicalUrl)
+  }
 
   // Public routes that don't require authentication
   const publicRoutes = [
     '/login',
     '/signup',
+    '/admin-login',
     '/',
     '/auth/callback',
     '/legal',
@@ -51,9 +64,10 @@ export async function middleware(request: NextRequest) {
   const supabaseSessionCookie = request.cookies.get('sb-access-token') || 
                                 request.cookies.get('sb-refresh-token')
 
-  // If no auth cookies found, redirect to login
+  // If no auth cookies found, redirect to login (use canonical URL in production so we never keep users on deploy URL)
   if (!authCookie && !supabaseSessionCookie) {
-    const loginUrl = new URL('/login', request.url)
+    const base = CANONICAL_ORIGIN || request.nextUrl.origin
+    const loginUrl = new URL('/login', base)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }

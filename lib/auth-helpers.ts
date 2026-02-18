@@ -100,7 +100,8 @@ export async function signUpWithMagicLink(
 
 /**
  * Get current authenticated user
- * Now uses server-side session management
+ * Now uses server-side session management.
+ * Returns null when not logged in (401); the browser may log "Failed to load resource: 401" — that's expected and harmless.
  */
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
@@ -110,6 +111,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       credentials: 'include', // Important: include cookies
     })
 
+    // 401 = no/invalid session; return null without throwing (browser may still show "Failed to load resource" in console)
     if (!response.ok) {
       return null
     }

@@ -87,8 +87,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send email with magic link
-    const magicLinkUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tasklinkers.com'}/api/auth/verify-magic-link?token=${result.token}&user_type=${body.user_type}`
+    // Send email with magic link (in development use request origin so links work on localhost)
+    const baseUrl = process.env.NODE_ENV === 'development'
+      ? request.nextUrl.origin
+      : (process.env.NEXT_PUBLIC_APP_URL || 'https://tasklinkers.com').replace(/\/$/, '')
+    const magicLinkUrl = `${baseUrl}/api/auth/verify-magic-link?token=${result.token}&user_type=${body.user_type}`
     const name = body.first_name || body.email?.split('@')[0] || 'User'
 
     const emailResult = await EmailService.sendMagicLinkEmail(

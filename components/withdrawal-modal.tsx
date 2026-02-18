@@ -31,6 +31,7 @@ interface WithdrawalModalProps {
   availableBalance: number
   bankAccounts: BankAccount[]
   calculateFee: (amount: number) => number
+  onSuccess?: () => void
 }
 
 export function WithdrawalModal({
@@ -39,6 +40,7 @@ export function WithdrawalModal({
   availableBalance,
   bankAccounts,
   calculateFee,
+  onSuccess,
 }: WithdrawalModalProps) {
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -74,20 +76,23 @@ export function WithdrawalModal({
 
     setLoading(true)
     try {
-      const response = await fetch("/api/withdrawals/request", {
+      const response = await fetch("/api/withdrawals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
+          action: "initiate_withdrawal",
           amount,
           bankAccountId: formData.bankAccountId,
           narration: formData.narration || "Withdrawal request",
         }),
       })
 
-      if (!response.ok) throw new Error("Failed to request withdrawal")
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || data.error || "Failed to request withdrawal")
 
-      // Reset form and close modal
       setFormData({ amount: "", bankAccountId: "", narration: "" })
+      onSuccess?.()
       onClose()
 
       toast({

@@ -1,5 +1,27 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 import { withdrawalService } from "@/lib/withdrawal-service"
+
+/**
+ * GET /api/withdrawals
+ * Returns withdrawal history for the current user.
+ * Returns empty array until a withdrawals table exists.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const user = await ServerSessionManager.getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    return NextResponse.json({
+      success: true,
+      withdrawals: [],
+    })
+  } catch (error) {
+    console.error("Withdrawals GET error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

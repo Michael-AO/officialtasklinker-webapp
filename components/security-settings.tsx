@@ -98,11 +98,11 @@ export function SecuritySettings() {
             </div>
             <div className="flex gap-2">
               {hasPinSetup ? (
-                <Button variant="outline" onClick={handlePinChange} disabled={true}>
+                <Button variant="outline" onClick={handlePinChange}>
                   Change PIN
                 </Button>
               ) : (
-                <Button onClick={handlePinSetup} disabled={true}>Setup PIN</Button>
+                <Button onClick={handlePinSetup}>Setup PIN</Button>
               )}
             </div>
           </div>

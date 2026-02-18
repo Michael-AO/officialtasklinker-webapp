@@ -1,4 +1,5 @@
 import type React from "react"
+import { Suspense } from "react"
 import { NotificationProvider } from "@/contexts/notification-context"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { AppSidebar } from "@/components/app-sidebar"
@@ -16,6 +17,20 @@ export default function DashboardLayout({
     <SidebarProvider defaultOpen={true}>
       <EscrowProvider>
         <NotificationProvider>
+          <Suspense fallback={
+            <>
+              <AppSidebar />
+              <SidebarInset>
+                <div className="flex h-full w-full flex-col bg-background">
+                  <DashboardHeader />
+                  <div className="flex-1 flex items-center justify-center p-6">
+                    <div className="animate-spin h-8 w-8 border-2 border-[#04A466] border-t-transparent rounded-full" />
+                  </div>
+                </div>
+              </SidebarInset>
+              <NotificationContainer />
+            </>
+          }>
           <DashboardVerificationGate>
             <AppSidebar />
             <SidebarInset>
@@ -26,6 +41,7 @@ export default function DashboardLayout({
             </SidebarInset>
             <NotificationContainer />
           </DashboardVerificationGate>
+          </Suspense>
         </NotificationProvider>
       </EscrowProvider>
     </SidebarProvider>

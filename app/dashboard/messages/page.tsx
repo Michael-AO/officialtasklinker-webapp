@@ -11,7 +11,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
 import { useNotifications } from "@/contexts/notification-context"
 import { toast } from "@/hooks/use-toast"
-import { supabase } from "@/lib/supabase"
 import { getInitials } from "@/lib/utils"
 import {
   ActivityIcon as Attachment,
@@ -107,86 +106,21 @@ export default function MessagesPage() {
     if (!user) return
 
     try {
-      // Get conversations where user is participant
-      const { data: conversations, error } = await supabase
-        .from("conversations")
-        .select(`
-          id,
-          task_id,
-          client_id,
-          freelancer_id,
-          created_at,
-          updated_at,
-          tasks!inner(
-            id,
-            title
-          )
-        `)
-        .or(`client_id.eq.${user.id},freelancer_id.eq.${user.id}`)
-        .order("updated_at", { ascending: false })
-
-      if (error) {
-        console.error("Database error:", error)
-        throw error
+      const res = await fetch("/api/messages/conversations", { credentials: "include" })
+      if (!res.ok) {
+        if (res.status === 401) {
+          setConversations([])
+          setLoading(false)
+          return
+        }
+        throw new Error("Failed to fetch")
       }
-
-      // Format conversations for frontend
-      const formattedConversations = await Promise.all(
-        (conversations || []).map(async (conv: any) => {
-          // Determine the other participant
-          const isClient = conv.client_id === user.id
-          const otherUserId = isClient ? conv.freelancer_id : conv.client_id
-
-          // Get other user's profile
-          const { data: otherUser } = await supabase
-            .from("users")
-            .select("id, name, avatar_url, user_type, rating")
-            .eq("id", otherUserId)
-            .single()
-
-          // Get messages for this conversation
-          const { data: messages } = await supabase
-            .from("messages")
-            .select("*")
-            .eq("conversation_id", conv.id)
-            .order("created_at", { ascending: true })
-
-          // Get last message
-          const lastMessage = messages?.[messages.length - 1]
-
-          // Count unread messages
-          const unreadCount = messages?.filter((msg: any) => msg.sender_id !== user.id && !msg.is_read).length || 0
-
-          return {
-            id: conv.id,
-            participant: {
-              id: otherUser?.id || otherUserId,
-              name: otherUser?.name || "Unknown User",
-              avatar: otherUser?.avatar_url,
-              role: isClient ? "Freelancer" : "Client",
-              rating: otherUser?.rating || 0,
-              online: false,
-            },
-            task_title: conv.tasks?.title || "Unknown Task",
-            task_id: conv.task_id,
-            last_message: lastMessage?.content || "No messages yet",
-            last_message_time: lastMessage?.created_at || conv.created_at,
-            unread_count: unreadCount,
-            messages:
-              messages?.map((msg: any) => ({
-                id: msg.id,
-                sender_id: msg.sender_id,
-                sender_name: msg.sender_id === user.id ? "You" : otherUser?.name || "Unknown",
-                content: msg.content,
-                timestamp: msg.created_at,
-                type: "text" as const,
-                read: msg.is_read,
-              })) || [],
-          }
-        }),
-      )
-
-      setConversations(formattedConversations)
+      const data = await res.json()
+      if (data.success && Array.isArray(data.conversations)) {
+        setConversations(data.conversations)
+      } else {
+        setConversations([])
+      }
     } catch (error) {
       console.error("Error fetching conversations:", error)
       toast({
@@ -207,54 +141,42 @@ export default function MessagesPage() {
     if (!newMessage.trim() || !selectedConversation || sending || !user) return
 
     setSending(true)
+    const content = newMessage
+    setNewMessage("")
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .insert({
+      const res = await fetch("/api/messages/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
           conversation_id: selectedConversation.id,
-          sender_id: user.id,
-          content: newMessage,
-          message_type: "text",
-          is_read: false,
-        })
-        .select()
-        .single()
+          content,
+          type: "text",
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.error || "Failed to send")
 
-      if (error) throw error
-
-      // Update conversation timestamp
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", selectedConversation.id)
-
-      // Create new message object
       const newMessageObj = {
-        id: data.id,
-        sender_id: user.id,
-        sender_name: "You",
-        content: newMessage,
-        timestamp: data.created_at,
+        id: data.message.id,
+        sender_id: data.message.sender_id,
+        sender_name: data.message.sender_name,
+        content: data.message.content,
+        timestamp: data.message.timestamp,
         type: "text" as const,
-        read: false,
+        read: data.message.read,
       }
 
-      // Update conversation with new message
       const updatedConversation = {
         ...selectedConversation,
         messages: [...selectedConversation.messages, newMessageObj],
-        last_message: newMessage,
+        last_message: content,
         last_message_time: new Date().toISOString(),
       }
 
       setSelectedConversation(updatedConversation)
-
-      // Update conversations list
       setConversations((prev) => prev.map((conv) => (conv.id === selectedConversation.id ? updatedConversation : conv)))
 
-      setNewMessage("")
-
-      // Add notification for recipient
       addNotification({
         title: "Message Sent",
         message: `Your message has been sent to ${selectedConversation.participant.name}`,
@@ -262,6 +184,7 @@ export default function MessagesPage() {
       })
     } catch (error) {
       console.error("Error sending message:", error)
+      setNewMessage(content)
       toast({
         title: "Failed to send message",
         description: "Please try again.",
@@ -274,13 +197,12 @@ export default function MessagesPage() {
 
   const markAsRead = async (conversationId: string) => {
     try {
-      await supabase
-        .from("messages")
-        .update({ is_read: true })
-        .eq("conversation_id", conversationId)
-        .neq("sender_id", user?.id)
-
-      // Update local state
+      await fetch("/api/messages/read", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ conversation_id: conversationId }),
+      })
       setConversations((prev) => prev.map((conv) => (conv.id === conversationId ? { ...conv, unread_count: 0 } : conv)))
     } catch (error) {
       console.error("Error marking as read:", error)

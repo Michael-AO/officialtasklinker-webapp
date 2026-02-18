@@ -60,89 +60,65 @@ interface EscrowContextType {
 
 const EscrowContext = createContext<EscrowContextType | undefined>(undefined)
 
+function mapApiToTransaction(acc: any): EscrowTransaction {
+  return {
+    id: acc.id,
+    taskId: acc.taskId,
+    taskTitle: acc.taskTitle,
+    clientId: acc.clientId,
+    clientName: acc.clientName,
+    freelancerId: acc.freelancerId,
+    freelancerName: acc.freelancerName,
+    amount: Number(acc.amount) ?? 0,
+    currency: acc.currency || "NGN",
+    status: acc.status,
+    paymentReference: acc.paymentReference || "",
+    createdAt: acc.createdAt,
+    updatedAt: acc.updatedAt,
+    releaseDate: acc.releaseDate,
+    disputeReason: acc.disputeReason,
+    milestones: (acc.milestones || []).map((m: any) => ({
+      id: m.id,
+      title: m.title,
+      description: m.description || "",
+      amount: Number(m.amount) ?? 0,
+      status: (m.status || "pending") as EscrowMilestone["status"],
+      dueDate: m.dueDate || "",
+      completedAt: m.completedAt,
+    })),
+  }
+}
+
 export function EscrowProvider({ children }: { children: React.ReactNode }) {
   const [transactions, setTransactions] = useState<EscrowTransaction[]>([])
   const [disputes, setDisputes] = useState<DisputeCase[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  const fetchEscrowList = async () => {
+    try {
+      const res = await fetch("/api/escrow", { credentials: "include" })
+      if (!res.ok) {
+        setTransactions([])
+        setDisputes([])
+        return
+      }
+      const data = await res.json()
+      if (data.success && Array.isArray(data.transactions)) {
+        setTransactions(data.transactions.map(mapApiToTransaction))
+      }
+      if (data.disputes && Array.isArray(data.disputes)) {
+        setDisputes(data.disputes)
+      }
+    } catch (e) {
+      console.error("Failed to fetch escrow list:", e)
+      setTransactions([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
-    // Load mock data
-    const mockTransactions: EscrowTransaction[] = [
-      {
-        id: "esc_001",
-        taskId: "task_001",
-        taskTitle: "Website Redesign Project",
-        clientId: "client_001",
-        clientName: "Sarah Johnson",
-        freelancerId: "freelancer_001",
-        freelancerName: "John Doe",
-        amount: 150000, // 1500 NGN in kobo
-        currency: "NGN",
-        status: "funded",
-        paymentReference: "TL_1703123456_abc123",
-        createdAt: "2024-12-01T10:00:00Z",
-        updatedAt: "2024-12-01T10:30:00Z",
-        milestones: [
-          {
-            id: "milestone_001",
-            title: "Design Mockups",
-            description: "Create initial design mockups and wireframes",
-            amount: 50000,
-            status: "completed",
-            dueDate: "2024-12-10T00:00:00Z",
-            completedAt: "2024-12-08T15:30:00Z",
-          },
-          {
-            id: "milestone_002",
-            title: "Frontend Development",
-            description: "Implement responsive frontend",
-            amount: 75000,
-            status: "pending",
-            dueDate: "2024-12-20T00:00:00Z",
-          },
-          {
-            id: "milestone_003",
-            title: "Testing & Deployment",
-            description: "Final testing and deployment",
-            amount: 25000,
-            status: "pending",
-            dueDate: "2024-12-25T00:00:00Z",
-          },
-        ],
-      },
-      {
-        id: "esc_002",
-        taskId: "task_002",
-        taskTitle: "Mobile App Development",
-        clientId: "client_002",
-        clientName: "TechCorp Inc.",
-        freelancerId: "freelancer_001",
-        freelancerName: "John Doe",
-        amount: 320000, // 3200 NGN in kobo
-        currency: "NGN",
-        status: "in_progress",
-        paymentReference: "TL_1703123457_def456",
-        createdAt: "2024-11-28T14:00:00Z",
-        updatedAt: "2024-12-01T09:00:00Z",
-      },
-    ]
-
-    const mockDisputes: DisputeCase[] = [
-      {
-        id: "dispute_001",
-        escrowId: "esc_003",
-        raisedBy: "client",
-        reason: "Quality Issues",
-        description: "The delivered work does not meet the agreed specifications",
-        evidence: ["screenshot1.png", "requirements.pdf"],
-        status: "under_review",
-        createdAt: "2024-11-30T16:00:00Z",
-      },
-    ]
-
-    setTransactions(mockTransactions)
-    setDisputes(mockDisputes)
-    setIsLoading(false)
+    fetchEscrowList()
   }, [])
 
   const createEscrow = async (
@@ -180,33 +156,26 @@ export function EscrowProvider({ children }: { children: React.ReactNode }) {
   }
 
   const releaseFunds = async (escrowId: string, milestoneId?: string): Promise<void> => {
-    setTransactions((prev) =>
-      prev.map((tx) => {
-        if (tx.id === escrowId) {
-          if (milestoneId && tx.milestones) {
-            const updatedMilestones = tx.milestones.map((m) =>
-              m.id === milestoneId ? { ...m, status: "approved" as const } : m,
-            )
-            const allCompleted = updatedMilestones.every((m) => m.status === "approved")
-            return {
-              ...tx,
-              milestones: updatedMilestones,
-              status: allCompleted ? "released" : tx.status,
-              updatedAt: new Date().toISOString(),
-              releaseDate: allCompleted ? new Date().toISOString() : tx.releaseDate,
-            }
-          } else {
-            return {
-              ...tx,
-              status: "released",
-              updatedAt: new Date().toISOString(),
-              releaseDate: new Date().toISOString(),
-            }
-          }
-        }
-        return tx
-      }),
-    )
+    try {
+      const res = await fetch("/api/escrow/release", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          escrowId,
+          milestone_id: milestoneId,
+          skipTransfer: true,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Release failed")
+      }
+      await fetchEscrowList()
+    } catch (e) {
+      console.error("Release funds error:", e)
+      throw e
+    }
   }
 
   const requestRefund = async (escrowId: string, reason: string): Promise<void> => {

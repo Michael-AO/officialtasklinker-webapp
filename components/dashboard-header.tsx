@@ -25,16 +25,16 @@ export function DashboardHeader() {
   const firstName = user.name?.split(" ")[0] || "User"
 
   return (
-    <header className="flex h-16 items-center gap-4 border-b bg-background px-6">
-      <div className="flex items-center gap-4">
+    <header className="flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b bg-background px-4 sm:px-6">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         <SidebarTrigger />
       </div>
 
-      <div className="flex-1 flex items-center gap-4">
+      <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-4">
         <GlobalSearch />
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {/* Hello greeting */}
         <div className="hidden md:block">
           <span className="text-sm font-medium text-muted-foreground">
@@ -50,7 +50,7 @@ export function DashboardHeader() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Button variant="ghost" className="relative h-9 w-9 sm:h-8 sm:w-8 rounded-full touch-manipulation">
               <UserAvatar 
                 user={user} 
                 className="h-8 w-8"
