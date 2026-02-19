@@ -71,6 +71,7 @@ interface Task {
   deadline?: string
   urgency: "low" | "normal" | "high"
   location: string
+  requires_escrow?: boolean
   client?: {
     id: string
     email: string
@@ -358,6 +359,12 @@ export default function MyTasksPage() {
                     </Link>
                     {task.client?.email && isVerifiedEmail(task.client.email) && (
                       <VerifiedBadge size="sm" />
+                    )}
+                    {task.requires_escrow && (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 inline-flex items-center gap-1">
+                        <VerifiedBadge size="sm" className="shrink-0" />
+                        Escrow
+                      </span>
                     )}
                     <Badge variant="outline" className="text-xs">
                       {generateTaskCode(task.id)}

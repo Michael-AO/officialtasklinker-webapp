@@ -35,6 +35,7 @@ function LoginContent() {
     try {
       const res = await fetch("/api/auth/login-password", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
@@ -156,6 +157,13 @@ function LoginContent() {
               Sign Up
             </Link>
           </div>
+          {process.env.NEXT_PUBLIC_SHOW_BYPASS_LINK === "true" && (
+            <div className="text-xs text-center text-gray-500 pt-2 border-t border-gray-100">
+              <a href="/api/auth/bypass?email=asereope@gmail.com" className="text-[#04A466] hover:underline">
+                Dev: Open dashboard as asereope@gmail.com
+              </a>
+            </div>
+          )}
         </CardFooter>
       </Card>
     </div>

@@ -205,6 +205,9 @@ export default function EditProfilePage() {
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   required
                 />
+                <p className="text-sm text-muted-foreground">
+                  Name may be pre-filled from NIN verification; you can update it here.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>

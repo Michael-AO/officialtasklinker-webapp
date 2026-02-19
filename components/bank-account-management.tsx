@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { CreditCard, Plus, MoreVertical, CheckCircle, Loader2, Edit, Trash2, Star } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CreditCard, Plus, MoreVertical, CheckCircle, Loader2, Edit, Trash2, Star, AlertTriangle } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
 interface BankAccount {
@@ -44,6 +45,7 @@ export function BankAccountManagement() {
   const [isVerifying, setIsVerifying] = useState(false)
   const [isVerified, setIsVerified] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchBankAccounts()
@@ -116,6 +118,7 @@ export function BankAccountManagement() {
   const addBankAccount = async () => {
     if (!isVerified) return
 
+    setAddError(null)
     setIsSaving(true)
     try {
       const selectedBank = banks.find((bank) => bank.code === selectedBankCode)
@@ -131,26 +134,44 @@ export function BankAccountManagement() {
         }),
       })
 
-      const result = await response.json()
-      if (result.success) {
+      let result: { success?: boolean; data?: BankAccount; error?: string; details?: string } = {}
+      try {
+        result = await response.json()
+      } catch {
+        const msg = "Invalid response from server."
+        setAddError(msg)
+        toast({
+          title: "Error",
+          description: msg,
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (response.ok && result.success && result.data) {
         setBankAccounts([...bankAccounts, result.data])
         resetForm()
         setShowAddModal(false)
+        setAddError(null)
         toast({
           title: "Bank Account Added",
           description: "Your bank account has been added successfully.",
         })
       } else {
+        const message = [result.error, result.details].filter(Boolean).join(" — ") || "Please try again."
+        setAddError(message)
         toast({
           title: "Failed to add account",
-          description: result.error || "Please try again.",
+          description: message,
           variant: "destructive",
         })
       }
     } catch (error) {
+      const msg = error instanceof Error ? error.message : "Failed to add bank account."
+      setAddError(msg)
       toast({
         title: "Error",
-        description: "Failed to add bank account.",
+        description: msg,
         variant: "destructive",
       })
     } finally {
@@ -368,12 +389,25 @@ export function BankAccountManagement() {
       </div>
 
       {/* Add Bank Account Modal */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+      <Dialog
+        open={showAddModal}
+        onOpenChange={(open) => {
+          setShowAddModal(open)
+          if (!open) setAddError(null)
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Add Bank Account</DialogTitle>
             <DialogDescription>Add a new bank account for receiving withdrawals.</DialogDescription>
           </DialogHeader>
+
+          {addError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{addError}</AlertDescription>
+            </Alert>
+          )}
 
           <div className="space-y-4">
             <div className="space-y-2">

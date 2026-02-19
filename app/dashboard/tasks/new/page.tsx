@@ -45,6 +45,7 @@ export default function NewTaskPage() {
     visibility: "public",
     urgency: "normal",
     requiresEscrow: false,
+    milestones: [] as { title: string; description: string; amount: string; due_date: string }[],
   })
 
   const [newSkill, setNewSkill] = useState("")
@@ -135,6 +136,16 @@ export default function NewTaskPage() {
         visibility: taskData.visibility,
         urgency: taskData.urgency,
         requires_escrow: taskData.requiresEscrow,
+        total_budget: taskData.budget.amount ? Number(taskData.budget.amount) : undefined,
+        milestones:
+          taskData.requiresEscrow && taskData.milestones.length > 0
+            ? taskData.milestones.map((m) => ({
+                title: m.title || "Milestone",
+                description: m.description || "",
+                amount: Number(m.amount) || 0,
+                due_date: m.due_date || undefined,
+              }))
+            : undefined,
       }
 
       console.log("Request body:", JSON.stringify(requestBody, null, 2))
@@ -160,6 +171,10 @@ export default function NewTaskPage() {
       console.log("API Success Response:", result)
 
       if (result.success) {
+        if (taskData.requiresEscrow) {
+          router.push(`/dashboard/escrow/setup?taskId=${result.task.id}`)
+          return
+        }
         setPostedTaskId(result.task.id)
         setTaskPosted(true)
         toast({
@@ -317,32 +332,57 @@ export default function NewTaskPage() {
                 <span>Status:</span>
                 <span className="font-medium text-green-600">Active & Visible</span>
               </div>
+              {taskData.requiresEscrow && (
+                <div className="flex justify-between">
+                  <span>Payment:</span>
+                  <span className="font-medium text-blue-600">Escrow enabled</span>
+                </div>
+              )}
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h3 className="font-medium text-blue-900 mb-2">🛡️ Want Extra Protection?</h3>
-              <p className="text-sm text-blue-700 mb-3">
-                Set up escrow to protect your payment and build trust with freelancers.
-              </p>
-              <ul className="text-xs text-blue-600 space-y-1">
-                <li>✓ Secure payment holding</li>
-                <li>✓ Release funds only when satisfied</li>
-                <li>✓ Dispute resolution support</li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <Button onClick={handleSetupEscrow} className="w-full" size="lg">
-                Setup Escrow Protection
-              </Button>
-              <Button onClick={handleViewTasks} variant="outline" className="w-full">
-                View My Tasks
-              </Button>
-            </div>
-
-            <p className="text-xs text-muted-foreground mt-4">
-              You can set up escrow protection later from your tasks dashboard.
-            </p>
+            {taskData.requiresEscrow ? (
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <h3 className="font-medium text-blue-900 mb-2">Escrow enabled</h3>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Complete setup so your job shows as protected. Pay via Paystack; funds are held until you release them in the milestone section.
+                  </p>
+                  <ul className="text-xs text-blue-600 space-y-1">
+                    <li>✓ Secure payment holding</li>
+                    <li>✓ Release funds only when satisfied</li>
+                    <li>✓ Dispute resolution support</li>
+                  </ul>
+                </div>
+                <div className="space-y-3">
+                  <Button onClick={handleSetupEscrow} className="w-full" size="lg">
+                    Set up escrow payment
+                  </Button>
+                  <Button onClick={handleViewTasks} variant="outline" className="w-full">
+                    View My Tasks
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4">
+                  You can complete escrow setup later from your task dashboard.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                  <h3 className="font-medium text-gray-900 mb-2">Pay offline</h3>
+                  <p className="text-sm text-gray-700">
+                    You chose to pay outside the platform. Arrange payment with your freelancer once you accept an application.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <Button onClick={handleViewTasks} className="w-full" size="lg">
+                    View My Tasks
+                  </Button>
+                  <Button onClick={handleSetupEscrow} variant="outline" className="w-full">
+                    Set up escrow later
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -693,6 +733,135 @@ export default function NewTaskPage() {
                   Public tasks are visible to all freelancers. Private tasks are only visible to invited freelancers.
                 </p>
               </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <Label>Payment</Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose how you want to pay the freelancer for this task.
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-3 rounded-lg border p-4">
+                    <input
+                      type="radio"
+                      id="payment-escrow"
+                      name="payment"
+                      checked={taskData.requiresEscrow}
+                      onChange={() => setTaskData((prev) => ({ ...prev, requiresEscrow: true }))}
+                      className="mt-1"
+                    />
+                    <div>
+                      <Label htmlFor="payment-escrow" className="font-medium cursor-pointer">
+                        Escrow (recommended)
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        Pay via Paystack; we hold the funds and you release them in the milestone section when satisfied.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 rounded-lg border p-4">
+                    <input
+                      type="radio"
+                      id="payment-offline"
+                      name="payment"
+                      checked={!taskData.requiresEscrow}
+                      onChange={() => setTaskData((prev) => ({ ...prev, requiresEscrow: false }))}
+                      className="mt-1"
+                    />
+                    <div>
+                      <Label htmlFor="payment-offline" className="font-medium cursor-pointer">
+                        Pay offline
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        Arrange payment directly with the freelancer outside the platform.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {taskData.requiresEscrow && (
+                <>
+                  <Separator />
+                  <div className="space-y-4">
+                    <Label>Milestones (optional)</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Split payment into milestones. Amounts must sum to your budget (₦{taskData.budget.amount || "0"}).
+                    </p>
+                    {taskData.milestones.map((m, idx) => (
+                      <div key={idx} className="flex flex-wrap items-end gap-2 rounded-lg border p-3">
+                        <Input
+                          placeholder="Title"
+                          value={m.title}
+                          onChange={(e) => {
+                            const next = [...taskData.milestones]
+                            next[idx] = { ...next[idx], title: e.target.value }
+                            setTaskData((prev) => ({ ...prev, milestones: next }))
+                          }}
+                          className="flex-1 min-w-[120px]"
+                        />
+                        <Input
+                          placeholder="Amount (NGN)"
+                          type="number"
+                          value={m.amount}
+                          onChange={(e) => {
+                            const next = [...taskData.milestones]
+                            next[idx] = { ...next[idx], amount: e.target.value }
+                            setTaskData((prev) => ({ ...prev, milestones: next }))
+                          }}
+                          className="w-28"
+                        />
+                        <Input
+                          placeholder="Due date (YYYY-MM-DD)"
+                          type="date"
+                          value={m.due_date}
+                          onChange={(e) => {
+                            const next = [...taskData.milestones]
+                            next[idx] = { ...next[idx], due_date: e.target.value }
+                            setTaskData((prev) => ({ ...prev, milestones: next }))
+                          }}
+                          className="w-40"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setTaskData((prev) => ({
+                              ...prev,
+                              milestones: prev.milestones.filter((_, i) => i !== idx),
+                            }))
+                          }
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setTaskData((prev) => ({
+                          ...prev,
+                          milestones: [...prev.milestones, { title: "", description: "", amount: "", due_date: "" }],
+                        }))
+                      }
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add milestone
+                    </Button>
+                    {taskData.milestones.length > 0 && taskData.budget.amount && (
+                      <p className="text-xs text-muted-foreground">
+                        Sum: ₦
+                        {taskData.milestones.reduce((s, m) => s + (Number(m.amount) || 0), 0)} / ₦
+                        {taskData.budget.amount}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         )}
@@ -724,7 +893,24 @@ export default function NewTaskPage() {
                   <Label className="text-sm font-medium text-muted-foreground">Duration</Label>
                   <p className="font-medium">{taskData.duration}</p>
                 </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Payment</Label>
+                  <p className="font-medium">{taskData.requiresEscrow ? "Escrow (Paystack)" : "Pay offline"}</p>
+                </div>
               </div>
+              {taskData.requiresEscrow && taskData.milestones.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Milestones</Label>
+                  <ul className="text-sm mt-1 space-y-1">
+                    {taskData.milestones.map((m, i) => (
+                      <li key={i}>
+                        {m.title || "Milestone"} — ₦{m.amount}
+                        {m.due_date ? ` (due ${m.due_date})` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Description</Label>

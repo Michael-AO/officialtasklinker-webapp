@@ -30,7 +30,13 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Bank account creation error:", error)
-      return NextResponse.json({ error: "Failed to create bank account" }, { status: 500 })
+      return NextResponse.json(
+        {
+          error: "Failed to create bank account",
+          details: error?.message ?? undefined,
+        },
+        { status: 500 },
+      )
     }
 
     return NextResponse.json({

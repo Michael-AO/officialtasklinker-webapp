@@ -24,6 +24,16 @@ import { MilestoneManager } from "@/components/milestone-manager"
 import { ProgressTracking } from "@/components/progress-tracking"
 import { FundMilestoneModal } from "@/components/fund-milestone-modal"
 import { RaiseDisputeModal } from "@/components/raise-dispute-modal"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { formatNaira } from "@/lib/currency"
 import { NairaIcon } from "@/components/naira-icon"
 import { useAuth } from "@/contexts/auth-context"
@@ -58,6 +68,7 @@ interface TaskData {
   created_at: string
   deadline: string
   urgency: string
+  requires_escrow?: boolean
   client: {
     name: string
     avatar_url: string
@@ -101,6 +112,11 @@ export default function TaskDetailPage() {
   const [releasing, setReleasing] = useState(false)
   const [fundModalMilestone, setFundModalMilestone] = useState<TaskMilestone | null>(null)
   const [disputeModalMilestone, setDisputeModalMilestone] = useState<TaskMilestone | null>(null)
+  const [submitDeliverableMilestone, setSubmitDeliverableMilestone] = useState<TaskMilestone | null>(null)
+  const [submitDeliverableUrls, setSubmitDeliverableUrls] = useState("")
+  const [submitDeliverableNotes, setSubmitDeliverableNotes] = useState("")
+  const [releasingMilestoneId, setReleasingMilestoneId] = useState<string | null>(null)
+  const [submittingDeliverable, setSubmittingDeliverable] = useState(false)
 
   // Check if current user is a freelancer with an application
   const userApplication = applications.find(app => app.freelancer_name === user?.name)
@@ -242,6 +258,7 @@ export default function TaskDetailPage() {
           created_at: data.task.created_at,
           deadline: data.task.deadline || data.task.created_at,
           urgency: data.task.urgency || "normal",
+          requires_escrow: data.task.requires_escrow === true,
           client: {
             name: data.task.client?.name || "Anonymous Client",
             avatar_url: data.task.client?.avatar_url || "/placeholder.svg?height=40&width=40",
@@ -322,6 +339,7 @@ export default function TaskDetailPage() {
         created_at: data.task.created_at,
         deadline: data.task.deadline || data.task.created_at,
         urgency: data.task.urgency || "normal",
+        requires_escrow: data.task.requires_escrow === true,
         client: {
           name: data.task.client?.name || "Anonymous Client",
           avatar_url: data.task.client?.avatar_url || "/placeholder.svg?height=40&width=40",
@@ -363,6 +381,67 @@ export default function TaskDetailPage() {
       })
     } finally {
       setReleasing(false)
+    }
+  }
+
+  const handleReleaseMilestone = async (m: TaskMilestone) => {
+    if (!escrowData?.id || releasingMilestoneId) return
+    setReleasingMilestoneId(m.id)
+    try {
+      const res = await fetch("/api/escrow/release", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          escrowId: escrowData.id,
+          milestone_id: m.id,
+          skipTransfer: true,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Release failed")
+      toast({ title: "Milestone released", description: `${formatNaira(m.amount)} released to freelancer.` })
+      await refetchTask()
+      await fetchEscrowStatus()
+      await refreshUser()
+    } catch (e) {
+      toast({
+        title: "Release failed",
+        description: e instanceof Error ? e.message : "Something went wrong",
+        variant: "destructive",
+      })
+    } finally {
+      setReleasingMilestoneId(null)
+    }
+  }
+
+  const handleSubmitDeliverable = async () => {
+    if (!submitDeliverableMilestone) return
+    setSubmittingDeliverable(true)
+    try {
+      const fileUrls = submitDeliverableUrls
+        .split(/[\n,]/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+      const res = await fetch(`/api/tasks/milestones/${submitDeliverableMilestone.id}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrls, notes: submitDeliverableNotes || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Submit failed")
+      toast({ title: "Deliverable submitted", description: "Client can now review and release payment." })
+      setSubmitDeliverableMilestone(null)
+      setSubmitDeliverableUrls("")
+      setSubmitDeliverableNotes("")
+      await refetchTask()
+    } catch (e) {
+      toast({
+        title: "Submit failed",
+        description: e instanceof Error ? e.message : "Something went wrong",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmittingDeliverable(false)
     }
   }
 
@@ -464,8 +543,11 @@ export default function TaskDetailPage() {
             <p className="text-muted-foreground">Task ID: {task.id}</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
           <Badge className={getStatusColor(task.status)}>{task.status.replace(/_/g, " ")}</Badge>
+          {task.requires_escrow && (
+            <Badge variant="secondary" className="bg-green-100 text-green-800">Escrow protected</Badge>
+          )}
           {/* Only show Edit Task button if user is the client */}
           {task.client.name === user?.name && (
             <Button variant="outline" size="sm" asChild>
@@ -554,7 +636,9 @@ export default function TaskDetailPage() {
                               ? "default"
                               : m.status === "DISPUTED"
                                 ? "destructive"
-                                : "secondary"
+                                : m.status === "IN_REVIEW"
+                                  ? "secondary"
+                                  : "secondary"
                           }
                         >
                           {m.status.replace(/_/g, " ")}
@@ -566,6 +650,29 @@ export default function TaskDetailPage() {
                             onClick={() => setFundModalMilestone(m)}
                           >
                             Fund Milestone
+                          </Button>
+                        )}
+                        {isClient && (m.status === "IN_REVIEW" || m.status === "FUNDED") && escrowData?.id && (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            disabled={releasingMilestoneId === m.id}
+                            onClick={() => handleReleaseMilestone(m)}
+                          >
+                            {releasingMilestoneId === m.id ? "Releasing…" : "Approve & Release"}
+                          </Button>
+                        )}
+                        {isAcceptedFreelancer && (m.status === "FUNDED" || m.status === "PENDING") && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSubmitDeliverableMilestone(m)
+                              setSubmitDeliverableUrls("")
+                              setSubmitDeliverableNotes("")
+                            }}
+                          >
+                            Submit deliverable
                           </Button>
                         )}
                         {isAcceptedFreelancer && m.status === "FUNDED" && (
@@ -1112,6 +1219,47 @@ export default function TaskDetailPage() {
         milestone={disputeModalMilestone}
         onSuccess={refetchTask}
       />
+
+      <Dialog open={!!submitDeliverableMilestone} onOpenChange={(open) => !open && setSubmitDeliverableMilestone(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Submit deliverable</DialogTitle>
+            <DialogDescription>
+              {submitDeliverableMilestone?.title} — Add links to your deliverables (one per line) and optional notes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>File or document URLs</Label>
+              <Textarea
+                placeholder="https://...&#10;https://..."
+                value={submitDeliverableUrls}
+                onChange={(e) => setSubmitDeliverableUrls(e.target.value)}
+                rows={4}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Notes (optional)</Label>
+              <Textarea
+                placeholder="Brief description of what you submitted"
+                value={submitDeliverableNotes}
+                onChange={(e) => setSubmitDeliverableNotes(e.target.value)}
+                rows={2}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSubmitDeliverableMilestone(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitDeliverable} disabled={submittingDeliverable}>
+              {submittingDeliverable ? "Submitting…" : "Submit"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

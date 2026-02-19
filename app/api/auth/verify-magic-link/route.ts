@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { MagicLinkManager, UserType } from '@/lib/magic-link-manager'
-import { ServerSessionManager } from '@/lib/server-session-manager'
+import { ServerSessionManager, getCookieDomain } from '@/lib/server-session-manager'
 
 export async function GET(request: NextRequest) {
   try {
@@ -91,8 +91,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
-    const cookieDomain =
-      isProduction && canonicalOrigin ? new URL(canonicalOrigin).hostname : undefined
+    const cookieDomain = getCookieDomain()
     res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
       httpOnly: true,
       secure: isProduction,

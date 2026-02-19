@@ -31,16 +31,19 @@ export default function EscrowSetupPage() {
   const { toast } = useToast()
   const { user, isLoading: authLoading } = useAuth()
 
-  const taskId = searchParams.get("taskId")
+  const taskId = searchParams.get("taskId") ?? searchParams.get("task")
+  const freelancerId = searchParams.get("freelancer") ?? undefined
+  const amountFromQuery = searchParams.get("amount")
   const [task, setTask] = useState<Task | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isStartingPayment, setIsStartingPayment] = useState(false)
 
   useEffect(() => {
     const fetchTask = async () => {
       if (!taskId) {
         toast({
           title: "Error",
-          description: "Task ID is required.",
+          description: "Task ID is required (use taskId or task query param).",
           variant: "destructive",
         })
         setIsLoading(false)
@@ -53,7 +56,7 @@ export default function EscrowSetupPage() {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
         const data = await response.json()
-        setTask(data)
+        setTask(data.task ?? data)
       } catch (error: any) {
         toast({
           title: "Error",
@@ -68,11 +71,43 @@ export default function EscrowSetupPage() {
     fetchTask()
   }, [taskId, toast])
 
-  const handlePaymentSetup = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Escrow payment setup will be available in the next update.",
-    })
+  const handlePaymentSetup = async () => {
+    if (!taskId || !task) return
+    const budget = amountFromQuery != null && Number(amountFromQuery) > 0
+      ? Number(amountFromQuery)
+      : (task.budget_max ?? task.budget_min ?? 0)
+    if (budget <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Task budget must be greater than zero.",
+        variant: "destructive",
+      })
+      return
+    }
+    setIsStartingPayment(true)
+    try {
+      const res = await fetch("/api/escrow/initialize-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, amount: budget, freelancerId: freelancerId || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to start payment")
+      }
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url
+        return
+      }
+      throw new Error("No payment URL returned")
+    } catch (e: any) {
+      toast({
+        title: "Payment setup failed",
+        description: e?.message ?? "Could not start escrow payment.",
+        variant: "destructive",
+      })
+      setIsStartingPayment(false)
+    }
   }
 
   if (isLoading) {
@@ -169,10 +204,21 @@ export default function EscrowSetupPage() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button onClick={handlePaymentSetup} className="flex-1" disabled>
-              Setup Escrow Payment
+            <Button
+              onClick={handlePaymentSetup}
+              className="flex-1"
+              disabled={isStartingPayment}
+            >
+              {isStartingPayment ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Redirecting to Paystack...
+                </>
+              ) : (
+                "Setup Escrow Payment"
+              )}
             </Button>
-            <Button variant="outline" onClick={() => router.back()}>
+            <Button variant="outline" onClick={() => router.back()} disabled={isStartingPayment}>
               Cancel
             </Button>
           </div>

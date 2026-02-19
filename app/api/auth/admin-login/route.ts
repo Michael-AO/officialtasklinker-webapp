@@ -6,7 +6,7 @@
  */
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
-import { ServerSessionManager } from "@/lib/server-session-manager"
+import { ServerSessionManager, getCookieDomain } from "@/lib/server-session-manager"
 
 const ALLOWED_ADMIN_EMAILS = [
   "asereopeyemimichael@gmail.com",
@@ -129,9 +129,7 @@ export async function POST(request: NextRequest) {
     )
 
     const isProduction = process.env.NODE_ENV === "production"
-    const cookieDomain = isProduction
-      ? new URL((process.env.NEXT_PUBLIC_APP_URL || "https://tasklinkers.com").replace(/\/$/, "")).hostname
-      : undefined
+    const cookieDomain = getCookieDomain()
     const res = NextResponse.json({ success: true, redirect: "/admin/dashboard" })
     res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
       httpOnly: true,

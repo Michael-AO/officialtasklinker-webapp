@@ -21,9 +21,9 @@ export default function DashboardLayout({
             <>
               <AppSidebar />
               <SidebarInset>
-                <div className="flex h-full w-full flex-col bg-background">
+                <div className="flex h-full w-full flex-col bg-white">
                   <DashboardHeader />
-                  <div className="flex-1 flex items-center justify-center p-6">
+                  <div className="flex-1 flex items-center justify-center p-6 bg-white">
                     <div className="animate-spin h-8 w-8 border-2 border-[#04A466] border-t-transparent rounded-full" />
                   </div>
                 </div>
@@ -34,9 +34,9 @@ export default function DashboardLayout({
           <DashboardVerificationGate>
             <AppSidebar />
             <SidebarInset>
-              <div className="flex h-full w-full flex-col bg-background">
+              <div className="flex h-full w-full flex-col bg-white">
                 <DashboardHeader />
-                <div className="flex-1 space-y-4 p-6 pt-6 bg-background">{children}</div>
+                <div className="flex-1 space-y-4 p-6 pt-6 bg-white">{children}</div>
               </div>
             </SidebarInset>
             <NotificationContainer />

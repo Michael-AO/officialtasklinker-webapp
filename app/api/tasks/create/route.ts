@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       urgency = "normal",
       experience_level = "intermediate",
       milestones: milestonesInput = [],
+      requires_escrow: requiresEscrowBody = false,
     } = taskFields
 
     // Validate required fields
@@ -153,26 +154,7 @@ export async function POST(request: NextRequest) {
       console.log("User exists:", existingUser)
     }
 
-    // Only verified clients can post tasks (resolve from DB for consistency)
-    const { data: dbUser, error: dbUserError } = await supabase
-      .from("users")
-      .select("user_type, is_verified")
-      .eq("id", userId)
-      .single()
-    if (dbUserError || !dbUser) {
-      return NextResponse.json(
-        { success: false, error: "Could not verify your account. Please try again." },
-        { status: 500 },
-      )
-    }
-    if (dbUser.user_type !== "client") {
-      return NextResponse.json(
-        { success: false, error: "Only clients can post tasks. Your account is not set as a client." },
-        { status: 403 },
-      )
-    }
-
-    // ✅ FIXED: Removed non-existent columns (has_escrow, escrow_amount)
+    // Any authenticated user can post a task; poster is stored as client_id for that task.
     const taskData = {
       client_id: userId,
       title: title.trim(),
@@ -190,9 +172,10 @@ export async function POST(request: NextRequest) {
       visibility,
       urgency,
       experience_level,
-      status: "active", // ✅ POSTS IMMEDIATELY AS ACTIVE
+      status: requiresEscrowBody === true ? "draft" : "active",
       applications_count: 0,
       views_count: 0,
+      requires_escrow: requiresEscrowBody === true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }

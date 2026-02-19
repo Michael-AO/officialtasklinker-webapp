@@ -71,6 +71,7 @@ interface Task {
   applications_count: number
   views_count: number
   created_at: string
+  requires_escrow?: boolean
   client?: {
     id: string
     name: string
@@ -447,6 +448,12 @@ export default function BrowseTasksPage() {
                 {task.category && (
                   <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
                     {task.category}
+                  </span>
+                )}
+                {(task as Task).requires_escrow && (
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 inline-flex items-center gap-1">
+                    <VerifiedBadge size="sm" className="shrink-0" />
+                    Escrow protected
                   </span>
                 )}
                 {(task.skills_required || []).slice(0, 3).map((skill) => (

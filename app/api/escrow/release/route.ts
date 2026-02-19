@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         .select("id, amount, status")
         .eq("id", milestoneId)
         .single()
-      if (!milestoneErr && milestone && milestone.status === "FUNDED") {
+      if (!milestoneErr && milestone && (milestone.status === "FUNDED" || milestone.status === "IN_REVIEW")) {
         await supabase
           .from("task_milestones")
           .update({ status: "RELEASED", updated_at: now })

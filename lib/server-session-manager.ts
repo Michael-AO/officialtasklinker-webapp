@@ -47,12 +47,29 @@ export interface SessionData extends UserData {
 export const COOKIE_NAME = 'tl-auth-token'
 const SESSION_DURATION_DAYS = 7
 
-/** In production, cookie domain so session works on both apex and www (e.g. tasklinkers.com). */
-function getCookieDomain(): string | undefined {
+const DEFAULT_COOKIE_DOMAIN = 'tasklinkers.com'
+
+/**
+ * In production, cookie domain so session works on both apex and www.
+ * Never uses a Netlify deploy host (e.g. *.netlify.app) when users use a custom domain.
+ * - SESSION_COOKIE_DOMAIN: use when set (e.g. tasklinkers.com).
+ * - Else if NEXT_PUBLIC_APP_URL host is *.netlify.app: use DEFAULT_COOKIE_DOMAIN.
+ * - Else: use hostname from NEXT_PUBLIC_APP_URL.
+ */
+export function getCookieDomain(): string | undefined {
   if (process.env.NODE_ENV !== 'production') return undefined
-  const url = process.env.NEXT_PUBLIC_APP_URL || 'https://tasklinkers.com'
+  const explicit = process.env.SESSION_COOKIE_DOMAIN?.trim()
+  if (explicit) {
+    try {
+      return explicit.includes('://') ? new URL(explicit).hostname : explicit
+    } catch {
+      return explicit
+    }
+  }
+  const url = process.env.NEXT_PUBLIC_APP_URL || `https://${DEFAULT_COOKIE_DOMAIN}`
   try {
-    return new URL(url.replace(/\/$/, '')).hostname
+    const hostname = new URL(url.replace(/\/$/, '')).hostname
+    return hostname.includes('netlify.app') ? DEFAULT_COOKIE_DOMAIN : hostname
   } catch {
     return undefined
   }

@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
         currency,
         views_count,
         client_id,
+        requires_escrow,
         users!tasks_client_id_fkey (
           name,
           email,

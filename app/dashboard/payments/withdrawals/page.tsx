@@ -53,7 +53,7 @@ interface WithdrawalRequest {
 export default function WithdrawalsPage() {
   const { user } = useAuth()
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false)
-  const [showBankModal, setShowBankModal] = useState(false)
+  const [withdrawalsTab, setWithdrawalsTab] = useState<"history" | "banks">("history")
   const [showPinModal, setShowPinModal] = useState(false)
   const [pinModalMode, setPinModalMode] = useState<"setup" | "change" | "verify">("setup")
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
@@ -75,7 +75,7 @@ export default function WithdrawalsPage() {
       ])
       if (bankResponse.ok) {
         const bankData = await bankResponse.json()
-        setBankAccounts(bankData.accounts || [])
+        setBankAccounts(bankData.success && Array.isArray(bankData.data) ? bankData.data : [])
       }
       if (withdrawalResponse.ok) {
         const withdrawalData = await withdrawalResponse.json()
@@ -165,7 +165,7 @@ export default function WithdrawalsPage() {
               Setup Security PIN
             </Button>
           )}
-          <Button variant="outline" onClick={() => setShowBankModal(true)}>
+          <Button variant="outline" onClick={() => setWithdrawalsTab("banks")}>
             <CreditCard className="mr-2 h-4 w-4" />
             Manage Banks
           </Button>
@@ -195,7 +195,7 @@ export default function WithdrawalsPage() {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <strong>Bank Account Required:</strong> Add and verify a bank account to make withdrawals.{" "}
-            <Button variant="link" className="p-0 h-auto" onClick={() => setShowBankModal(true)}>
+            <Button variant="link" className="p-0 h-auto" onClick={() => setWithdrawalsTab("banks")}>
               Add bank account
             </Button>
           </AlertDescription>
@@ -249,7 +249,7 @@ export default function WithdrawalsPage() {
       </div>
 
       {/* Withdrawal History */}
-      <Tabs defaultValue="history" className="space-y-4">
+      <Tabs value={withdrawalsTab} onValueChange={(v) => setWithdrawalsTab(v as "history" | "banks")} className="space-y-4">
         <TabsList>
           <TabsTrigger value="history">Withdrawal History</TabsTrigger>
           <TabsTrigger value="banks">Bank Accounts</TabsTrigger>
@@ -381,8 +381,6 @@ export default function WithdrawalsPage() {
         calculateFee={calculateFee}
         onSuccess={fetchData}
       />
-
-      <BankAccountManagement />
 
       <PinSetupModal isOpen={showPinModal} onClose={() => setShowPinModal(false)} mode={pinModalMode} />
     </div>

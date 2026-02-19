@@ -63,6 +63,7 @@ interface TaskData {
   created_at: string
   deadline: string
   urgency: string
+  requires_escrow?: boolean
   client: {
     id: string
     name: string
@@ -175,6 +176,7 @@ export default function TaskViewPage() {
           created_at: taskData.task.created_at,
           deadline: taskData.task.deadline || taskData.task.created_at,
           urgency: taskData.task.urgency || "normal",
+          requires_escrow: taskData.task.requires_escrow === true,
           client: {
             id: taskData.task.client?.id || "",
             name: taskData.task.client?.name || "Anonymous Client",
@@ -638,6 +640,11 @@ export default function TaskViewPage() {
                     {task.client.is_verified && (
                       <Badge variant="secondary" className="text-xs">
                         Verified
+                      </Badge>
+                    )}
+                    {task.requires_escrow && (
+                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                        Escrow protected
                       </Badge>
                     )}
                   </div>
