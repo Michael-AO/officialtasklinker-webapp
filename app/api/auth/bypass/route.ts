@@ -1,6 +1,5 @@
 /**
- * Dev bypass: log in as a specific user without password (for local/dashboard work).
- * Only enabled when NODE_ENV !== 'production' or ALLOW_BYPASS_AUTH is set.
+ * Bypass auth: log in by email only (no password). For now always enabled; only checks that the email exists.
  * Allowed email: asereope@gmail.com only.
  */
 import { NextRequest, NextResponse } from "next/server"
@@ -10,8 +9,7 @@ import { ServerSessionManager, getCookieDomain } from "@/lib/server-session-mana
 const BYPASS_ALLOWED_EMAIL = "asereope@gmail.com"
 
 function isBypassEnabled(): boolean {
-  if (process.env.NODE_ENV !== "production") return true
-  return process.env.ALLOW_BYPASS_AUTH === "true"
+  return true
 }
 
 export async function GET(request: NextRequest) {
@@ -63,8 +61,16 @@ export async function GET(request: NextRequest) {
 
   const isProduction = process.env.NODE_ENV === "production"
   const cookieDomain = getCookieDomain()
-  const redirectUrl = new URL("/dashboard/settings", request.url)
-  const res = NextResponse.redirect(redirectUrl)
+  const canonicalOrigin = isProduction
+    ? (process.env.NEXT_PUBLIC_APP_URL || "https://tasklinkers.com").replace(/\/$/, "")
+    : request.nextUrl.origin
+  const redirectUrl = new URL("/dashboard", canonicalOrigin)
+  const redirectHref = redirectUrl.toString().replace(/&/g, "&amp;").replace(/"/g, "&quot;")
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirectHref}"></head><body>Redirecting to dashboard…</body></html>`
+  const res = new NextResponse(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  })
   res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
     httpOnly: true,
     secure: isProduction,
