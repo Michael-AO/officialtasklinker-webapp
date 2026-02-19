@@ -121,6 +121,8 @@ For password login to work in production (no redirect-back-to-login), set in Net
 
 Ensure users access the site at the same host you configure (e.g. always `https://tasklinkers.com` or always `https://www.tasklinkers.com`), or set `SESSION_COOKIE_DOMAIN=tasklinkers.com` so the cookie is valid for both.
 
+Run `node scripts/check-env-for-login.js` to verify local env and see the Post-Op checklist.
+
 ---
 
 ## Quick copy-paste

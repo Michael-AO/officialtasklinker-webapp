@@ -40,6 +40,7 @@ function LoginContent() {
       const contentType = res.headers.get("Content-Type") ?? ""
       if (res.ok && contentType.includes("text/html")) {
         const redirectTo = res.headers.get("X-Redirect-To") || "/dashboard"
+        await res.text()
         window.location.href = redirectTo
         return
       }

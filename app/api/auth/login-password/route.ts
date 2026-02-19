@@ -4,7 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
-import { ServerSessionManager, getCookieDomain } from "@/lib/server-session-manager"
+import { ServerSessionManager } from "@/lib/server-session-manager"
 
 const DEMO_EMAIL = "asereope@gmail.com"
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
 
     const redirectPath = user.user_type === "admin" ? "/admin/dashboard" : "/dashboard"
     const isProduction = process.env.NODE_ENV === "production"
-    const cookieDomain = getCookieDomain()
 
     // 200 HTML redirect so browser persists Set-Cookie before navigation (fixes production redirect-back-to-login)
     const canonicalOrigin =
@@ -93,13 +92,13 @@ export async function POST(request: NextRequest) {
         "X-Redirect-To": redirectPath,
       },
     })
+    // Omit domain so cookie is host-only (fixes "coming back to login" when domain was set)
     res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60,
-      ...(cookieDomain && { domain: cookieDomain }),
     })
     return res
   } catch (error) {
