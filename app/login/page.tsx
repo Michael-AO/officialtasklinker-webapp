@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
-import { Mail, AlertCircle } from "lucide-react"
+import { Mail, Lock, AlertCircle } from "lucide-react"
 
 function normalizeLoginError(raw: string | null): string {
   if (!raw) return "Something went wrong. Please try again."
@@ -18,8 +18,10 @@ function normalizeLoginError(raw: string | null): string {
 function LoginContent() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [userType, setUserType] = useState<"freelancer" | "client">("freelancer")
 
   useEffect(() => {
     const errorParam = searchParams.get("error")
@@ -35,7 +37,12 @@ function LoginContent() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password: password || "tasklinkers",
+          user_type: userType,
+          redirect: searchParams.get("redirect") ?? undefined,
+        }),
       })
       const contentType = res.headers.get("Content-Type") ?? ""
       if (res.ok && contentType.includes("text/html")) {
@@ -77,7 +84,7 @@ function LoginContent() {
             Welcome Back
           </CardTitle>
           <CardDescription className="text-center text-[#64748b]">
-            Enter your email to continue
+            Enter your email and password to log in
           </CardDescription>
         </CardHeader>
 
@@ -104,6 +111,33 @@ function LoginContent() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="tasklinkers"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                autoComplete="current-password"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="userType">I am a</Label>
+              <select
+                id="userType"
+                value={userType}
+                onChange={(e) => setUserType(e.target.value as "freelancer" | "client")}
+                className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#04A466]/30 focus:border-[#04A466]"
+                disabled={loading}
+              >
+                <option value="freelancer">Freelancer</option>
+                <option value="client">Client</option>
+              </select>
+            </div>
+
             <Button
               type="submit"
               className="w-full bg-[#04A466] hover:bg-[#039a5c] text-white"
@@ -111,12 +145,12 @@ function LoginContent() {
             >
               {loading ? (
                 <>
-                  <Mail className="mr-2 h-4 w-4 animate-pulse" />
+                  <Lock className="mr-2 h-4 w-4 animate-pulse" />
                   Signing in...
                 </>
               ) : (
                 <>
-                  <Mail className="mr-2 h-4 w-4" />
+                  <Lock className="mr-2 h-4 w-4" />
                   Log In
                 </>
               )}

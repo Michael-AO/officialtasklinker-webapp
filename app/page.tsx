@@ -167,12 +167,12 @@ export default function HomePage() {
             <Button asChild className="bg-[#04A466] hover:bg-[#039a5c] text-white rounded-lg px-5 min-h-[40px]">
               <Link href="/signup">Create Account</Link>
             </Button>
-            <Link className="text-sm font-medium text-[#475569] hover:text-[#1e293b] py-2 px-1 -m-1 rounded focus:outline-none focus:ring-2 focus:ring-[#04A466]/30" href="/api/auth/bypass?email=asereope@gmail.com">
+            <Link className="text-sm font-medium text-[#475569] hover:text-[#1e293b] py-2 px-1 -m-1 rounded focus:outline-none focus:ring-2 focus:ring-[#04A466]/30" href="/login">
               Log In
             </Link>
           </div>
           <div className="ml-auto flex md:hidden items-center gap-2 sm:gap-3">
-            <Link href="/api/auth/bypass?email=asereope@gmail.com" className="text-sm font-medium text-[#475569] hover:text-[#1e293b] py-2.5 px-2 rounded-lg min-h-[44px] inline-flex items-center justify-center touch-manipulation">Log In</Link>
+            <Link href="/login" className="text-sm font-medium text-[#475569] hover:text-[#1e293b] py-2.5 px-2 rounded-lg min-h-[44px] inline-flex items-center justify-center touch-manipulation">Log In</Link>
             <Button asChild size="sm" className="bg-[#04A466] hover:bg-[#039a5c] text-white rounded-lg min-h-[44px] px-3 sm:px-4 text-sm font-medium shrink-0 touch-manipulation">
               <Link href="/signup">Create Account</Link>
             </Button>
@@ -200,7 +200,7 @@ export default function HomePage() {
               <button type="button" className="py-2.5 text-base font-medium text-[#475569] text-left" onClick={() => { setPanelOpen("categories"); setMobileNavOpen(false); }}>Categories</button>
               <button type="button" className="py-2.5 text-base font-medium text-[#475569] text-left" onClick={() => { setPanelOpen("faq"); setMobileNavOpen(false); }}>FAQ</button>
               <div className="mt-4 pt-4 border-t space-y-2">
-                <Link href="/api/auth/bypass?email=asereope@gmail.com" className="block py-2.5 text-base font-medium text-[#475569]" onClick={() => setMobileNavOpen(false)}>Log In</Link>
+                <Link href="/login" className="block py-2.5 text-base font-medium text-[#475569]" onClick={() => setMobileNavOpen(false)}>Log In</Link>
                 <Button asChild className="w-full bg-[#04A466] hover:bg-[#039a5c] text-white rounded-lg">
                   <Link href="/signup" onClick={() => setMobileNavOpen(false)}>Create Account</Link>
                 </Button>
@@ -380,7 +380,7 @@ export default function HomePage() {
                       </div>
                       <div className="border-t bg-gray-50 px-4 py-3">
                         <Button className="w-full rounded-lg bg-[#04A466] font-medium text-white hover:bg-[#039a5c]" asChild>
-                          <Link href={"/api/auth/bypass?email=asereope@gmail.com&next=" + encodeURIComponent("/dashboard/browse/" + task.id)}>Apply now</Link>
+                          <Link href={"/login?redirect=" + encodeURIComponent("/dashboard/browse/" + task.id)}>Apply now</Link>
                         </Button>
                       </div>
                     </CardContent>
