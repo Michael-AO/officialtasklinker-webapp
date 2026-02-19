@@ -64,7 +64,9 @@ export async function GET(request: NextRequest) {
   const canonicalOrigin = isProduction
     ? (process.env.NEXT_PUBLIC_APP_URL || "https://tasklinkers.com").replace(/\/$/, "")
     : request.nextUrl.origin
-  const redirectUrl = new URL("/dashboard", canonicalOrigin)
+  const nextPath = request.nextUrl.searchParams.get("next")?.trim()
+  const path = nextPath?.startsWith("/") ? nextPath : "/dashboard"
+  const redirectUrl = new URL(path, canonicalOrigin)
   const redirectHref = redirectUrl.toString().replace(/&/g, "&amp;").replace(/"/g, "&quot;")
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirectHref}"></head><body>Redirecting to dashboard…</body></html>`
   const res = new NextResponse(html, {
