@@ -110,6 +110,17 @@ Middleware redirects unauthenticated users to `/login?redirect=<pathname>`.
 - [ ] In Brevo: **Settings → SMTP & API → API Keys** – create a key with permission to send transactional email; use that value for `BREVO_API_KEY`.
 - [ ] No redirect URL whitelist needed for magic links; links use `NEXT_PUBLIC_APP_URL` + `/api/auth/verify-magic-link?...`
 
+### Password login – session cookie (production)
+
+For password login to work in production (no redirect-back-to-login), set in Netlify (and ensure Supabase is the same project as local):
+
+- [ ] **JWT_SECRET_KEY** – Used to sign session JWTs. If unset, the app falls back to `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `lib/server-session-manager.ts`). Prefer a dedicated secret (e.g. 32+ chars) in production.
+- [ ] **NEXT_PUBLIC_APP_URL** – Canonical app URL (e.g. `https://tasklinkers.com`). Used for redirect after login and for cookie domain when the host is `*.netlify.app`.
+- [ ] **SESSION_COOKIE_DOMAIN** (optional) – Override cookie domain (e.g. `tasklinkers.com`) so the session cookie works on both apex and www. If unset, production uses the host from `NEXT_PUBLIC_APP_URL` or `tasklinkers.com` when the request host is `*.netlify.app`.
+- [ ] **Supabase** – Same project as local: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`. The `user_sessions` table must exist and be writable by the service role.
+
+Ensure users access the site at the same host you configure (e.g. always `https://tasklinkers.com` or always `https://www.tasklinkers.com`), or set `SESSION_COOKIE_DOMAIN=tasklinkers.com` so the cookie is valid for both.
+
 ---
 
 ## Quick copy-paste

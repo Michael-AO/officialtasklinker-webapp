@@ -91,10 +91,27 @@ export async function POST(request: NextRequest) {
       metadata
     )
 
-    const redirect = user.user_type === "admin" ? "/admin/dashboard" : "/dashboard"
+    const redirectPath = user.user_type === "admin" ? "/admin/dashboard" : "/dashboard"
     const isProduction = process.env.NODE_ENV === "production"
     const cookieDomain = getCookieDomain()
-    const res = NextResponse.json({ success: true, redirect })
+
+    // 200 HTML redirect so browser persists Set-Cookie before navigation (fixes production redirect-back-to-login)
+    const canonicalOrigin =
+      isProduction
+        ? (process.env.NEXT_PUBLIC_APP_URL || "https://tasklinkers.com").replace(/\/$/, "")
+        : null
+    const redirectUrl = canonicalOrigin
+      ? new URL(redirectPath, canonicalOrigin)
+      : new URL(redirectPath, request.nextUrl.origin)
+    const redirectHref = redirectUrl.toString().replace(/&/g, "&amp;").replace(/"/g, "&quot;")
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirectHref}"></head><body>Redirecting to dashboard…</body></html>`
+    const res = new NextResponse(html, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "X-Redirect-To": redirectPath,
+      },
+    })
     res.cookies.set(ServerSessionManager.COOKIE_NAME, sessionToken, {
       httpOnly: true,
       secure: isProduction,

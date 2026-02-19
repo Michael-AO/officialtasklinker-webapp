@@ -43,6 +43,12 @@ function LoginContent() {
           user_type: userType,
         }),
       })
+      const contentType = res.headers.get("Content-Type") ?? ""
+      if (res.ok && contentType.includes("text/html")) {
+        const redirectTo = res.headers.get("X-Redirect-To") || "/dashboard"
+        window.location.href = redirectTo
+        return
+      }
       const data = await res.json().catch(() => ({}))
       if (data.success && data.redirect) {
         window.location.href = data.redirect
